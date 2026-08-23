@@ -1,0 +1,66 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Coin Toss: Binomial → Normal | ME 3310</title>
+  <link rel="stylesheet" href="styles.css" />
+</head>
+<body>
+  <main class="wrap">
+    <header class="hero">
+      <p class="eyebrow">ME 3310 · Experimental Methods I</p>
+      <h1>Coin Toss: Binomial → Normal</h1>
+      <p class="lead">A single coin toss has only two outcomes. But the number of heads in many independent tosses has a binomial distribution whose shape becomes increasingly well approximated by a normal distribution.</p>
+    </header>
+
+    <section class="panel">
+      <div class="section-head">
+        <div>
+          <p class="step">Central Limit Idea</p>
+          <h2>Increase the number of tosses</h2>
+        </div>
+        <p class="prompt"><strong>Question:</strong> How can a discrete experiment made only of heads and tails begin to look like a continuous bell-shaped distribution?</p>
+      </div>
+
+      <div class="control-row">
+        <label for="n-slider">Number of coin tosses, n</label>
+        <input id="n-slider" type="range" min="1" max="200" value="5" />
+        <output id="n-value">5</output>
+      </div>
+      <div class="button-row" aria-label="Select number of tosses">
+        <button data-n="1">1</button><button data-n="5">5</button><button data-n="10">10</button><button data-n="30">30</button><button data-n="100">100</button><button data-n="200">200</button>
+      </div>
+
+      <div class="stats-grid">
+        <div class="stat"><span>Distribution</span><strong id="dist-label">Binomial(5, 0.5)</strong></div>
+        <div class="stat"><span>Mean, np</span><strong id="mean-value">2.50</strong></div>
+        <div class="stat"><span>SD, √np(1−p)</span><strong id="sd-value">1.12</strong></div>
+        <div class="stat"><span>Normal approximation</span><strong id="normal-label">N(2.50, 1.12²)</strong></div>
+      </div>
+
+      <figure class="chart-card">
+        <figcaption>
+          <strong>Exact binomial probabilities and normal approximation</strong>
+          <span>Bars show the exact probability of each possible head count. The curve/points use a normal approximation with the same mean and variance, including a continuity correction.</span>
+        </figcaption>
+        <svg id="chart" role="img" aria-label="Binomial distribution compared with normal approximation"></svg>
+      </figure>
+
+      <div class="legend"><span><i class="bar-key"></i>Exact binomial</span><span><i class="line-key"></i>Normal approximation</span></div>
+
+      <div class="callout">
+        <strong>What to notice:</strong> the outcomes remain integer counts, but as <em>n</em> grows the binomial probability pattern becomes smoother and increasingly bell-shaped. For a fair coin, the matching normal model is approximately N(n/2, n/4).
+      </div>
+
+      <div class="reflection-grid">
+        <div class="reflection"><h3>Observe</h3><p>Compare n = 5 with n = 30 and n = 100. Where does the normal approximation improve most?</p></div>
+        <div class="reflection"><h3>Interpret</h3><p>The coin itself never becomes normal. It is the distribution of an aggregate quantity—the number of heads—that becomes approximately normal.</p></div>
+      </div>
+    </section>
+
+    <nav class="next"><a href="../sampling-distribution/">Next explorer: Sampling Distribution of the Mean →</a></nav>
+  </main>
+  <script src="app.js"></script>
+</body>
+</html>
