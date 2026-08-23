@@ -1,0 +1,71 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Sampling Distribution of the Mean | ME 3310</title>
+  <link rel="stylesheet" href="styles.css" />
+</head>
+<body>
+  <main class="wrap">
+    <header class="hero">
+      <p class="eyebrow">ME 3310 · Experimental Methods I</p>
+      <h1>Sampling Distribution of the Mean</h1>
+      <p class="lead">Take many independent samples from the same population, calculate one mean from each sample, and look at the distribution of those means. This is the Central Limit Theorem in experimental form.</p>
+    </header>
+
+    <section class="panel">
+      <div class="section-head">
+        <div><p class="step">Central Limit Theorem</p><h2>Repeat the whole experiment</h2></div>
+        <p class="prompt"><strong>Question:</strong> If individual measurements are not normally distributed, can the sample mean still have an approximately normal sampling distribution?</p>
+      </div>
+
+      <div class="controls">
+        <label>Population
+          <select id="population"><option value="dice">Fair die — discrete uniform</option><option value="exp">Right-skewed exponential</option></select>
+        </label>
+        <label>Measurements per sample, n
+          <div class="range-row"><input id="n-slider" type="range" min="1" max="50" value="1" /><output id="n-value">1</output></div>
+        </label>
+        <button id="resimulate">Repeat simulation</button>
+      </div>
+      <div class="button-row"><button data-n="1">n = 1</button><button data-n="2">2</button><button data-n="5">5</button><button data-n="10">10</button><button data-n="30">30</button><button data-n="50">50</button></div>
+
+      <div class="stats-grid">
+        <div class="stat"><span>Population mean, μ</span><strong id="mu">3.500</strong></div>
+        <div class="stat"><span>Population SD, σ</span><strong id="sigma">1.708</strong></div>
+        <div class="stat"><span>Theoretical SE, σ/√n</span><strong id="se">1.708</strong></div>
+        <div class="stat"><span>Observed SD of sample means</span><strong id="emp-sd">—</strong></div>
+      </div>
+
+      <div class="chart-grid">
+        <figure class="chart-card">
+          <figcaption><strong>One measurement, X</strong><span id="population-note">A fair die is clearly not normally distributed.</span></figcaption>
+          <svg id="population-chart" role="img" aria-label="Distribution of individual measurements"></svg>
+        </figure>
+        <figure class="chart-card">
+          <figcaption><strong>Means from 3,000 repeated samples</strong><span>Histogram: simulated sample means. Curve: N(μ, σ²/n).</span></figcaption>
+          <svg id="mean-chart" role="img" aria-label="Sampling distribution of the sample mean with normal approximation"></svg>
+        </figure>
+      </div>
+
+      <div class="legend"><span><i class="bar-key"></i>Simulation</span><span><i class="line-key"></i>Normal model for X̄</span></div>
+
+      <div class="callout">
+        <strong>Central Limit Theorem:</strong> for independent, identically distributed measurements with finite variance,
+        the standardized sample mean <span class="math">(X̄ − μ)/(σ/√n)</span> approaches N(0,1) as n grows. Equivalently, for sufficiently large n, <span class="math">X̄ ≈ N(μ, σ²/n)</span>.
+      </div>
+
+      <div class="contrast">
+        <div><strong>Law of Large Numbers</strong><p>tells us <em>where</em> the sample mean goes: X̄ becomes concentrated near μ.</p></div>
+        <div><strong>Central Limit Theorem</strong><p>tells us about the <em>shape and scale</em> of the sampling distribution: approximately normal with SE = σ/√n.</p></div>
+      </div>
+
+      <div class="reflection"><strong>Try this:</strong> start with the right-skewed population at n = 1, then compare n = 5, 10, and 30. The individual measurements remain skewed; the distribution of their averages changes.</div>
+    </section>
+
+    <nav class="next"><a href="../confidence-interval/">Connect this to confidence intervals →</a></nav>
+  </main>
+  <script src="app.js"></script>
+</body>
+</html>
