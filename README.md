@@ -11,34 +11,44 @@ me3310-interactive/
 ├── index.html
 ├── netlify.toml
 ├── repeated-measurements/
-│   ├── index.html
-│   ├── styles.css
-│   └── app.js
+├── binomial-normal/
+├── sampling-distribution/
 └── confidence-interval/
-    ├── index.html
-    ├── styles.css
-    └── app.js
 ```
+
+Each explorer directory contains its own `index.html`, `styles.css`, and `app.js`.
 
 ## Explorer 01 — Repeated Measurements & Law of Large Numbers
 
-Focuses on one conceptual question: **What becomes more stable as measurements are repeated—the individual measurements or our estimate of the mean?**
+Focuses on the question: **What becomes more stable as measurements are repeated—the individual measurements or our estimate of the mean?** Students use a fair-die or hypothetical MPG example and watch the running sample mean stabilize.
 
-Students can use a fair-die example or a hypothetical road-test MPG example, add repeated measurements, view a histogram of individual observations, and watch the running sample mean stabilize.
+## Explorer 02 — Coin Toss: Binomial → Normal
 
-## Explorer 02 — Confidence Interval & t-Distribution
+Uses a fair coin to show how the exact binomial distribution of the number of heads is increasingly well approximated by a normal distribution as the number of independent tosses increases. The normal approximation uses the same mean and variance and a continuity correction.
 
-Supports the statistical tools needed for Lab 01. Students can vary sample size, sample mean, and sample standard deviation and observe the resulting standard error and 95% t-confidence interval. An optional comparison shows the corresponding z-interval under the hypothetical assumption that the population standard deviation is known.
+## Explorer 03 — Sampling Distribution of the Mean
+
+Demonstrates the Central Limit Theorem by repeatedly drawing samples from either a discrete-uniform die population or a right-skewed exponential population. Students compare the original measurement distribution with the distribution of 3,000 sample means and the normal model `N(mu, sigma^2/n)`.
+
+The page explicitly distinguishes the two ideas:
+- **Law of Large Numbers:** the sample mean becomes concentrated near the population mean.
+- **Central Limit Theorem:** the standardized sample mean approaches a standard normal distribution; equivalently, the sampling distribution of the mean is approximately normal with standard error `sigma/sqrt(n)` for sufficiently large `n` under the usual assumptions.
+
+## Explorer 04 — Confidence Interval & t-Distribution
+
+Supports the statistical tools needed for Lab 01. Students vary sample size, sample mean, and sample standard deviation and observe the standard error and 95% t-confidence interval. An optional comparison shows the corresponding z-interval when population standard deviation is assumed known.
 
 ## Netlify
 
-The production site is connected to the `main` branch and published as a static site. Commits to `main` automatically redeploy.
+Commits to `main` automatically redeploy.
 
 Current URLs:
 
 ```text
 https://me3310-interactive.netlify.app/
 https://me3310-interactive.netlify.app/repeated-measurements/
+https://me3310-interactive.netlify.app/binomial-normal/
+https://me3310-interactive.netlify.app/sampling-distribution/
 https://me3310-interactive.netlify.app/confidence-interval/
 ```
 
