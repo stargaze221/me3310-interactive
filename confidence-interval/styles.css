@@ -1,0 +1,72 @@
+:root{
+  --purple:#4f2683;
+  --purple-dark:#2d1b46;
+  --gold:#ffcf33;
+  --ink:#222;
+  --muted:#62646a;
+  --line:#d9d9de;
+  --soft:#f6f3fa;
+  --bg:#f7f7f8;
+  --white:#fff;
+}
+*{box-sizing:border-box}
+body{margin:0;background:var(--bg);color:var(--ink);font-family:Arial,Helvetica,sans-serif;line-height:1.55}
+.wrap{max-width:1080px;margin:0 auto;padding:24px 18px 40px}
+.hero{background:var(--soft);border-left:7px solid var(--purple);padding:22px 24px;margin-bottom:22px}
+.eyebrow,.step{margin:0 0 4px;text-transform:uppercase;letter-spacing:.08em;font-size:.78rem;font-weight:800;color:var(--purple)}
+h1{margin:.1rem 0 .45rem;color:var(--purple-dark);font-size:clamp(1.7rem,3vw,2.4rem);line-height:1.15}
+h2{margin:.1rem 0 .5rem;color:var(--purple-dark);font-size:1.4rem}
+.lead{margin:0;max-width:900px;font-size:1.05rem}
+.panel{background:var(--white);border:1px solid var(--line);border-radius:12px;padding:22px;margin:20px 0;box-shadow:0 1px 2px rgba(0,0,0,.03)}
+.panel.compact{padding:18px 22px}
+.section-head{display:grid;grid-template-columns:minmax(240px,.9fr) minmax(320px,1.4fr);gap:22px;align-items:start;margin-bottom:18px}
+.prompt{margin:0;background:#fff9df;border-left:4px solid var(--gold);padding:12px 14px}
+.controls{display:grid;grid-template-columns:1.3fr 1fr 1fr;gap:14px;margin:14px 0 18px}
+label{font-weight:700;color:var(--purple-dark)}
+input[type="range"]{display:block;width:100%;margin-top:10px}
+input[type="number"]{display:block;width:100%;margin-top:6px;padding:10px;border:1px solid #aaa;border-radius:7px;font:inherit}
+.formula-box{display:grid;grid-template-columns:1fr 1fr;gap:12px;margin:10px 0 14px}
+.formula-box>div{border:1px solid var(--line);border-radius:9px;padding:14px;background:#fcfcfd}
+.formula-label{display:block;color:var(--muted);font-size:.82rem;margin-bottom:3px}
+.formula{font-size:1.18rem;font-weight:800;color:var(--purple-dark)}
+.stats-grid{display:grid;grid-template-columns:repeat(4,minmax(145px,1fr));gap:10px;margin:14px 0 18px}
+.stat{border:1px solid var(--line);border-radius:9px;padding:12px;background:#fcfcfd;min-height:78px}
+.stat span{display:block;color:var(--muted);font-size:.84rem;margin-bottom:3px}
+.stat strong{display:block;color:var(--purple-dark);font-size:1.13rem;line-height:1.25;overflow-wrap:anywhere}
+.chart-card{margin:0;border:1px solid var(--line);border-radius:10px;padding:12px;background:#fff}
+.chart-card figcaption{display:flex;flex-direction:column;gap:2px;margin-bottom:8px}
+.chart-card figcaption span{font-size:.86rem;color:var(--muted)}
+svg{display:block;width:100%;height:260px;background:#fff}
+.check-row{display:flex;gap:10px;align-items:flex-start;margin:16px 0 10px;font-weight:600;color:#333}
+.check-row input{margin-top:4px;transform:scale(1.15)}
+.comparison-note{background:var(--soft);border-left:5px solid var(--purple);padding:13px 15px;margin-top:10px}
+.concept-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:12px}
+.concept-grid>div{border-top:4px solid var(--gold);background:#fafafa;padding:14px;border-radius:7px}
+.concept-grid strong{display:block;color:var(--purple-dark);font-size:1.2rem;margin-bottom:4px}
+.concept-grid span{display:block;color:#444}
+.question{margin:.7rem 0;padding-left:12px;border-left:3px solid var(--gold)}
+a{color:var(--purple);font-weight:700}
+footer{margin-top:20px;padding:14px 18px;background:var(--purple-dark);color:#fff;border-radius:9px}
+footer p{margin:0}
+.axis{stroke:#8b8d93;stroke-width:1}
+.gridline{stroke:#ececef;stroke-width:1}
+.tick-label{fill:#666;font-size:11px}
+.axis-label{fill:#555;font-size:12px;font-weight:700}
+.ci-t{stroke:var(--purple);stroke-width:5;stroke-linecap:round}
+.ci-z{stroke:#777;stroke-width:4;stroke-linecap:round}
+.cap-t{stroke:var(--purple);stroke-width:2}
+.cap-z{stroke:#777;stroke-width:2}
+.mean-point{fill:#222}
+.mean-line{stroke:#222;stroke-width:1.5;stroke-dasharray:4 4}
+.ci-label{fill:#333;font-size:12px;font-weight:700}
+@media (max-width:820px){
+  .section-head,.controls,.formula-box{grid-template-columns:1fr}
+  .stats-grid{grid-template-columns:1fr 1fr}
+  .concept-grid{grid-template-columns:1fr}
+}
+@media (max-width:520px){
+  .wrap{padding:12px 10px 30px}
+  .panel{padding:15px}
+  .stats-grid{grid-template-columns:1fr}
+  svg{height:240px}
+}
