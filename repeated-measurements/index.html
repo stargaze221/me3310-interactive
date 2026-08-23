@@ -1,0 +1,138 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Repeated Measurements → Confidence | ME 3310</title>
+  <link rel="stylesheet" href="styles.css" />
+</head>
+<body>
+  <main class="wrap">
+    <header class="hero">
+      <p class="eyebrow">ME 3310 · Experimental Methods I</p>
+      <h1>From Repeated Measurements to Confidence</h1>
+      <p class="lead">Random measurements do not stop being random. But repeated measurements can make an estimate more stable and give us evidence about how precise that estimate is.</p>
+    </header>
+
+    <section class="panel">
+      <div class="section-head">
+        <div>
+          <p class="step">Part A</p>
+          <h2>Repeat the experiment</h2>
+        </div>
+        <p class="prompt"><strong>Question:</strong> What becomes more stable as the number of measurements grows: the measurements themselves, or our estimate?</p>
+      </div>
+
+      <div class="controls-grid">
+        <label>
+          Experiment
+          <select id="experiment">
+            <option value="dice">Fair six-sided die</option>
+            <option value="mpg">Road-test fuel economy</option>
+          </select>
+        </label>
+        <div class="experiment-note" id="experiment-note"></div>
+      </div>
+
+      <div class="button-row" aria-label="Add measurements">
+        <button data-add="1">+1 measurement</button>
+        <button data-add="10">+10</button>
+        <button data-add="100">+100</button>
+        <button data-add="1000">+1000</button>
+        <button class="secondary" id="reset">Reset</button>
+      </div>
+
+      <div class="stats-grid" aria-live="polite">
+        <div class="stat"><span>Sample size</span><strong id="stat-n">0</strong></div>
+        <div class="stat"><span>Latest value</span><strong id="stat-latest">—</strong></div>
+        <div class="stat"><span>Sample mean</span><strong id="stat-mean">—</strong></div>
+        <div class="stat"><span>Sample SD</span><strong id="stat-sd">—</strong></div>
+      </div>
+
+      <div class="chart-grid">
+        <figure class="chart-card">
+          <figcaption>
+            <strong>Running sample mean</strong>
+            <span>The dashed line is the population mean used by the simulation.</span>
+          </figcaption>
+          <svg id="mean-chart" role="img" aria-label="Running sample mean versus number of measurements"></svg>
+        </figure>
+
+        <figure class="chart-card">
+          <figcaption>
+            <strong>Distribution of individual measurements</strong>
+            <span id="hist-caption">Relative frequency of die outcomes.</span>
+          </figcaption>
+          <svg id="hist-chart" role="img" aria-label="Histogram of individual measurements"></svg>
+        </figure>
+      </div>
+
+      <div class="callout">
+        <strong>Law of Large Numbers:</strong> individual measurements can remain variable while the sample mean becomes more stable as more independent measurements are collected.
+      </div>
+    </section>
+
+    <section class="panel">
+      <div class="section-head">
+        <div>
+          <p class="step">Part B</p>
+          <h2>How uncertain is the estimated mean?</h2>
+        </div>
+        <p class="prompt">In Lab 01, the population standard deviation is not known. We estimate variability from the same finite sample, so the <strong>t-distribution</strong> is the appropriate introductory model for a confidence interval for the mean.</p>
+      </div>
+
+      <div class="formula-box">
+        <div>
+          <span class="formula-label">Standard error</span>
+          <span class="formula">SE = s / √n</span>
+        </div>
+        <div>
+          <span class="formula-label">95% t confidence interval</span>
+          <span class="formula">x̄ ± t* · s / √n</span>
+        </div>
+      </div>
+
+      <div class="stats-grid confidence-stats" aria-live="polite">
+        <div class="stat"><span>Degrees of freedom</span><strong id="stat-df">—</strong></div>
+        <div class="stat"><span>Standard error</span><strong id="stat-se">—</strong></div>
+        <div class="stat"><span>95% t-CI</span><strong id="stat-tci">Need n ≥ 2</strong></div>
+        <div class="stat"><span>CI width</span><strong id="stat-width">—</strong></div>
+      </div>
+
+      <label class="check-row">
+        <input type="checkbox" id="show-z" />
+        <span>Compare with a 95% z-interval <em>as if the population standard deviation were already known</em>.</span>
+      </label>
+
+      <figure class="chart-card ci-card">
+        <figcaption>
+          <strong>Confidence interval comparison</strong>
+          <span>For small samples, estimating the standard deviation adds uncertainty, so the t-based interval is usually wider.</span>
+        </figcaption>
+        <svg id="ci-chart" role="img" aria-label="Comparison of t and z confidence intervals"></svg>
+      </figure>
+
+      <div class="reflection-grid">
+        <div class="reflection">
+          <h3>Think</h3>
+          <p>If the sample SD stays about the same while <em>n</em> increases, what happens to the standard error?</p>
+        </div>
+        <div class="reflection">
+          <h3>Discuss</h3>
+          <p>Why should we be less confident when both the mean and the variability must be estimated from only a few measurements?</p>
+        </div>
+        <div class="reflection">
+          <h3>Engineering judgment</h3>
+          <p>Would a narrower interval always justify an engineering decision? What other evidence or assumptions might matter?</p>
+        </div>
+      </div>
+    </section>
+
+    <footer>
+      <p><strong>Experimental reasoning:</strong> Engineering Question → Measurement → Evidence → Analysis / Inference → Engineering Judgment.</p>
+    </footer>
+  </main>
+
+  <script src="app.js"></script>
+</body>
+</html>
