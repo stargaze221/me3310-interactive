@@ -2,7 +2,7 @@
 
 Interactive web visualizations for **ME 3310 — Experimental Methods I**.
 
-The repository is organized as one static Netlify site with independent explorer pages that can be embedded in Canvas using stable URLs.
+The repository is designed as one static Netlify site with multiple focused explorer pages. Each explorer can be embedded independently in Canvas using a stable Netlify URL.
 
 ## Current structure
 
@@ -10,40 +10,36 @@ The repository is organized as one static Netlify site with independent explorer
 me3310-interactive/
 ├── index.html
 ├── netlify.toml
-└── repeated-measurements/
+├── repeated-measurements/
+│   ├── index.html
+│   ├── styles.css
+│   └── app.js
+└── confidence-interval/
     ├── index.html
     ├── styles.css
     └── app.js
 ```
 
-## Repeated Measurements → Confidence
+## Explorer 01 — Repeated Measurements & Law of Large Numbers
 
-The first explorer supports the Week 01 progression from random variation to inference:
+Focuses on one conceptual question: **What becomes more stable as measurements are repeated—the individual measurements or our estimate of the mean?**
 
-1. Repeat a fair-die experiment or a hypothetical road-test MPG measurement.
-2. Observe individual variability and the running sample mean.
-3. Connect repeated measurement to the Law of Large Numbers.
-4. Compute sample mean, sample standard deviation, and standard error.
-5. Construct a 95% confidence interval using the t-distribution.
-6. Optionally compare against a z-interval in the hypothetical case where the population standard deviation is known.
+Students can use a fair-die example or a hypothetical road-test MPG example, add repeated measurements, view a histogram of individual observations, and watch the running sample mean stabilize.
 
-The intended experimental-methods message is that individual measurements may remain variable even while the estimate of the mean becomes more stable.
+## Explorer 02 — Confidence Interval & t-Distribution
+
+Supports the statistical tools needed for Lab 01. Students can vary sample size, sample mean, and sample standard deviation and observe the resulting standard error and 95% t-confidence interval. An optional comparison shows the corresponding z-interval under the hypothetical assumption that the population standard deviation is known.
 
 ## Netlify
 
-Connect this repository to one Netlify site and publish the repository root.
+The production site is connected to the `main` branch and published as a static site. Commits to `main` automatically redeploy.
 
-- Build command: none
-- Publish directory: `.`
-- Production branch: `main`
-
-After connection, pushes to `main` automatically redeploy the site.
-
-Typical URLs will be:
+Current URLs:
 
 ```text
-https://<site-name>.netlify.app/
-https://<site-name>.netlify.app/repeated-measurements/
+https://me3310-interactive.netlify.app/
+https://me3310-interactive.netlify.app/repeated-measurements/
+https://me3310-interactive.netlify.app/confidence-interval/
 ```
 
-The explorer URL can be embedded directly in a Canvas iframe.
+Each explorer URL can be embedded directly in Canvas using an iframe.
