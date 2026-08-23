@@ -1,0 +1,100 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Confidence Interval & t-Distribution | ME 3310</title>
+  <link rel="stylesheet" href="styles.css" />
+</head>
+<body>
+  <main class="wrap">
+    <header class="hero">
+      <p class="eyebrow">ME 3310 · Experimental Methods I</p>
+      <h1>Confidence Interval & the t-Distribution</h1>
+      <p class="lead">Repeated measurements give us a sample mean. A confidence interval helps us describe how precisely that sample estimates the population mean.</p>
+    </header>
+
+    <section class="panel">
+      <div class="section-head">
+        <div>
+          <p class="step">Lab 01 connection</p>
+          <h2>Estimate the mean from a finite sample</h2>
+        </div>
+        <p class="prompt">In Lab 01, the population standard deviation is <strong>not known</strong>. We estimate variability using the sample SD, so we use the <strong>t-distribution</strong> for the introductory confidence interval for the mean.</p>
+      </div>
+
+      <div class="controls">
+        <label>
+          Sample size, n: <strong id="n-value">5</strong>
+          <input id="n" type="range" min="3" max="50" value="5" step="1" />
+        </label>
+        <label>
+          Sample mean, x̄
+          <input id="xbar" type="number" value="30" step="0.1" />
+        </label>
+        <label>
+          Sample standard deviation, s
+          <input id="s" type="number" value="2" min="0.01" step="0.1" />
+        </label>
+      </div>
+
+      <div class="formula-box">
+        <div>
+          <span class="formula-label">Standard error</span>
+          <span class="formula">SE = s / √n</span>
+        </div>
+        <div>
+          <span class="formula-label">95% t confidence interval</span>
+          <span class="formula">x̄ ± t* · s / √n</span>
+        </div>
+      </div>
+
+      <div class="stats-grid" aria-live="polite">
+        <div class="stat"><span>Degrees of freedom</span><strong id="df">4</strong></div>
+        <div class="stat"><span>Standard error</span><strong id="se">—</strong></div>
+        <div class="stat"><span>95% t critical value</span><strong id="tcrit">—</strong></div>
+        <div class="stat"><span>95% t-CI</span><strong id="tci">—</strong></div>
+      </div>
+
+      <figure class="chart-card">
+        <figcaption>
+          <strong>Confidence interval around the sample mean</strong>
+          <span>Change the sample size while keeping the sample SD fixed. Watch what happens to the standard error and interval width.</span>
+        </figcaption>
+        <svg id="ci-chart" role="img" aria-label="Confidence interval for the sample mean"></svg>
+      </figure>
+
+      <label class="check-row">
+        <input type="checkbox" id="show-z" />
+        <span><strong>Compare with z:</strong> show what the 95% interval would look like if the population standard deviation were already known and equal to the value shown above.</span>
+      </label>
+
+      <div id="z-note" class="comparison-note" hidden>
+        <strong>Why is the t-interval wider?</strong> With a small sample, we are estimating both the mean and the variability from limited data. The t-distribution accounts for that extra uncertainty. As n grows, t approaches the normal distribution and the two intervals become nearly identical.
+      </div>
+    </section>
+
+    <section class="panel compact">
+      <h2>Three quantities that are easy to confuse</h2>
+      <div class="concept-grid">
+        <div><strong>s</strong><span>How variable are the individual measurements?</span></div>
+        <div><strong>s / √n</strong><span>How variable is our estimate of the mean?</span></div>
+        <div><strong>t* · s / √n</strong><span>How far do we extend from the sample mean for this confidence interval?</span></div>
+      </div>
+    </section>
+
+    <section class="panel compact">
+      <h2>Think before calculating</h2>
+      <p class="question">If the sample SD stays about the same, why does collecting more measurements usually narrow the confidence interval?</p>
+      <p class="question">A narrow confidence interval tells us the mean is estimated precisely. Does that alone prove the experiment is unbiased or that the engineering model is correct?</p>
+      <p><a href="../repeated-measurements/">← Return to Repeated Measurements & Law of Large Numbers</a></p>
+    </section>
+
+    <footer>
+      <p><strong>Experimental reasoning:</strong> Measurement → Evidence → Analysis / Inference → Engineering Judgment.</p>
+    </footer>
+  </main>
+
+  <script src="app.js"></script>
+</body>
+</html>
