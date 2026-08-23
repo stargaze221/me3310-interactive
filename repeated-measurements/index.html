@@ -3,24 +3,24 @@
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1" />
-  <title>Repeated Measurements → Confidence | ME 3310</title>
+  <title>Repeated Measurements & Law of Large Numbers | ME 3310</title>
   <link rel="stylesheet" href="styles.css" />
 </head>
 <body>
   <main class="wrap">
     <header class="hero">
       <p class="eyebrow">ME 3310 · Experimental Methods I</p>
-      <h1>From Repeated Measurements to Confidence</h1>
-      <p class="lead">Random measurements do not stop being random. But repeated measurements can make an estimate more stable and give us evidence about how precise that estimate is.</p>
+      <h1>Repeated Measurements & the Law of Large Numbers</h1>
+      <p class="lead">Individual measurements can remain variable even while our estimate of the mean becomes more stable.</p>
     </header>
 
     <section class="panel">
       <div class="section-head">
         <div>
-          <p class="step">Part A</p>
+          <p class="step">Explore</p>
           <h2>Repeat the experiment</h2>
         </div>
-        <p class="prompt"><strong>Question:</strong> What becomes more stable as the number of measurements grows: the measurements themselves, or our estimate?</p>
+        <p class="prompt"><strong>Question:</strong> What becomes more stable as the number of measurements grows: the measurements themselves, or our estimate of the mean?</p>
       </div>
 
       <div class="controls-grid">
@@ -60,7 +60,7 @@
 
         <figure class="chart-card">
           <figcaption>
-            <strong>Distribution of individual measurements</strong>
+            <strong>Individual measurements</strong>
             <span id="hist-caption">Relative frequency of die outcomes.</span>
           </figcaption>
           <svg id="hist-chart" role="img" aria-label="Histogram of individual measurements"></svg>
@@ -68,64 +68,29 @@
       </div>
 
       <div class="callout">
-        <strong>Law of Large Numbers:</strong> individual measurements can remain variable while the sample mean becomes more stable as more independent measurements are collected.
+        <strong>Law of Large Numbers:</strong> repeated independent measurements do not make individual observations less random. Instead, the sample mean tends to become more stable as the sample size grows.
+      </div>
+
+      <div class="reflection-grid">
+        <div class="reflection">
+          <h3>Observe</h3>
+          <p>After 100 or 1000 measurements, are the individual outcomes still spread out?</p>
+        </div>
+        <div class="reflection">
+          <h3>Interpret</h3>
+          <p>Compare that spread with the behavior of the running sample mean.</p>
+        </div>
+        <div class="reflection">
+          <h3>Engineering connection</h3>
+          <p>If these were repeated road-test measurements, what would more measurements improve—and what would they not improve?</p>
+        </div>
       </div>
     </section>
 
     <section class="panel">
-      <div class="section-head">
-        <div>
-          <p class="step">Part B</p>
-          <h2>How uncertain is the estimated mean?</h2>
-        </div>
-        <p class="prompt">In Lab 01, the population standard deviation is not known. We estimate variability from the same finite sample, so the <strong>t-distribution</strong> is the appropriate introductory model for a confidence interval for the mean.</p>
-      </div>
-
-      <div class="formula-box">
-        <div>
-          <span class="formula-label">Standard error</span>
-          <span class="formula">SE = s / √n</span>
-        </div>
-        <div>
-          <span class="formula-label">95% t confidence interval</span>
-          <span class="formula">x̄ ± t* · s / √n</span>
-        </div>
-      </div>
-
-      <div class="stats-grid confidence-stats" aria-live="polite">
-        <div class="stat"><span>Degrees of freedom</span><strong id="stat-df">—</strong></div>
-        <div class="stat"><span>Standard error</span><strong id="stat-se">—</strong></div>
-        <div class="stat"><span>95% t-CI</span><strong id="stat-tci">Need n ≥ 2</strong></div>
-        <div class="stat"><span>CI width</span><strong id="stat-width">—</strong></div>
-      </div>
-
-      <label class="check-row">
-        <input type="checkbox" id="show-z" />
-        <span>Compare with a 95% z-interval <em>as if the population standard deviation were already known</em>.</span>
-      </label>
-
-      <figure class="chart-card ci-card">
-        <figcaption>
-          <strong>Confidence interval comparison</strong>
-          <span>For small samples, estimating the standard deviation adds uncertainty, so the t-based interval is usually wider.</span>
-        </figcaption>
-        <svg id="ci-chart" role="img" aria-label="Comparison of t and z confidence intervals"></svg>
-      </figure>
-
-      <div class="reflection-grid">
-        <div class="reflection">
-          <h3>Think</h3>
-          <p>If the sample SD stays about the same while <em>n</em> increases, what happens to the standard error?</p>
-        </div>
-        <div class="reflection">
-          <h3>Discuss</h3>
-          <p>Why should we be less confident when both the mean and the variability must be estimated from only a few measurements?</p>
-        </div>
-        <div class="reflection">
-          <h3>Engineering judgment</h3>
-          <p>Would a narrower interval always justify an engineering decision? What other evidence or assumptions might matter?</p>
-        </div>
-      </div>
+      <h2>Next: How confident are we in the mean?</h2>
+      <p>The sample mean may become more stable, but an engineer still needs to quantify how precise that estimate is. The next explorer introduces standard error and the 95% t-confidence interval used in Lab 01.</p>
+      <p><a href="../confidence-interval/">Open the Confidence Interval & t-Distribution Explorer →</a></p>
     </section>
 
     <footer>
