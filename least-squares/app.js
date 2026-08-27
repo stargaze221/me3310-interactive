@@ -15,12 +15,14 @@
 
   const sampleSize = el('sample-size');
   const noise = el('noise');
+  const noiseMax = el('noise-max');
   const offset = el('offset');
   const slope = el('slope');
   const residualToggle = el('show-residuals');
 
   sampleSize.addEventListener('change', render);
   noise.addEventListener('input', render);
+  noiseMax.addEventListener('change', updateNoiseMaximum);
   offset.addEventListener('input', render);
   slope.addEventListener('input', render);
   residualToggle.addEventListener('change', render);
@@ -57,6 +59,16 @@
     while (u === 0) u = Math.random();
     while (v === 0) v = Math.random();
     return Math.sqrt(-2 * Math.log(u)) * Math.cos(2 * Math.PI * v);
+  }
+
+  function updateNoiseMaximum() {
+    let maxValue = Number(noiseMax.value);
+    if (!Number.isFinite(maxValue)) maxValue = 0.50;
+    maxValue = Math.max(0.05, Math.min(5, maxValue));
+    noiseMax.value = maxValue.toFixed(2);
+    noise.max = String(maxValue);
+    if (Number(noise.value) > maxValue) noise.value = String(maxValue);
+    render();
   }
 
   function newExperiment() {
@@ -99,6 +111,18 @@
     return `${value.toFixed(4)} V²`;
   }
 
+  function setDynamicMath(id, tex) {
+    const node = el(id);
+    node.textContent = `\\(${tex}\\)`;
+  }
+
+  function typesetDynamicMath() {
+    if (!window.MathJax || !window.MathJax.typesetPromise) return;
+    const nodes = [el('fit-equation'), el('true-equation')];
+    if (window.MathJax.typesetClear) window.MathJax.typesetClear(nodes);
+    window.MathJax.typesetPromise(nodes).catch(() => {});
+  }
+
   function render() {
     const data = currentData();
     const guessB0 = Number(offset.value);
@@ -120,15 +144,16 @@
 
     el('fit-result').classList.toggle('hidden', !showFit);
     el('legend-fit').classList.toggle('hidden', !showFit);
-    el('fit-equation').textContent = `V̂ = ${fit.b0.toFixed(3)} + ${fit.b1.toFixed(5)} p`;
+    setDynamicMath('fit-equation', `\\hat V=${fit.b0.toFixed(3)}+${fit.b1.toFixed(5)}p`);
     el('fit-sse').textContent = `Minimum SSE for these data = ${formatSSE(fit.sse)}`;
 
     el('true-result').classList.toggle('hidden', !showTrue);
     el('legend-true').classList.toggle('hidden', !showTrue);
-    el('true-equation').textContent = `V = ${TRUE_OFFSET.toFixed(2)} + ${TRUE_SLOPE.toFixed(4)} p`;
+    setDynamicMath('true-equation', `V=${TRUE_OFFSET.toFixed(2)}+${TRUE_SLOPE.toFixed(4)}p`);
 
     updateObservation(data.length, fit);
     drawCalibration(data, guessB0, guessB1, fit);
+    typesetDynamicMath();
   }
 
   function updateObservation(n, fit) {
@@ -252,5 +277,6 @@
     }));
   }
 
+  updateNoiseMaximum();
   newExperiment();
 })();
