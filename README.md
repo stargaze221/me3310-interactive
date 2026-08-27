@@ -13,7 +13,8 @@ me3310-interactive/
 ├── repeated-measurements/
 ├── binomial-normal/
 ├── sampling-distribution/
-└── confidence-interval/
+├── confidence-interval/
+└── least-squares/
 ```
 
 Each explorer directory contains its own `index.html`, `styles.css`, and `app.js`.
@@ -38,6 +39,10 @@ The page explicitly distinguishes the two ideas:
 
 Supports the statistical tools needed for Lab 01. Students vary sample size, sample mean, and sample standard deviation and observe the standard error and 95% t-confidence interval. An optional comparison shows the corresponding z-interval when population standard deviation is assumed known.
 
+## Explorer 05 — Least Squares Calibration
+
+Supports Week 02 and Lab 02 sensor calibration. A simulated accelerator-pedal sensor follows a hidden linear model with Gaussian measurement noise. Students adjust the proposed offset and sensitivity manually, observe residuals and the live sum of squared errors, change sample size and noise level, regenerate experiments, and then reveal the least-squares fit and hidden true model. A short expandable section connects Gaussian errors with the maximum-likelihood interpretation of least squares.
+
 ## Netlify
 
 Commits to `main` automatically redeploy.
@@ -50,6 +55,7 @@ https://me3310-interactive.netlify.app/repeated-measurements/
 https://me3310-interactive.netlify.app/binomial-normal/
 https://me3310-interactive.netlify.app/sampling-distribution/
 https://me3310-interactive.netlify.app/confidence-interval/
+https://me3310-interactive.netlify.app/least-squares/
 ```
 
 Each explorer URL can be embedded directly in Canvas using an iframe.
