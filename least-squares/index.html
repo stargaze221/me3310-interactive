@@ -5,6 +5,16 @@
   <meta name="viewport" content="width=device-width, initial-scale=1" />
   <title>Least Squares Calibration Explorer | ME 3310</title>
   <link rel="stylesheet" href="styles.css" />
+  <script>
+    window.MathJax = {
+      tex: {
+        inlineMath: [['\\(', '\\)']],
+        displayMath: [['$$', '$$']]
+      },
+      svg: { fontCache: 'global' }
+    };
+  </script>
+  <script defer src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-svg.js"></script>
 </head>
 <body>
   <main class="wrap">
@@ -26,18 +36,18 @@
       <div class="model-strip">
         <div>
           <span class="model-label">Calibration model</span>
-          <strong>V = b₀ + b₁p + ε</strong>
+          <strong>\(V=b_0+b_1p+\varepsilon\)</strong>
         </div>
         <div>
-          <span class="model-label">b₀</span>
+          <span class="model-label">\(b_0\)</span>
           <strong>offset</strong>
         </div>
         <div>
-          <span class="model-label">b₁</span>
+          <span class="model-label">\(b_1\)</span>
           <strong>sensitivity</strong>
         </div>
         <div>
-          <span class="model-label">ε</span>
+          <span class="model-label">\(\varepsilon\)</span>
           <strong>measurement variation</strong>
         </div>
       </div>
@@ -57,18 +67,25 @@
           </select>
           <p class="help">Increasing n keeps the existing measurements and reveals additional calibration points from the same experiment.</p>
 
-          <label for="noise">Measurement noise, σ <span id="noise-value">0.08 V</span></label>
-          <input id="noise" type="range" min="0" max="0.20" step="0.01" value="0.08" />
+          <label for="noise">Measurement noise, \(\sigma\) <span id="noise-value">0.08 V</span></label>
+          <input id="noise" type="range" min="0" max="0.50" step="0.01" value="0.08" />
+
+          <label for="noise-max">Noise slider maximum</label>
+          <div class="inline-control">
+            <input id="noise-max" type="number" min="0.05" max="5" step="0.05" value="0.50" />
+            <span>V</span>
+          </div>
+          <p class="help">Increase this limit for a deliberately noisy class demonstration (for example, 1–2 V).</p>
 
           <button id="new-experiment" class="secondary wide">New experiment</button>
 
           <hr />
           <h3>2. Adjust your calibration</h3>
 
-          <label for="offset">Offset, b₀ <span id="offset-value">0.30 V</span></label>
+          <label for="offset">Offset, \(b_0\) <span id="offset-value">0.30 V</span></label>
           <input id="offset" type="range" min="0" max="1.00" step="0.01" value="0.30" />
 
-          <label for="slope">Sensitivity, b₁ <span id="slope-value">0.0450 V/%</span></label>
+          <label for="slope">Sensitivity, \(b_1\) <span id="slope-value">0.0450 V/%</span></label>
           <input id="slope" type="range" min="0.020" max="0.060" step="0.0005" value="0.045" />
 
           <div class="button-stack">
@@ -140,13 +157,13 @@
     <section class="panel">
       <p class="step">Deeper connection</p>
       <h2>Why do we square the residuals?</h2>
-      <p>For residuals rᵢ = Vᵢ − (b₀ + b₁pᵢ), least squares chooses the parameters that minimize</p>
-      <div class="formula">SSE = Σ rᵢ².</div>
+      <p>For residuals \(r_i=V_i-(b_0+b_1p_i)\), least squares chooses the parameters that minimize</p>
+      <div class="formula">\(\mathrm{SSE}=\sum_{i=1}^{n}r_i^2\)</div>
       <details>
         <summary>Gaussian noise and maximum likelihood</summary>
         <div class="details-body">
-          <p>If independent measurement errors are modeled as Gaussian with constant standard deviation, εᵢ ~ N(0, σ²), then</p>
-          <div class="formula">log L = constant − SSE / (2σ²).</div>
+          <p>If independent measurement errors are modeled as Gaussian with constant standard deviation, \(\varepsilon_i\sim\mathcal{N}(0,\sigma^2)\), then</p>
+          <div class="formula">\(\log L=\mathrm{constant}-\dfrac{\mathrm{SSE}}{2\sigma^2}\)</div>
           <p>Therefore, maximizing the likelihood is equivalent to minimizing the sum of squared residuals. This gives least squares a probabilistic interpretation—it is not merely a convenient curve-fitting rule.</p>
           <p><strong>Important:</strong> using least squares does not prove that real sensor errors are Gaussian. The error model is an engineering assumption that should be examined against experimental evidence.</p>
         </div>
@@ -157,7 +174,7 @@
       <p class="step">Connect to Lab 02</p>
       <h2>From voltage back to pedal position</h2>
       <p>Once a calibration has been estimated, a new voltage measurement can be converted to an estimated pedal position using</p>
-      <div class="formula">p̂ = (V − b̂₀) / b̂₁.</div>
+      <div class="formula">\(\hat p=\dfrac{V-\hat b_0}{\hat b_1}\)</div>
       <p>The remaining question is experimental, not merely algebraic: <strong>over what range, and with what evidence, should we trust that estimate?</strong></p>
     </section>
 
