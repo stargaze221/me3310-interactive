@@ -6,13 +6,7 @@
   <title>Regression Confidence Explorer | ME 3310</title>
   <link rel="stylesheet" href="styles.css" />
   <script>
-    window.MathJax = {
-      tex: {
-        inlineMath: [['\\(', '\\)']],
-        displayMath: [['$$', '$$']]
-      },
-      svg: { fontCache: 'global' }
-    };
+    window.MathJax = { tex: { inlineMath: [['\\(', '\\)']], displayMath: [['$$', '$$']] }, svg: { fontCache: 'global' } };
   </script>
   <script defer src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-svg.js"></script>
 </head>
@@ -21,42 +15,29 @@
     <header class="hero">
       <p class="eyebrow">ME 3310 · Experimental Methods I · Week 02</p>
       <h1>Regression Confidence Explorer</h1>
-      <p class="lead">Add calibration measurements one at a time and watch how the estimated sensor sensitivity and its 95% confidence interval respond. More evidence usually narrows what the experiment supports—but not necessarily after every single new point.</p>
+      <p class="lead">Add calibration measurements one at a time and watch how both estimated regression coefficients become better constrained by the evidence. The main focus is sensor sensitivity, but the offset is estimated from the same finite dataset.</p>
     </header>
 
     <section class="panel">
       <div class="section-head">
         <div>
           <p class="step">Evidence accumulates</p>
-          <h2>How precisely do we know the sensitivity?</h2>
+          <h2>How precisely do we know the calibration?</h2>
         </div>
-        <p class="prompt"><strong>Question:</strong> Least squares gives one best-fit slope. If the calibration experiment were repeated with new noisy measurements, would we obtain exactly the same slope?</p>
+        <p class="prompt"><strong>Question:</strong> Least squares estimates both offset and sensitivity. If the calibration experiment were repeated with new noisy measurements, would we obtain exactly the same \(\hat b_0\) and \(\hat b_1\)?</p>
       </div>
 
       <div class="model-strip">
-        <div>
-          <span class="model-label">Calibration model</span>
-          <strong>\(V=b_0+b_1p+\varepsilon\)</strong>
-        </div>
-        <div>
-          <span class="model-label">Estimate</span>
-          <strong>\(\hat b_1\)</strong>
-        </div>
-        <div>
-          <span class="model-label">Slope standard error</span>
-          <strong>\(SE_{\hat b_1}=s/\sqrt{S_{pp}}\)</strong>
-        </div>
-        <div>
-          <span class="model-label">95% slope CI</span>
-          <strong>\(\hat b_1\pm t^*SE_{\hat b_1}\)</strong>
-        </div>
+        <div><span class="model-label">Calibration model</span><strong>\(V=b_0+b_1p+\varepsilon\)</strong></div>
+        <div><span class="model-label">Estimated offset</span><strong>\(\hat b_0\)</strong></div>
+        <div><span class="model-label">Estimated sensitivity</span><strong>\(\hat b_1\)</strong></div>
+        <div><span class="model-label">95% coefficient CI</span><strong>estimate \(\pm t^*SE\)</strong></div>
       </div>
 
       <div class="explorer-grid">
         <aside class="controls-card">
           <h3>Build the calibration evidence</h3>
           <p class="help">Start with only three measurements. Each button reveals additional points from the same simulated experiment.</p>
-
           <div class="button-grid">
             <button id="add-one" type="button">Add 1 measurement</button>
             <button id="add-five" type="button">Add 5 measurements</button>
@@ -70,63 +51,29 @@
             <option value="0.08" selected>Moderate · σ = 0.08 V</option>
             <option value="0.16">High · σ = 0.16 V</option>
           </select>
-          <p class="help">Changing noise keeps the same underlying random realization but changes its magnitude.</p>
+          <p class="help">Changing noise keeps the same random realization but changes its magnitude.</p>
 
           <div class="button-stack">
             <button id="new-experiment" type="button" class="secondary">New random experiment</button>
             <button id="toggle-true" type="button" class="secondary">Reveal true model</button>
           </div>
 
-          <div class="warning">
-            <strong>Watch for this:</strong> the confidence interval does not have to become narrower after every single added measurement. The overall trend is the important idea.
-          </div>
+          <div class="warning"><strong>Watch for this:</strong> neither confidence interval must shrink after every single added measurement. The overall trend is the important idea.</div>
         </aside>
 
         <div>
           <div class="stats-grid" aria-live="polite">
-            <div class="stat">
-              <span>Sample size</span>
-              <strong id="stat-n">3</strong>
-              <small>calibration measurements</small>
-            </div>
-            <div class="stat">
-              <span>Estimated sensitivity</span>
-              <strong id="stat-slope">—</strong>
-              <small>least-squares slope</small>
-            </div>
-            <div class="stat">
-              <span>95% slope CI</span>
-              <strong id="stat-ci">—</strong>
-              <small>range supported by the model</small>
-            </div>
-            <div class="stat">
-              <span>CI width</span>
-              <strong id="stat-ci-width">—</strong>
-              <small>df and t* appear here</small>
-            </div>
+            <div class="stat"><span>Sample size</span><strong id="stat-n">3</strong><small>calibration measurements</small></div>
+            <div class="stat"><span>Estimated sensitivity</span><strong id="stat-slope">—</strong><small>least-squares slope</small></div>
+            <div class="stat"><span>95% slope CI</span><strong id="stat-ci">—</strong><small>interval for true sensitivity</small></div>
+            <div class="stat"><span>Slope CI width</span><strong id="stat-ci-width">—</strong><small>df and t* appear here</small></div>
           </div>
 
           <div class="stats-grid">
-            <div class="stat">
-              <span>Residual standard deviation</span>
-              <strong id="stat-s">—</strong>
-              <small>remaining scatter about the line</small>
-            </div>
-            <div class="stat">
-              <span>True sensitivity</span>
-              <strong>hidden</strong>
-              <small>reveal only for simulation comparison</small>
-            </div>
-            <div class="stat">
-              <span>Input range</span>
-              <strong>0–100 %FS</strong>
-              <small>points progressively fill the range</small>
-            </div>
-            <div class="stat">
-              <span>Main question</span>
-              <strong>How narrow?</strong>
-              <small>not merely: what is the slope?</small>
-            </div>
+            <div class="stat"><span>Estimated offset</span><strong id="stat-offset">—</strong><small>least-squares intercept</small></div>
+            <div class="stat"><span>95% offset CI</span><strong id="stat-offset-ci">—</strong><small>interval for true offset</small></div>
+            <div class="stat"><span>Residual standard deviation</span><strong id="stat-s">—</strong><small>remaining scatter about the line</small></div>
+            <div class="stat"><span>Input range</span><strong>0–100 %FS</strong><small>points progressively fill the range</small></div>
           </div>
 
           <figure class="chart-card">
@@ -135,7 +82,7 @@
               <span>The shaded region describes uncertainty in the fitted mean calibration relationship. It is not a prediction interval for a new individual measurement.</span>
             </figcaption>
             <svg id="calibration-chart" role="img" aria-label="Pedal position versus sensor voltage with least-squares fit and 95 percent confidence band"></svg>
-            <div class="legend" aria-label="Calibration chart legend">
+            <div class="legend">
               <span><i class="dot"></i> measurements</span>
               <span><i class="line fit"></i> least-squares fit</span>
               <span><i class="band-swatch"></i> 95% mean-response confidence band</span>
@@ -149,10 +96,23 @@
               <span>The center line is \(\hat b_1\). The shaded bounds are the 95% confidence interval for the true sensitivity.</span>
             </figcaption>
             <svg id="history-chart" role="img" aria-label="Estimated sensor sensitivity and 95 percent confidence interval versus number of calibration measurements"></svg>
-            <div class="legend" aria-label="Slope history chart legend">
+            <div class="legend">
               <span><i class="line fit"></i> estimated sensitivity</span>
               <span><i class="band-swatch"></i> 95% slope confidence interval</span>
               <span id="legend-true-history" class="hidden"><i class="line true"></i> true sensitivity</span>
+            </div>
+          </figure>
+
+          <figure class="chart-card">
+            <figcaption>
+              <strong>Estimated offset as evidence accumulates</strong>
+              <span>The center line is \(\hat b_0\). The shaded bounds are the 95% confidence interval for the true offset.</span>
+            </figcaption>
+            <svg id="offset-history-chart" role="img" aria-label="Estimated sensor offset and 95 percent confidence interval versus number of calibration measurements"></svg>
+            <div class="legend">
+              <span><i class="line fit"></i> estimated offset</span>
+              <span><i class="band-swatch"></i> 95% offset confidence interval</span>
+              <span id="legend-true-offset" class="hidden"><i class="line true"></i> true offset</span>
             </div>
           </figure>
         </div>
@@ -161,46 +121,33 @@
       <div id="observation" class="callout"></div>
 
       <div class="reflection-grid">
-        <div class="reflection">
-          <h3>Observe</h3>
-          <p>Add measurements one at a time. Does the slope estimate move smoothly toward one value, or does it sometimes move in the opposite direction?</p>
-        </div>
-        <div class="reflection">
-          <h3>Interpret</h3>
-          <p>What happens to the 95% interval overall as the experiment provides more well-distributed evidence?</p>
-        </div>
-        <div class="reflection">
-          <h3>Engineering judgment</h3>
-          <p>Does a narrow confidence interval prove that the linear calibration model is physically correct?</p>
-        </div>
+        <div class="reflection"><h3>Observe</h3><p>Add measurements one at a time. Do both coefficient estimates move smoothly, or can either one move away from the true value after a new point?</p></div>
+        <div class="reflection"><h3>Interpret</h3><p>What happens to the two 95% intervals overall as more well-distributed evidence accumulates?</p></div>
+        <div class="reflection"><h3>Engineering judgment</h3><p>Does a narrow confidence interval for both coefficients prove that the linear model is physically correct?</p></div>
       </div>
     </section>
 
     <section class="panel">
       <p class="step">Connect the visualization to the equations</p>
-      <h2>Why does the slope interval usually narrow?</h2>
-      <p>For simple linear regression, the standard error of the estimated sensitivity is</p>
+      <h2>Both coefficients are estimated from the same data</h2>
+      <p>For simple linear regression, the standard errors are</p>
       <div class="formula">\(SE_{\hat b_1}=\dfrac{s}{\sqrt{\sum_{i=1}^{n}(p_i-\bar p)^2}}\)</div>
-      <p>and the 95% confidence interval is</p>
-      <div class="formula">\(\hat b_1\pm t_{0.975,n-2}SE_{\hat b_1}\).</div>
-      <div class="note">
-        <strong>Two effects matter:</strong> as informative calibration points accumulate across the input range, \(\sum(p_i-\bar p)^2\) generally grows, and the Student-t critical value decreases toward about 1.96 as the degrees of freedom increase. Residual scatter \(s\) can still fluctuate, so the interval need not shrink monotonically after every point.
-      </div>
+      <div class="formula">\(SE_{\hat b_0}=s\sqrt{\dfrac{1}{n}+\dfrac{\bar p^2}{\sum_{i=1}^{n}(p_i-\bar p)^2}}\)</div>
+      <p>and each 95% confidence interval has the form</p>
+      <div class="formula">\(\text{estimate}\pm t_{0.975,n-2}SE\).</div>
+      <div class="note"><strong>Why keep sensitivity as the main focus?</strong> In sensor calibration, \(b_1\) has the direct physical meaning of sensitivity. The offset plot is included to make clear that \(b_0\) is also estimated—not fixed.</div>
     </section>
 
     <section class="panel">
       <p class="step">A subtle but important distinction</p>
-      <h2>Slope interval versus confidence band</h2>
-      <p>The lower chart asks, <strong>“How precisely do we know the sensor sensitivity?”</strong> The upper shaded band asks a different question: <strong>“How precisely do we know the mean calibration response at a particular pedal position?”</strong></p>
+      <h2>Coefficient intervals versus the confidence band</h2>
+      <p>The two lower charts ask how precisely we know the <strong>parameters</strong> \(b_0\) and \(b_1\). The upper shaded band asks a different question: how precisely do we know the <strong>mean sensor response</strong> at a particular pedal position?</p>
       <div class="formula">\(\hat V(p_0)\pm t^*s\sqrt{\dfrac{1}{n}+\dfrac{(p_0-\bar p)^2}{\sum(p_i-\bar p)^2}}\)</div>
-      <p>The band is typically narrowest near the center of the calibration inputs and wider near the edges. A prediction interval for a new individual sensor measurement would be wider still.</p>
+      <p>A prediction interval for a new individual sensor measurement would be wider still.</p>
     </section>
 
-    <footer>
-      <p><strong>Experimental reasoning:</strong> More data do not magically reveal the true model. They can reduce uncertainty about parameters when the measurements are informative and the assumed model is appropriate.</p>
-    </footer>
+    <footer><p><strong>Experimental reasoning:</strong> More data do not magically reveal the true model. They can reduce uncertainty about estimated parameters when the measurements are informative and the assumed model is appropriate.</p></footer>
   </main>
-
   <script src="app.js"></script>
 </body>
 </html>
