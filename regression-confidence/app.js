@@ -22,20 +22,11 @@
 
   el('add-one').addEventListener('click', () => addEvidence(1));
   el('add-five').addEventListener('click', () => addEvidence(5));
-  el('show-all').addEventListener('click', () => {
-    currentN = MAX_N;
-    render();
-  });
-  el('reset-evidence').addEventListener('click', () => {
-    currentN = MIN_N;
-    render();
-  });
+  el('show-all').addEventListener('click', () => { currentN = MAX_N; render(); });
+  el('reset-evidence').addEventListener('click', () => { currentN = MIN_N; render(); });
   el('new-experiment').addEventListener('click', newExperiment);
   el('noise').addEventListener('change', render);
-  el('toggle-true').addEventListener('click', () => {
-    showTrue = !showTrue;
-    render();
-  });
+  el('toggle-true').addEventListener('click', () => { showTrue = !showTrue; render(); });
   window.addEventListener('resize', render);
 
   function makeProgressivePositions(count) {
@@ -50,8 +41,7 @@
   }
 
   function randn() {
-    let u = 0;
-    let v = 0;
+    let u = 0, v = 0;
     while (u === 0) u = Math.random();
     while (v === 0) v = Math.random();
     return Math.sqrt(-2 * Math.log(u)) * Math.cos(2 * Math.PI * v);
@@ -69,9 +59,7 @@
     render();
   }
 
-  function sigma() {
-    return Number(el('noise').value);
-  }
+  function sigma() { return Number(el('noise').value); }
 
   function dataPrefix(n) {
     const sd = sigma();
@@ -89,26 +77,31 @@
 
   function leastSquares(data) {
     const n = data.length;
-    const meanX = data.reduce((sum, d) => sum + d.x, 0) / n;
-    const meanY = data.reduce((sum, d) => sum + d.y, 0) / n;
-    const sxx = data.reduce((sum, d) => sum + (d.x - meanX) ** 2, 0);
-    const sxy = data.reduce((sum, d) => sum + (d.x - meanX) * (d.y - meanY), 0);
+    const meanX = data.reduce((s, d) => s + d.x, 0) / n;
+    const meanY = data.reduce((s, d) => s + d.y, 0) / n;
+    const sxx = data.reduce((s, d) => s + (d.x - meanX) ** 2, 0);
+    const sxy = data.reduce((s, d) => s + (d.x - meanX) * (d.y - meanY), 0);
     const b1 = sxy / sxx;
     const b0 = meanY - b1 * meanX;
-    const sse = data.reduce((sum, d) => {
-      const residual = d.y - (b0 + b1 * d.x);
-      return sum + residual * residual;
+    const sse = data.reduce((s, d) => {
+      const r = d.y - (b0 + b1 * d.x);
+      return s + r * r;
     }, 0);
     const df = n - 2;
     const residualSd = Math.sqrt(Math.max(0, sse / df));
-    const seSlope = residualSd / Math.sqrt(sxx);
     const t = tCritical(df);
-    const slopeHalfWidth = t * seSlope;
+    const seSlope = residualSd / Math.sqrt(sxx);
+    const seOffset = residualSd * Math.sqrt(1 / n + (meanX * meanX) / sxx);
+    const slopeHalf = t * seSlope;
+    const offsetHalf = t * seOffset;
+
     return {
-      n, meanX, meanY, sxx, b0, b1, sse, df, residualSd, seSlope, t,
-      slopeLower: b1 - slopeHalfWidth,
-      slopeUpper: b1 + slopeHalfWidth,
-      slopeHalfWidth
+      n, meanX, meanY, sxx, b0, b1, sse, df, residualSd, t,
+      seSlope, seOffset,
+      slopeLower: b1 - slopeHalf,
+      slopeUpper: b1 + slopeHalf,
+      offsetLower: b0 - offsetHalf,
+      offsetUpper: b0 + offsetHalf
     };
   }
 
@@ -125,10 +118,12 @@
       const fit = leastSquares(dataPrefix(n));
       rows.push({
         n,
-        estimate: fit.b1,
-        lower: fit.slopeLower,
-        upper: fit.slopeUpper,
-        width: fit.slopeUpper - fit.slopeLower
+        slopeEstimate: fit.b1,
+        slopeLower: fit.slopeLower,
+        slopeUpper: fit.slopeUpper,
+        offsetEstimate: fit.b0,
+        offsetLower: fit.offsetLower,
+        offsetUpper: fit.offsetUpper
       });
     }
     return rows;
@@ -145,6 +140,8 @@
     el('stat-ci').textContent = `[${fit.slopeLower.toFixed(5)}, ${fit.slopeUpper.toFixed(5)}]`;
     el('stat-ci-width').textContent = `${(fit.slopeUpper - fit.slopeLower).toFixed(5)} V/%FS`;
     el('stat-ci-width').nextElementSibling.textContent = `df = ${fit.df}, t* = ${fit.t.toFixed(3)}`;
+    el('stat-offset').textContent = `${fit.b0.toFixed(3)} V`;
+    el('stat-offset-ci').textContent = `[${fit.offsetLower.toFixed(3)}, ${fit.offsetUpper.toFixed(3)}] V`;
     el('stat-s').textContent = `${fit.residualSd.toFixed(3)} V`;
 
     el('add-one').disabled = currentN >= MAX_N;
@@ -154,33 +151,48 @@
     el('toggle-true').textContent = showTrue ? 'Hide true model' : 'Reveal true model';
     el('legend-true-cal').classList.toggle('hidden', !showTrue);
     el('legend-true-history').classList.toggle('hidden', !showTrue);
+    el('legend-true-offset').classList.toggle('hidden', !showTrue);
 
     updateObservation(fit, previous);
     drawCalibration(data, fit);
-    drawHistory(rows);
+    drawParameterHistory(rows, {
+      svgId: 'history-chart',
+      estimateKey: 'slopeEstimate', lowerKey: 'slopeLower', upperKey: 'slopeUpper',
+      truth: TRUE_SLOPE,
+      yLabel: 'Estimated sensitivity, V/%FS'
+    });
+    drawParameterHistory(rows, {
+      svgId: 'offset-history-chart',
+      estimateKey: 'offsetEstimate', lowerKey: 'offsetLower', upperKey: 'offsetUpper',
+      truth: TRUE_OFFSET,
+      yLabel: 'Estimated offset, V'
+    });
   }
 
   function updateObservation(fit, previous) {
     const box = el('observation');
-    const width = fit.slopeUpper - fit.slopeLower;
     if (!previous) {
-      box.innerHTML = `<strong>Start with very little evidence:</strong> with n = ${fit.n}, only ${fit.df} degree of freedom remains for estimating residual scatter. The 95% interval can be wide because both the standard error and the t critical value reflect limited information.`;
+      box.innerHTML = `<strong>Start with very little evidence:</strong> with n = ${fit.n}, only ${fit.df} degree of freedom remains for estimating residual scatter. Both coefficient intervals can be wide because the same small dataset must estimate offset, sensitivity, and residual variation.`;
       return;
     }
-
-    const delta = width - previous.width;
-    if (delta < -1e-9) {
-      box.innerHTML = `<strong>This update narrowed the interval.</strong> The current 95% slope-CI width is ${width.toFixed(5)} V/%FS. More well-distributed evidence generally increases information about the sensitivity, although the interval does not have to shrink after every single point.`;
-    } else if (delta > 1e-9) {
-      box.innerHTML = `<strong>This update widened the interval slightly.</strong> That can happen: the new observation changed the estimated residual scatter enough to offset the added information. Confidence intervals need not shrink monotonically one point at a time.`;
+    const slopeWidth = fit.slopeUpper - fit.slopeLower;
+    const previousSlopeWidth = previous.slopeUpper - previous.slopeLower;
+    const offsetWidth = fit.offsetUpper - fit.offsetLower;
+    const previousOffsetWidth = previous.offsetUpper - previous.offsetLower;
+    const sChange = slopeWidth - previousSlopeWidth;
+    const oChange = offsetWidth - previousOffsetWidth;
+    if (sChange < 0 && oChange < 0) {
+      box.innerHTML = `<strong>This update narrowed both coefficient intervals.</strong> More well-distributed evidence generally improves parameter precision, although neither interval must shrink after every single measurement.`;
+    } else if (sChange > 0 || oChange > 0) {
+      box.innerHTML = `<strong>At least one coefficient interval widened slightly.</strong> That can happen because a new observation can increase the estimated residual scatter or change the fitted geometry. Watch the overall trend rather than expecting monotonic shrinkage.`;
     } else {
-      box.innerHTML = `<strong>More evidence:</strong> the interval width changed very little with this observation. Watch the overall trend as additional measurements accumulate across the calibration range.`;
+      box.innerHTML = `<strong>More evidence:</strong> the interval widths changed only slightly with this observation. Continue adding measurements and compare the overall behavior of offset and sensitivity uncertainty.`;
     }
   }
 
   function svgEl(name, attrs = {}, text = '') {
     const node = document.createElementNS(NS, name);
-    Object.entries(attrs).forEach(([key, value]) => node.setAttribute(key, String(value)));
+    Object.entries(attrs).forEach(([k, v]) => node.setAttribute(k, String(v)));
     if (text) node.textContent = text;
     return node;
   }
@@ -205,37 +217,33 @@
   }
 
   function drawAxes(svg, width, height, margin, xScale, yScale, xTicks, yMin, yMax, xLabel, yLabel) {
-    const x0 = margin.left;
-    const x1 = width - margin.right;
-    const y0 = height - margin.bottom;
-    const y1 = margin.top;
+    const x0 = margin.left, x1 = width - margin.right;
+    const y0 = height - margin.bottom, y1 = margin.top;
 
     ticks(yMin, yMax, 5).forEach(t => {
       const y = yScale(t);
       svg.appendChild(svgEl('line', { x1:x0, y1:y, x2:x1, y2:y, class:'gridline' }));
       svg.appendChild(svgEl('text', { x:x0-8, y:y+4, 'text-anchor':'end', class:'tick-label' }, formatTick(t)));
     });
-
     xTicks.forEach(t => {
       const x = xScale(t);
       svg.appendChild(svgEl('line', { x1:x, y1:y1, x2:x, y2:y0, class:'gridline' }));
       svg.appendChild(svgEl('text', { x, y:y0+18, 'text-anchor':'middle', class:'tick-label' }, String(t)));
     });
-
     svg.appendChild(svgEl('line', { x1:x0, y1:y0, x2:x1, y2:y0, class:'axis' }));
     svg.appendChild(svgEl('line', { x1:x0, y1:y0, x2:x0, y2:y1, class:'axis' }));
     svg.appendChild(svgEl('text', { x:(x0+x1)/2, y:height-6, 'text-anchor':'middle', class:'axis-label' }, xLabel));
     svg.appendChild(svgEl('text', { x:15, y:(y0+y1)/2, transform:`rotate(-90 15 ${(y0+y1)/2})`, 'text-anchor':'middle', class:'axis-label' }, yLabel));
   }
 
-  function pathFromPoints(points, xScale, yScale, yKey) {
-    return points.map((p, i) => `${i === 0 ? 'M' : 'L'} ${xScale(p.x ?? p.n)} ${yScale(p[yKey])}`).join(' ');
+  function polygonPath(points, xScale, yScale, xKey, upperKey, lowerKey) {
+    const upper = points.map((p, i) => `${i === 0 ? 'M' : 'L'} ${xScale(p[xKey])} ${yScale(p[upperKey])}`).join(' ');
+    const lower = [...points].reverse().map(p => `L ${xScale(p[xKey])} ${yScale(p[lowerKey])}`).join(' ');
+    return `${upper} ${lower} Z`;
   }
 
-  function polygonPath(upperPoints, lowerPoints, xScale, yScale, xKey, upperKey, lowerKey) {
-    const upper = upperPoints.map((p, i) => `${i === 0 ? 'M' : 'L'} ${xScale(p[xKey])} ${yScale(p[upperKey])}`).join(' ');
-    const lower = [...lowerPoints].reverse().map(p => `L ${xScale(p[xKey])} ${yScale(p[lowerKey])}`).join(' ');
-    return `${upper} ${lower} Z`;
+  function linePath(points, xScale, yScale, xKey, yKey) {
+    return points.map((p, i) => `${i === 0 ? 'M' : 'L'} ${xScale(p[xKey])} ${yScale(p[yKey])}`).join(' ');
   }
 
   function drawCalibration(data, fit) {
@@ -243,96 +251,69 @@
     const { width, height } = setupSvg(svg, 390);
     const m = { left:64, right:20, top:22, bottom:50 };
     const band = Array.from({ length: 51 }, (_, i) => meanBandAt(fit, i * 2));
-
-    const values = [
-      ...data.map(d => d.y),
-      ...band.map(d => d.lower),
-      ...band.map(d => d.upper),
-      TRUE_OFFSET,
-      TRUE_OFFSET + TRUE_SLOPE * 100
-    ];
-    let yMin = Math.min(...values);
-    let yMax = Math.max(...values);
+    const vals = [...data.map(d => d.y), ...band.map(d => d.lower), ...band.map(d => d.upper)];
+    if (showTrue) vals.push(TRUE_OFFSET, TRUE_OFFSET + TRUE_SLOPE * 100);
+    let yMin = Math.min(...vals), yMax = Math.max(...vals);
     const pad = Math.max(0.20, (yMax - yMin) * 0.08);
-    yMin -= pad;
-    yMax += pad;
+    yMin -= pad; yMax += pad;
 
     const xScale = x => m.left + x / 100 * (width - m.left - m.right);
     const yScale = y => height - m.bottom - (y - yMin) / (yMax - yMin) * (height - m.top - m.bottom);
-
     drawAxes(svg, width, height, m, xScale, yScale, [0,20,40,60,80,100], yMin, yMax, 'Pedal position, p (%FS)', 'Sensor voltage, V (V)');
 
-    svg.appendChild(svgEl('path', {
-      d: polygonPath(band, band, xScale, yScale, 'x', 'upper', 'lower'),
-      class:'conf-band'
-    }));
-    svg.appendChild(svgEl('path', { d:pathFromPoints(band, xScale, yScale, 'upper'), class:'conf-bound' }));
-    svg.appendChild(svgEl('path', { d:pathFromPoints(band, xScale, yScale, 'lower'), class:'conf-bound' }));
+    svg.appendChild(svgEl('path', { d:polygonPath(band, xScale, yScale, 'x', 'upper', 'lower'), class:'conf-band' }));
+    svg.appendChild(svgEl('path', { d:linePath(band, xScale, yScale, 'x', 'upper'), class:'conf-bound' }));
+    svg.appendChild(svgEl('path', { d:linePath(band, xScale, yScale, 'x', 'lower'), class:'conf-bound' }));
 
     if (showTrue) {
       svg.appendChild(svgEl('line', {
-        x1:xScale(0), y1:yScale(TRUE_OFFSET),
-        x2:xScale(100), y2:yScale(TRUE_OFFSET + TRUE_SLOPE * 100),
-        class:'true-line-svg'
+        x1:xScale(0), y1:yScale(TRUE_OFFSET), x2:xScale(100), y2:yScale(TRUE_OFFSET + TRUE_SLOPE * 100), class:'true-line-svg'
       }));
     }
-
     svg.appendChild(svgEl('line', {
-      x1:xScale(0), y1:yScale(fit.b0),
-      x2:xScale(100), y2:yScale(fit.b0 + fit.b1 * 100),
-      class:'fit-line-svg'
+      x1:xScale(0), y1:yScale(fit.b0), x2:xScale(100), y2:yScale(fit.b0 + fit.b1 * 100), class:'fit-line-svg'
     }));
-
     data.forEach(d => {
-      const point = svgEl('circle', { cx:xScale(d.x), cy:yScale(d.y), r:5.0, class:'data-point' });
+      const point = svgEl('circle', { cx:xScale(d.x), cy:yScale(d.y), r:5, class:'data-point' });
       point.appendChild(svgEl('title', {}, `p = ${d.x.toFixed(2)} %FS, V = ${d.y.toFixed(3)} V`));
       svg.appendChild(point);
     });
   }
 
-  function drawHistory(rows) {
-    const svg = el('history-chart');
+  function drawParameterHistory(rows, cfg) {
+    const svg = el(cfg.svgId);
     const { width, height } = setupSvg(svg, 300);
-    const m = { left:74, right:20, top:20, bottom:50 };
+    const m = { left:82, right:20, top:20, bottom:50 };
 
-    const yValues = rows.flatMap(r => [r.lower, r.upper, r.estimate]);
-    if (showTrue) yValues.push(TRUE_SLOPE);
-    let yMin = Math.min(...yValues);
-    let yMax = Math.max(...yValues);
-    const range = Math.max(0.002, yMax - yMin);
-    yMin -= range * 0.12;
-    yMax += range * 0.12;
+    const vals = rows.flatMap(r => [r[cfg.lowerKey], r[cfg.upperKey], r[cfg.estimateKey]]);
+    if (showTrue) vals.push(cfg.truth);
+    let yMin = Math.min(...vals), yMax = Math.max(...vals);
+    const minRange = cfg.svgId === 'history-chart' ? 0.002 : 0.10;
+    const range = Math.max(minRange, yMax - yMin);
+    yMin -= 0.10 * range;
+    yMax += 0.10 * range;
 
     const xScale = n => m.left + (n - MIN_N) / (MAX_N - MIN_N) * (width - m.left - m.right);
     const yScale = y => height - m.bottom - (y - yMin) / (yMax - yMin) * (height - m.top - m.bottom);
-    const xTicks = [3,10,20,30,40,50];
+    drawAxes(svg, width, height, m, xScale, yScale, [3,10,20,30,40,50], yMin, yMax, 'Number of calibration measurements, n', cfg.yLabel);
 
-    drawAxes(svg, width, height, m, xScale, yScale, xTicks, yMin, yMax, 'Number of calibration measurements, n', 'Estimated sensitivity, V/%FS');
-
-    svg.appendChild(svgEl('path', {
-      d: polygonPath(rows, rows, xScale, yScale, 'n', 'upper', 'lower'),
-      class:'history-band'
-    }));
-    svg.appendChild(svgEl('path', { d:pathFromPoints(rows, xScale, yScale, 'upper'), class:'history-bound' }));
-    svg.appendChild(svgEl('path', { d:pathFromPoints(rows, xScale, yScale, 'lower'), class:'history-bound' }));
-    svg.appendChild(svgEl('path', { d:pathFromPoints(rows, xScale, yScale, 'estimate'), class:'history-estimate' }));
+    svg.appendChild(svgEl('path', { d:polygonPath(rows, xScale, yScale, 'n', cfg.upperKey, cfg.lowerKey), class:'conf-band' }));
+    svg.appendChild(svgEl('path', { d:linePath(rows, xScale, yScale, 'n', cfg.upperKey), class:'conf-bound' }));
+    svg.appendChild(svgEl('path', { d:linePath(rows, xScale, yScale, 'n', cfg.lowerKey), class:'conf-bound' }));
+    svg.appendChild(svgEl('path', { d:linePath(rows, xScale, yScale, 'n', cfg.estimateKey), class:'fit-line-svg' }));
 
     if (showTrue) {
       svg.appendChild(svgEl('line', {
-        x1:xScale(MIN_N), y1:yScale(TRUE_SLOPE),
-        x2:xScale(MAX_N), y2:yScale(TRUE_SLOPE),
-        class:'history-true'
+        x1:xScale(MIN_N), y1:yScale(cfg.truth), x2:xScale(MAX_N), y2:yScale(cfg.truth), class:'true-line-svg'
       }));
     }
 
     const last = rows[rows.length - 1];
     svg.appendChild(svgEl('line', {
-      x1:xScale(last.n), y1:m.top,
-      x2:xScale(last.n), y2:height-m.bottom,
-      class:'current-guide'
+      x1:xScale(last.n), y1:m.top, x2:xScale(last.n), y2:height-m.bottom, class:'current-n-line'
     }));
     svg.appendChild(svgEl('circle', {
-      cx:xScale(last.n), cy:yScale(last.estimate), r:4.8, class:'history-point'
+      cx:xScale(last.n), cy:yScale(last[cfg.estimateKey]), r:5.5, class:'history-point'
     }));
   }
 
