@@ -14,7 +14,8 @@ me3310-interactive/
 ├── binomial-normal/
 ├── sampling-distribution/
 ├── confidence-interval/
-└── least-squares/
+├── least-squares/
+└── regression-confidence/
 ```
 
 Each explorer directory contains its own `index.html`, `styles.css`, and `app.js`.
@@ -43,6 +44,10 @@ Supports the statistical tools needed for Lab 01. Students vary sample size, sam
 
 Supports Week 02 and Lab 02 sensor calibration. A simulated accelerator-pedal sensor follows a hidden linear model with Gaussian measurement noise. Students adjust the proposed offset and sensitivity manually, observe residuals and the live sum of squared errors, change sample size and noise level, regenerate experiments, and then reveal the least-squares fit and hidden true model. A short expandable section connects Gaussian errors with the maximum-likelihood interpretation of least squares.
 
+## Explorer 06 — Regression Confidence
+
+Extends the Week 02 calibration example from point estimation to inference. Students begin with only three calibration measurements and add evidence one point at a time. The explorer updates the least-squares sensitivity, residual standard deviation, Student-t critical value, 95% confidence interval for the slope, and the 95% confidence band for the mean calibration response. A second plot shows how the slope estimate and its confidence bounds evolve with sample size. The page emphasizes that confidence intervals do not have to shrink after every individual measurement and that a narrow interval does not prove that the assumed linear physical model is correct.
+
 ## Netlify
 
 Commits to `main` automatically redeploy.
@@ -56,6 +61,7 @@ https://me3310-interactive.netlify.app/binomial-normal/
 https://me3310-interactive.netlify.app/sampling-distribution/
 https://me3310-interactive.netlify.app/confidence-interval/
 https://me3310-interactive.netlify.app/least-squares/
+https://me3310-interactive.netlify.app/regression-confidence/
 ```
 
 Each explorer URL can be embedded directly in Canvas using an iframe.
