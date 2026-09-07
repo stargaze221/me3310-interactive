@@ -1,0 +1,16 @@
+.uncertainty-controls { grid-template-columns: repeat(3, minmax(190px, 1fr)); }
+.design-note { margin: 12px 0 0; }
+.uncertainty-summary { grid-template-columns: repeat(3, minmax(170px, 1fr)); }
+.swatch { width: 20px; height: 10px; display: inline-block; border: 1px solid rgba(0,0,0,.15); }
+.swatch.conf { background: rgba(79, 38, 131, .22); }
+.swatch.pred { background: rgba(46, 111, 149, .16); }
+.interval-note { margin: 10px 0 0; }
+.mini-metrics { display: flex; flex-wrap: wrap; gap: 18px; margin-top: 10px; padding: 10px 12px; background: #f7f8fa; border: 1px solid #d9dde3; border-radius: 5px; color: #4b525b; }
+.mini-metrics strong { color: #222; }
+@media (max-width: 900px) {
+  .uncertainty-controls { grid-template-columns: 1fr; }
+  .uncertainty-summary { grid-template-columns: repeat(2, minmax(150px, 1fr)); }
+}
+@media (max-width: 560px) {
+  .uncertainty-summary { grid-template-columns: 1fr; }
+}
