@@ -1,0 +1,124 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Likelihood and Least Squares Explorer</title>
+  <link rel="stylesheet" href="styles.css" />
+</head>
+<body>
+  <main class="app-shell">
+    <header class="hero">
+      <p class="eyebrow">ME 3310 · Experimental Methods I</p>
+      <h1>Likelihood and Least Squares Explorer</h1>
+      <p class="lead">Hold one observed calibration dataset fixed. Move a candidate slope and watch the residuals, sum of squared errors, and likelihood change together.</p>
+    </header>
+
+    <section class="panel setup">
+      <h2>What is fixed in this viewer?</h2>
+      <p>The observed dataset is fixed. We compare candidate regression models of the form</p>
+      <div class="equation">y = 2 + b₁x + ε, &nbsp;&nbsp; ε ~ N(0, σ²)</div>
+      <div class="setup-grid">
+        <div class="setup-card">
+          <strong>Observed evidence</strong>
+          <p>Eight calibration measurements are held fixed while you change the candidate slope.</p>
+        </div>
+        <div class="setup-card">
+          <strong>Unknown parameter</strong>
+          <p>The intercept is fixed at b₀ = 2 so we can focus on the meaning of likelihood as a function of b₁.</p>
+        </div>
+      </div>
+      <p class="fineprint">This simplified one-parameter view is for interpretation. Full linear regression normally estimates both intercept and slope.</p>
+    </section>
+
+    <section class="panel controls">
+      <div class="control-grid">
+        <label>
+          Candidate slope, b₁
+          <input id="slopeSlider" type="range" min="2.2" max="3.8" step="0.01" value="2.70" />
+          <span id="slopeValue" class="readout">2.70</span>
+        </label>
+        <label>
+          Assumed measurement noise, σ
+          <input id="sigmaSlider" type="range" min="0.3" max="1.5" step="0.05" value="0.70" />
+          <span id="sigmaValue" class="readout">0.70</span>
+        </label>
+      </div>
+      <div class="button-row">
+        <button id="bestBtn" type="button">Jump to Maximum Likelihood / Minimum SSE</button>
+        <button id="resetBtn" type="button" class="secondary">Reset</button>
+      </div>
+    </section>
+
+    <section class="metric-grid">
+      <div class="metric"><span>Candidate slope</span><strong id="metricSlope">2.70</strong></div>
+      <div class="metric"><span>Sum of squared errors</span><strong id="metricSSE">—</strong></div>
+      <div class="metric"><span>Relative likelihood</span><strong id="metricLike">—</strong></div>
+      <div class="metric"><span>Best slope for this fixed dataset</span><strong id="metricBest">—</strong></div>
+    </section>
+
+    <section class="viz-grid">
+      <article class="panel">
+        <div class="panel-heading">
+          <div>
+            <h2>Observed Data and Candidate Line</h2>
+            <p>Vertical segments are residuals between the fixed observations and the candidate model.</p>
+          </div>
+          <div class="legend">
+            <span><i class="dot observed"></i>Observed data</span>
+            <span><i class="line candidate"></i>Candidate line</span>
+            <span><i class="line best"></i>Best-fit line</span>
+          </div>
+        </div>
+        <canvas id="dataCanvas" width="760" height="430" role="img" aria-label="Fixed calibration data with candidate regression line and residuals"></canvas>
+      </article>
+
+      <article class="panel">
+        <div class="panel-heading">
+          <div>
+            <h2>Likelihood as a Function of Slope</h2>
+            <p>The data stay fixed. Only the candidate parameter value changes.</p>
+          </div>
+        </div>
+        <canvas id="likeCanvas" width="760" height="430" role="img" aria-label="Relative likelihood versus candidate slope"></canvas>
+      </article>
+
+      <article class="panel">
+        <div class="panel-heading">
+          <div>
+            <h2>Sum of Squared Errors</h2>
+            <p>The same candidate slope also determines the least-squares objective.</p>
+          </div>
+        </div>
+        <canvas id="sseCanvas" width="760" height="430" role="img" aria-label="Sum of squared errors versus candidate slope"></canvas>
+      </article>
+
+      <article class="panel residual-panel">
+        <div class="panel-heading">
+          <div>
+            <h2>Residual Pattern</h2>
+            <p>Residuals close to zero support the candidate model more strongly.</p>
+          </div>
+        </div>
+        <canvas id="residCanvas" width="760" height="430" role="img" aria-label="Residuals versus known input for the candidate slope"></canvas>
+      </article>
+    </section>
+
+    <section class="panel notice">
+      <h2>What should you notice?</h2>
+      <ul>
+        <li>Probability starts with a model and describes possible data. Here we do the opposite: the data are fixed and we compare parameter values.</li>
+        <li>The likelihood is largest when the candidate line makes the observed residuals collectively small.</li>
+        <li>For Gaussian measurement errors with fixed σ, the slope that maximizes likelihood is the same slope that minimizes SSE.</li>
+        <li>Changing σ changes how sharply likelihood penalizes residuals, but it does not change the SSE curve itself.</li>
+      </ul>
+    </section>
+
+    <div class="takeaway">
+      <strong>Same evidence, two views:</strong><br />
+      maximize likelihood &nbsp; ⇔ &nbsp; minimize squared residuals &nbsp; (for Gaussian measurement error)
+    </div>
+  </main>
+  <script src="app.js"></script>
+</body>
+</html>
