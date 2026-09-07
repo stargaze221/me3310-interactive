@@ -14,7 +14,54 @@
       <p class="lead">Repeat the same calibration experiment computationally and watch finite-sample variation move the fitted regression line.</p>
     </header>
 
+    <section class="panel setup" aria-labelledby="setup-title">
+      <h2 id="setup-title">What experiment are we simulating?</h2>
+      <p>
+        Imagine a sensor with a fixed, underlying calibration relationship. We control a known input <strong>x</strong>,
+        measure the sensor output <strong>y</strong>, and use a finite number of measurements to estimate the calibration line.
+      </p>
+
+      <div class="equation" aria-label="True model y equals 2 plus 3 x plus epsilon, where epsilon is normally distributed with mean zero and variance sigma squared">
+        <strong>True model:</strong>&nbsp; y = 2 + 3x + ε &nbsp;&nbsp; with &nbsp;&nbsp; ε ~ N(0, σ²)
+      </div>
+
+      <div class="setup-grid">
+        <div class="setup-card">
+          <span class="setup-label">What stays fixed?</span>
+          <ul>
+            <li>True intercept: b₀ = 2</li>
+            <li>True slope: b₁ = 3</li>
+            <li>Known inputs x are evenly spaced from 0 to 5</li>
+            <li>The selected noise level σ</li>
+          </ul>
+        </div>
+        <div class="setup-card">
+          <span class="setup-label">What changes randomly?</span>
+          <ul>
+            <li>Each measurement receives a new random error εᵢ</li>
+            <li>The measured y-values therefore change</li>
+            <li>The fitted intercept b̂₀ and slope b̂₁ change</li>
+          </ul>
+        </div>
+      </div>
+
+      <h3>One finite-sample experiment</h3>
+      <ol class="recipe">
+        <li><strong>Choose n known inputs.</strong> The simulator places n values evenly from x = 0 to x = 5.</li>
+        <li><strong>Measure the sensor output.</strong> For each xᵢ, generate yᵢ = 2 + 3xᵢ + εᵢ.</li>
+        <li><strong>Fit a regression line.</strong> Use least squares to estimate ŷ = b̂₀ + b̂₁x.</li>
+        <li><strong>Record the estimate.</strong> One experiment contributes one value of b̂₁ to the histogram.</li>
+      </ol>
+
+      <div class="mc-callout">
+        <strong>Monte Carlo step:</strong> repeat the entire finite-sample experiment many times using the
+        <em>same true model, same x locations, same n, and same σ</em>, but draw new independent measurement errors each time.
+        The resulting histogram shows the distribution of slope estimates we could obtain from repeated experiments.
+      </div>
+    </section>
+
     <section class="panel controls" aria-label="Simulation controls">
+      <h2>Run the repeated experiment</h2>
       <div class="control-grid">
         <label>
           Measurements per experiment, n
@@ -27,7 +74,7 @@
           </select>
         </label>
         <label>
-          Measurement noise, σ
+          Measurement noise standard deviation, σ
           <input id="noiseSigma" type="range" min="0.2" max="2.0" step="0.1" value="1.0" />
           <span id="noiseValue" class="readout">1.0</span>
         </label>
@@ -54,8 +101,8 @@
       <article class="panel">
         <div class="panel-heading">
           <div>
-            <h2>Latest Experiment</h2>
-            <p>The physical model stays fixed; the measured points change.</p>
+            <h2>Latest Finite-Sample Experiment</h2>
+            <p>One set of n noisy measurements produces one fitted line.</p>
           </div>
           <div class="legend" aria-label="Plot legend">
             <span><i class="dot observed"></i>Measured data</span>
@@ -70,7 +117,7 @@
         <div class="panel-heading">
           <div>
             <h2>Distribution of Estimated Slopes</h2>
-            <p>Each repeated experiment contributes one value of b̂₁.</p>
+            <p>Each repeated finite-sample experiment contributes one value of b̂₁.</p>
           </div>
         </div>
         <canvas id="histCanvas" width="760" height="430" role="img" aria-label="Histogram of estimated regression slopes from repeated experiments"></canvas>
