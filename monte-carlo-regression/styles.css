@@ -39,11 +39,49 @@ h1 { margin: 0; color: var(--purple); font-size: clamp(1.5rem, 3vw, 2.2rem); }
   margin-bottom: 18px;
   border-radius: 8px;
 }
+.setup { background: #fff; }
+.equation {
+  margin: 16px 0 18px;
+  padding: 14px 16px;
+  background: var(--purple-light);
+  border-left: 4px solid var(--purple);
+  font-size: 1.05rem;
+  text-align: center;
+}
+.setup-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(240px, 1fr));
+  gap: 14px;
+  margin: 18px 0;
+}
+.setup-card {
+  background: var(--soft);
+  border: 1px solid var(--border);
+  padding: 14px 16px;
+  border-radius: 6px;
+}
+.setup-label {
+  display: block;
+  font-weight: 700;
+  color: var(--purple);
+  margin-bottom: 7px;
+}
+.setup-card ul { margin: 0; padding-left: 20px; }
+.setup-card li + li { margin-top: 4px; }
+h3 { margin: 20px 0 8px; color: var(--purple); font-size: 1.02rem; }
+.recipe { margin: 10px 0 18px; padding-left: 24px; }
+.recipe li + li { margin-top: 8px; }
+.mc-callout {
+  padding: 14px 16px;
+  background: #eef4f8;
+  border-left: 4px solid var(--true);
+}
 .controls { background: var(--soft); }
 .control-grid {
   display: grid;
   grid-template-columns: repeat(2, minmax(220px, 1fr));
   gap: 16px;
+  margin-top: 12px;
 }
 .control-grid.compact { grid-template-columns: repeat(3, minmax(180px, 1fr)); }
 label { font-weight: 700; display: grid; gap: 7px; }
@@ -97,6 +135,9 @@ details summary { cursor: pointer; color: var(--purple); font-weight: 700; font-
   .viz-grid { grid-template-columns: 1fr; }
   .summary-grid { grid-template-columns: repeat(2, minmax(130px, 1fr)); }
   .control-grid.compact { grid-template-columns: 1fr; }
+}
+@media (max-width: 680px) {
+  .setup-grid { grid-template-columns: 1fr; }
 }
 @media (max-width: 560px) {
   .app-shell { padding: 12px; }
