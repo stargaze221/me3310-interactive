@@ -5,26 +5,22 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>Monte Carlo Regression Explorer</title>
   <link rel="stylesheet" href="styles.css" />
+  <link rel="stylesheet" href="uncertainty.css" />
 </head>
 <body>
   <main class="app-shell">
     <header class="hero">
       <p class="eyebrow">ME 3310 · Experimental Methods I</p>
       <h1>Monte Carlo Regression Explorer</h1>
-      <p class="lead">Repeat the same calibration experiment computationally and watch finite-sample variation move the fitted regression line.</p>
+      <p class="lead">Repeat one calibration experiment computationally, then connect the fitted line to residuals, confidence intervals, prediction intervals, and repeated-experiment coverage.</p>
     </header>
 
     <section class="panel setup" aria-labelledby="setup-title">
       <h2 id="setup-title">What experiment are we simulating?</h2>
-      <p>
-        Imagine a sensor with a fixed, underlying calibration relationship. We control a known input <strong>x</strong>,
-        measure the sensor output <strong>y</strong>, and use a finite number of measurements to estimate the calibration line.
-      </p>
-
+      <p>Imagine a sensor with a fixed underlying calibration relationship. We control a known input <strong>x</strong>, measure the sensor output <strong>y</strong>, and use a finite number of measurements to estimate the calibration line.</p>
       <div class="equation" aria-label="True model y equals 2 plus 3 x plus epsilon, where epsilon is normally distributed with mean zero and variance sigma squared">
         <strong>True model:</strong>&nbsp; y = 2 + 3x + ε &nbsp;&nbsp; with &nbsp;&nbsp; ε ~ N(0, σ²)
       </div>
-
       <div class="setup-grid">
         <div class="setup-card">
           <span class="setup-label">What stays fixed?</span>
@@ -39,30 +35,28 @@
           <span class="setup-label">What changes randomly?</span>
           <ul>
             <li>Each measurement receives a new random error εᵢ</li>
-            <li>The measured y-values therefore change</li>
+            <li>The measured y-values change</li>
             <li>The fitted intercept b̂₀ and slope b̂₁ change</li>
+            <li>The residuals and confidence intervals change</li>
           </ul>
         </div>
       </div>
-
       <h3>One finite-sample experiment</h3>
       <ol class="recipe">
         <li><strong>Choose n known inputs.</strong> The simulator places n values evenly from x = 0 to x = 5.</li>
         <li><strong>Measure the sensor output.</strong> For each xᵢ, generate yᵢ = 2 + 3xᵢ + εᵢ.</li>
         <li><strong>Fit a regression line.</strong> Use least squares to estimate ŷ = b̂₀ + b̂₁x.</li>
-        <li><strong>Record the estimate.</strong> One experiment contributes one value of b̂₁ to the histogram.</li>
+        <li><strong>Inspect residual evidence.</strong> Compute eᵢ = yᵢ − ŷᵢ and estimate the residual standard deviation.</li>
+        <li><strong>Quantify uncertainty.</strong> Build a 95% confidence interval for b₁ and bands around the fitted response.</li>
       </ol>
-
       <div class="mc-callout">
-        <strong>Monte Carlo step:</strong> repeat the entire finite-sample experiment many times using the
-        <em>same true model, same x locations, same n, and same σ</em>, but draw new independent measurement errors each time.
-        The resulting histogram shows the distribution of slope estimates we could obtain from repeated experiments.
+        <strong>Monte Carlo step:</strong> repeat the entire finite-sample experiment using the <em>same true model, same x locations, same n, and same σ</em>, but draw new independent errors each time. Because the simulation knows the true slope b₁ = 3, it can also check how often the nominal 95% slope confidence interval actually contains the truth.
       </div>
     </section>
 
     <section class="panel controls" aria-label="Simulation controls">
       <h2>Run the repeated experiment</h2>
-      <div class="control-grid">
+      <div class="control-grid uncertainty-controls">
         <label>
           Measurements per experiment, n
           <select id="sampleSize">
@@ -78,7 +72,17 @@
           <input id="noiseSigma" type="range" min="0.2" max="2.0" step="0.1" value="1.0" />
           <span id="noiseValue" class="readout">1.0</span>
         </label>
+        <label>
+          Interval display on latest experiment
+          <select id="intervalMode">
+            <option value="none">Fit only</option>
+            <option value="confidence" selected>95% confidence band</option>
+            <option value="prediction">95% prediction interval</option>
+            <option value="both">Both intervals</option>
+          </select>
+        </label>
       </div>
+      <p class="fineprint design-note">Changing <strong>n</strong> or <strong>σ</strong> resets the accumulated Monte Carlo results so each histogram and coverage result represents one experimental design.</p>
       <div class="button-row" aria-label="Run simulation">
         <button type="button" data-runs="1">Run 1</button>
         <button type="button" data-runs="10">Run 10</button>
@@ -90,11 +94,13 @@
       <p id="status" class="status" aria-live="polite">Ready. The true model is y = 2 + 3x + ε.</p>
     </section>
 
-    <section class="summary-grid" aria-label="Simulation summary">
+    <section class="summary-grid uncertainty-summary" aria-label="Simulation summary">
       <div class="metric"><span>Experiments</span><strong id="runsCount">0</strong></div>
       <div class="metric"><span>Latest slope b̂₁</span><strong id="latestSlope">—</strong></div>
+      <div class="metric"><span>Latest 95% CI for b₁</span><strong id="latestSlopeCI">—</strong></div>
       <div class="metric"><span>Mean slope</span><strong id="meanSlope">—</strong></div>
       <div class="metric"><span>SD of slope</span><strong id="sdSlope">—</strong></div>
+      <div class="metric"><span>Observed 95% CI coverage</span><strong id="coverageRate">—</strong></div>
     </section>
 
     <section class="viz-grid">
@@ -102,15 +108,32 @@
         <div class="panel-heading">
           <div>
             <h2>Latest Finite-Sample Experiment</h2>
-            <p>One set of n noisy measurements produces one fitted line.</p>
+            <p>One set of n noisy measurements produces one fitted line and interval estimates.</p>
           </div>
           <div class="legend" aria-label="Plot legend">
             <span><i class="dot observed"></i>Measured data</span>
             <span><i class="line true"></i>True model</span>
             <span><i class="line fit"></i>Latest fit</span>
+            <span><i class="swatch conf"></i>95% confidence</span>
+            <span><i class="swatch pred"></i>95% prediction</span>
           </div>
         </div>
-        <canvas id="scatterCanvas" width="760" height="430" role="img" aria-label="Scatter plot of the latest simulated calibration experiment with true and fitted regression lines"></canvas>
+        <canvas id="scatterCanvas" width="760" height="430" role="img" aria-label="Scatter plot of the latest calibration experiment with true model, fitted regression line, and optional confidence or prediction intervals"></canvas>
+        <p class="fineprint interval-note"><strong>Confidence band:</strong> uncertainty in the estimated mean response. <strong>Prediction interval:</strong> uncertainty for one new measurement, so it is wider.</p>
+      </article>
+
+      <article class="panel">
+        <div class="panel-heading">
+          <div>
+            <h2>Residuals from the Latest Experiment</h2>
+            <p>Residual eᵢ = yᵢ − ŷᵢ is the part of each measurement not explained by the fitted line.</p>
+          </div>
+        </div>
+        <canvas id="residualCanvas" width="760" height="430" role="img" aria-label="Residuals versus known input for the latest finite-sample regression experiment"></canvas>
+        <div class="mini-metrics">
+          <span>Mean residual: <strong id="residualMean">—</strong></span>
+          <span>Residual SD estimate: <strong id="residualSD">—</strong></span>
+        </div>
       </article>
 
       <article class="panel">
@@ -122,15 +145,27 @@
         </div>
         <canvas id="histCanvas" width="760" height="430" role="img" aria-label="Histogram of estimated regression slopes from repeated experiments"></canvas>
       </article>
+
+      <article class="panel">
+        <div class="panel-heading">
+          <div>
+            <h2>Recent 95% Confidence Intervals for the Slope</h2>
+            <p>Each horizontal interval comes from one experiment. The vertical reference is the true b₁ = 3.</p>
+          </div>
+        </div>
+        <canvas id="coverageCanvas" width="760" height="430" role="img" aria-label="Recent slope confidence intervals showing whether each interval contains the true slope"></canvas>
+        <p class="fineprint">Blue intervals contain the true slope; orange intervals miss it. With enough repeated experiments, the observed coverage should fluctuate near the nominal 95% level when the model assumptions hold.</p>
+      </article>
     </section>
 
     <section class="panel notice">
       <h2>What should you notice?</h2>
       <ul>
-        <li>The true calibration relationship is unchanged across repetitions.</li>
-        <li>Random measurement variation produces different finite datasets.</li>
-        <li>Different datasets produce different estimates of the slope and intercept.</li>
-        <li>Increasing n usually makes the distribution of estimated slopes narrower.</li>
+        <li>The true calibration relationship stays fixed, but finite samples produce different fitted lines.</li>
+        <li>Residuals show the measurement-to-model discrepancies left after fitting.</li>
+        <li>Increasing n usually narrows the distribution of slope estimates and the confidence interval.</li>
+        <li>A prediction interval is wider than a confidence band because a future measurement contains new measurement noise.</li>
+        <li>A 95% confidence procedure is a repeated-experiment statement: across many repetitions, about 95% of intervals should contain the true parameter under the stated model assumptions.</li>
       </ul>
     </section>
 
@@ -139,18 +174,15 @@
       <div class="insight-body">
         <p>Suppose you try to cover a parameter space with the same number of grid values in every dimension. The required number of combinations grows exponentially.</p>
         <div class="control-grid compact">
-          <label>
-            Grid values per dimension
+          <label>Grid values per dimension
             <input id="gridPerDim" type="range" min="2" max="20" step="1" value="10" />
             <span id="gridValue" class="readout">10</span>
           </label>
-          <label>
-            Number of dimensions
+          <label>Number of dimensions
             <input id="dimension" type="range" min="1" max="20" step="1" value="2" />
             <span id="dimValue" class="readout">2</span>
           </label>
-          <label>
-            Monte Carlo samples
+          <label>Monte Carlo samples
             <select id="mcSamples">
               <option value="100">100</option>
               <option value="1000">1,000</option>
@@ -168,6 +200,6 @@
       </div>
     </details>
   </main>
-  <script src="app.js"></script>
+  <script src="app-v2.js"></script>
 </body>
 </html>
