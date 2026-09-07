@@ -1,0 +1,126 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Monte Carlo Regression Explorer</title>
+  <link rel="stylesheet" href="styles.css" />
+</head>
+<body>
+  <main class="app-shell">
+    <header class="hero">
+      <p class="eyebrow">ME 3310 · Experimental Methods I</p>
+      <h1>Monte Carlo Regression Explorer</h1>
+      <p class="lead">Repeat the same calibration experiment computationally and watch finite-sample variation move the fitted regression line.</p>
+    </header>
+
+    <section class="panel controls" aria-label="Simulation controls">
+      <div class="control-grid">
+        <label>
+          Measurements per experiment, n
+          <select id="sampleSize">
+            <option value="5">5</option>
+            <option value="10" selected>10</option>
+            <option value="20">20</option>
+            <option value="50">50</option>
+            <option value="100">100</option>
+          </select>
+        </label>
+        <label>
+          Measurement noise, σ
+          <input id="noiseSigma" type="range" min="0.2" max="2.0" step="0.1" value="1.0" />
+          <span id="noiseValue" class="readout">1.0</span>
+        </label>
+      </div>
+      <div class="button-row" aria-label="Run simulation">
+        <button type="button" data-runs="1">Run 1</button>
+        <button type="button" data-runs="10">Run 10</button>
+        <button type="button" data-runs="100">Run 100</button>
+        <button type="button" data-runs="1000">Run 1,000</button>
+        <button type="button" data-runs="10000">Run 10,000</button>
+        <button type="button" id="resetBtn" class="secondary">Reset</button>
+      </div>
+      <p id="status" class="status" aria-live="polite">Ready. The true model is y = 2 + 3x + ε.</p>
+    </section>
+
+    <section class="summary-grid" aria-label="Simulation summary">
+      <div class="metric"><span>Experiments</span><strong id="runsCount">0</strong></div>
+      <div class="metric"><span>Latest slope b̂₁</span><strong id="latestSlope">—</strong></div>
+      <div class="metric"><span>Mean slope</span><strong id="meanSlope">—</strong></div>
+      <div class="metric"><span>SD of slope</span><strong id="sdSlope">—</strong></div>
+    </section>
+
+    <section class="viz-grid">
+      <article class="panel">
+        <div class="panel-heading">
+          <div>
+            <h2>Latest Experiment</h2>
+            <p>The physical model stays fixed; the measured points change.</p>
+          </div>
+          <div class="legend" aria-label="Plot legend">
+            <span><i class="dot observed"></i>Measured data</span>
+            <span><i class="line true"></i>True model</span>
+            <span><i class="line fit"></i>Latest fit</span>
+          </div>
+        </div>
+        <canvas id="scatterCanvas" width="760" height="430" role="img" aria-label="Scatter plot of the latest simulated calibration experiment with true and fitted regression lines"></canvas>
+      </article>
+
+      <article class="panel">
+        <div class="panel-heading">
+          <div>
+            <h2>Distribution of Estimated Slopes</h2>
+            <p>Each repeated experiment contributes one value of b̂₁.</p>
+          </div>
+        </div>
+        <canvas id="histCanvas" width="760" height="430" role="img" aria-label="Histogram of estimated regression slopes from repeated experiments"></canvas>
+      </article>
+    </section>
+
+    <section class="panel notice">
+      <h2>What should you notice?</h2>
+      <ul>
+        <li>The true calibration relationship is unchanged across repetitions.</li>
+        <li>Random measurement variation produces different finite datasets.</li>
+        <li>Different datasets produce different estimates of the slope and intercept.</li>
+        <li>Increasing n usually makes the distribution of estimated slopes narrower.</li>
+      </ul>
+    </section>
+
+    <details class="panel insight">
+      <summary>Optional Insight: Monte Carlo and the Curse of Dimensionality</summary>
+      <div class="insight-body">
+        <p>Suppose you try to cover a parameter space with the same number of grid values in every dimension. The required number of combinations grows exponentially.</p>
+        <div class="control-grid compact">
+          <label>
+            Grid values per dimension
+            <input id="gridPerDim" type="range" min="2" max="20" step="1" value="10" />
+            <span id="gridValue" class="readout">10</span>
+          </label>
+          <label>
+            Number of dimensions
+            <input id="dimension" type="range" min="1" max="20" step="1" value="2" />
+            <span id="dimValue" class="readout">2</span>
+          </label>
+          <label>
+            Monte Carlo samples
+            <select id="mcSamples">
+              <option value="100">100</option>
+              <option value="1000">1,000</option>
+              <option value="10000" selected>10,000</option>
+              <option value="1000000">1,000,000</option>
+            </select>
+          </label>
+        </div>
+        <div class="dimension-grid">
+          <div class="metric"><span>Exhaustive grid combinations</span><strong id="gridCombos">100</strong></div>
+          <div class="metric"><span>Equivalent MC samples per dimension</span><strong id="equivPerDim">100</strong></div>
+        </div>
+        <p class="takeaway" id="dimensionTakeaway">10,000 Monte Carlo samples in 2 dimensions correspond to about 100 samples per dimension.</p>
+        <p class="fineprint">Monte Carlo avoids exhaustive grid enumeration, but it does not make a high-dimensional space dense. High-dimensional spaces remain sparse.</p>
+      </div>
+    </details>
+  </main>
+  <script src="app.js"></script>
+</body>
+</html>
