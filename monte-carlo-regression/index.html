@@ -119,7 +119,7 @@
           </div>
         </div>
         <canvas id="scatterCanvas" width="760" height="430" role="img" aria-label="Scatter plot of the latest calibration experiment with true model, fitted regression line, and optional confidence or prediction intervals"></canvas>
-        <p class="fineprint interval-note"><strong>Confidence band:</strong> uncertainty in the estimated mean response. <strong>Prediction interval:</strong> uncertainty for one new measurement, so it is wider.</p>
+        <p class="fineprint interval-note"><strong>Confidence band:</strong> uncertainty in the estimated mean response. <strong>Prediction interval:</strong> uncertainty for one new measurement at the same specified x, so it is wider because it also includes new measurement noise.</p>
       </article>
 
       <article class="panel">
@@ -140,7 +140,7 @@
         <div class="panel-heading">
           <div>
             <h2>Distribution of Estimated Slopes</h2>
-            <p>Each repeated finite-sample experiment contributes one value of b̂₁.</p>
+            <p>Each repeated finite-sample experiment contributes one value of b̂₁. This histogram uses the slope estimates from all accumulated experiments.</p>
           </div>
         </div>
         <canvas id="histCanvas" width="760" height="430" role="img" aria-label="Histogram of estimated regression slopes from repeated experiments"></canvas>
@@ -150,11 +150,11 @@
         <div class="panel-heading">
           <div>
             <h2>Recent 95% Confidence Intervals for the Slope</h2>
-            <p>Each horizontal interval comes from one experiment. The vertical reference is the true b₁ = 3.</p>
+            <p>Each horizontal interval comes from one experiment. Only the recent intervals are drawn for readability; the vertical reference is the true b₁ = 3.</p>
           </div>
         </div>
         <canvas id="coverageCanvas" width="760" height="430" role="img" aria-label="Recent slope confidence intervals showing whether each interval contains the true slope"></canvas>
-        <p class="fineprint">Blue intervals contain the true slope; orange intervals miss it. With enough repeated experiments, the observed coverage should fluctuate near the nominal 95% level when the model assumptions hold.</p>
+        <p class="fineprint">The center point of each interval is that experiment's slope estimate. Blue intervals contain the true slope; orange intervals miss it. The overall coverage summary above uses all accumulated experiments.</p>
       </article>
     </section>
 
@@ -164,7 +164,7 @@
         <li>The true calibration relationship stays fixed, but finite samples produce different fitted lines.</li>
         <li>Residuals show the measurement-to-model discrepancies left after fitting.</li>
         <li>Increasing n usually narrows the distribution of slope estimates and the confidence interval.</li>
-        <li>A prediction interval is wider than a confidence band because a future measurement contains new measurement noise.</li>
+        <li>A prediction interval is wider than a confidence band because a future measurement at a specified x contains new measurement noise.</li>
         <li>A 95% confidence procedure is a repeated-experiment statement: across many repetitions, about 95% of intervals should contain the true parameter under the stated model assumptions.</li>
       </ul>
     </section>
@@ -172,17 +172,34 @@
     <details class="panel insight">
       <summary>Optional Insight: Monte Carlo and the Curse of Dimensionality</summary>
       <div class="insight-body">
-        <p>Suppose you try to cover a parameter space with the same number of grid values in every dimension. The required number of combinations grows exponentially.</p>
+        <p><strong>Why can Monte Carlo remain useful in high dimensions?</strong> It does not try to cover the entire parameter space densely. Instead, it estimates quantities such as an expected value using a sample average.</p>
+
+        <div class="equation" aria-label="Monte Carlo estimator and its variance">
+          <strong>Monte Carlo estimator:</strong>&nbsp; Î<sub>N</sub> = (1/N) Σ f(X<sub>i</sub>)
+          <br />
+          <strong>Estimator variance:</strong>&nbsp; Var(Î<sub>N</sub>) = Var[f(X)] / N
+          <br />
+          <strong>Estimator SD:</strong>&nbsp; SD(Î<sub>N</sub>) = σ<sub>f</sub> / √N
+        </div>
+
+        <p>The characteristic Monte Carlo sampling rate is therefore <strong>1/√N</strong>. Dimension <em>d</em> does not appear in the exponent of N. However, dimension can still make the problem harder through the problem-dependent variance term σ<sub>f</sub>², rare events, poor sampling distributions, or more expensive model evaluations.</p>
+
+        <div class="note" style="margin: 14px 0; padding: 12px 14px; background: #eef4f8; border-left: 4px solid #2e6f95;">
+          <strong>Useful way to think about it:</strong> for plain Monte Carlo integration, much of the dimensional difficulty is pushed into the variance/problem structure rather than into the N<sup>−1/2</sup> convergence exponent.
+        </div>
+
+        <p>Compare that statistical averaging idea with an exhaustive grid. If you use the same number of grid values along every dimension, the number of combinations grows exponentially.</p>
+
         <div class="control-grid compact">
           <label>Grid values per dimension
             <input id="gridPerDim" type="range" min="2" max="20" step="1" value="10" />
             <span id="gridValue" class="readout">10</span>
           </label>
           <label>Number of dimensions
-            <input id="dimension" type="range" min="1" max="20" step="1" value="2" />
-            <span id="dimValue" class="readout">2</span>
+            <input id="dimension" type="range" min="1" max="20" step="1" value="5" />
+            <span id="dimValue" class="readout">5</span>
           </label>
-          <label>Monte Carlo samples
+          <label>Monte Carlo samples, N
             <select id="mcSamples">
               <option value="100">100</option>
               <option value="1000">1,000</option>
@@ -190,16 +207,68 @@
               <option value="1000000">1,000,000</option>
             </select>
           </label>
+          <label>Problem-dependent SD, σf
+            <input id="sigmaF" type="range" min="0.5" max="10" step="0.5" value="2" />
+            <span id="sigmaFValue" class="readout">2.0</span>
+          </label>
         </div>
-        <div class="dimension-grid">
-          <div class="metric"><span>Exhaustive grid combinations</span><strong id="gridCombos">100</strong></div>
-          <div class="metric"><span>Equivalent MC samples per dimension</span><strong id="equivPerDim">100</strong></div>
+
+        <div class="dimension-grid" style="grid-template-columns: repeat(2, minmax(220px, 1fr));">
+          <div class="metric"><span>Exhaustive grid combinations</span><strong id="gridCombos">100,000</strong></div>
+          <div class="metric"><span>Grid-equivalent linear resolution, N^(1/d)</span><strong id="equivPerDim">6.31</strong></div>
+          <div class="metric"><span>Monte Carlo sampling factor, 1/√N</span><strong id="mcRateFactor">0.0100</strong></div>
+          <div class="metric"><span>Estimator SD, σf/√N</span><strong id="mcStdError">0.0200</strong></div>
         </div>
-        <p class="takeaway" id="dimensionTakeaway">10,000 Monte Carlo samples in 2 dimensions correspond to about 100 samples per dimension.</p>
-        <p class="fineprint">Monte Carlo avoids exhaustive grid enumeration, but it does not make a high-dimensional space dense. High-dimensional spaces remain sparse.</p>
+
+        <p class="takeaway" id="dimensionTakeaway">With N = 10,000 and d = 5, a dense grid would be expensive while 10,000 Monte Carlo samples remain geometrically sparse. The sampling factor is 1/√N = 0.0100; with σf = 2.0, the estimator SD is about 0.0200.</p>
+
+        <p class="fineprint"><strong>Do not interpret N^(1/d) literally.</strong> It is only a geometric heuristic: if N total points were arranged like an equally spaced grid in d dimensions, each axis would have about N^(1/d) locations. It is not the Monte Carlo error rate. Dimension may still affect σf and other problem-specific difficulty.</p>
       </div>
     </details>
   </main>
   <script src="app-v2.js"></script>
+  <script>
+    (() => {
+      const gridEl = document.getElementById('gridPerDim');
+      const dimEl = document.getElementById('dimension');
+      const mcEl = document.getElementById('mcSamples');
+      const sigmaFEl = document.getElementById('sigmaF');
+      const sigmaFValueEl = document.getElementById('sigmaFValue');
+      const gridCombosEl = document.getElementById('gridCombos');
+      const equivEl = document.getElementById('equivPerDim');
+      const mcRateEl = document.getElementById('mcRateFactor');
+      const mcStdErrorEl = document.getElementById('mcStdError');
+      const takeawayEl = document.getElementById('dimensionTakeaway');
+
+      if (!gridEl || !dimEl || !mcEl || !sigmaFEl) return;
+
+      function compactNumber(v) {
+        if (v < 1e6) return Math.round(v).toLocaleString();
+        if (v < 1e12) return v.toExponential(3);
+        return v.toExponential(2);
+      }
+
+      function updateVarianceView() {
+        const g = Number(gridEl.value);
+        const d = Number(dimEl.value);
+        const N = Number(mcEl.value);
+        const sigmaF = Number(sigmaFEl.value);
+        const combos = g ** d;
+        const linearResolution = N ** (1 / d);
+        const rate = 1 / Math.sqrt(N);
+        const estimatorSD = sigmaF * rate;
+
+        sigmaFValueEl.textContent = sigmaF.toFixed(1);
+        gridCombosEl.textContent = compactNumber(combos);
+        equivEl.textContent = linearResolution.toFixed(linearResolution >= 100 ? 0 : linearResolution >= 10 ? 1 : 2);
+        mcRateEl.textContent = rate.toFixed(rate < 0.01 ? 4 : 3);
+        mcStdErrorEl.textContent = estimatorSD.toFixed(estimatorSD < 0.1 ? 4 : 3);
+        takeawayEl.textContent = `With N = ${N.toLocaleString()} and d = ${d}, the samples are geometrically sparse (grid-equivalent linear resolution ≈ ${linearResolution.toFixed(linearResolution >= 100 ? 0 : linearResolution >= 10 ? 1 : 2)}). But the basic Monte Carlo sampling factor is 1/√N = ${rate.toFixed(rate < 0.01 ? 4 : 3)}. If σf = ${sigmaF.toFixed(1)}, the estimator SD is about ${estimatorSD.toFixed(estimatorSD < 0.1 ? 4 : 3)}.`;
+      }
+
+      [gridEl, dimEl, mcEl, sigmaFEl].forEach(el => el.addEventListener('input', updateVarianceView));
+      updateVarianceView();
+    })();
+  </script>
 </body>
 </html>
