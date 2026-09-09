@@ -1,0 +1,508 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Pseudo-Random Number Explorer</title>
+  <style>
+    :root {
+      --purple: #4f2683;
+      --purple-light: #f4f1f8;
+      --text: #222;
+      --muted: #5e6570;
+      --border: #d9dde3;
+      --soft: #f7f8fa;
+      --blue: #2e6f95;
+      --orange: #a24b2a;
+      --green: #39734f;
+    }
+    * { box-sizing: border-box; }
+    body {
+      margin: 0;
+      background: #fff;
+      color: var(--text);
+      font-family: Arial, Helvetica, sans-serif;
+      line-height: 1.55;
+    }
+    .app-shell { max-width: 1120px; margin: 0 auto; padding: 20px; }
+    .hero { border-left: 6px solid var(--purple); padding: 8px 18px; margin-bottom: 18px; }
+    .eyebrow { margin: 0 0 4px; color: var(--muted); font-size: .9rem; }
+    h1 { margin: 0; color: var(--purple); font-size: clamp(1.45rem, 3vw, 2.1rem); }
+    .lead { margin: 6px 0 0; max-width: 900px; }
+    .panel {
+      border: 1px solid var(--border);
+      background: #fff;
+      padding: 17px;
+      margin-bottom: 17px;
+      border-radius: 8px;
+    }
+    h2 { margin: 0 0 6px; color: var(--purple); font-size: 1.14rem; }
+    h3 { margin: 18px 0 7px; color: var(--purple); font-size: 1rem; }
+    .equation {
+      margin: 14px 0;
+      padding: 13px 15px;
+      background: var(--purple-light);
+      border-left: 4px solid var(--purple);
+      text-align: center;
+      font-size: 1.02rem;
+    }
+    .note {
+      margin-top: 13px;
+      padding: 12px 14px;
+      background: #eef4f8;
+      border-left: 4px solid var(--blue);
+    }
+    .controls { background: var(--soft); }
+    .control-grid {
+      display: grid;
+      grid-template-columns: repeat(3, minmax(190px, 1fr));
+      gap: 14px;
+      margin-top: 12px;
+    }
+    label { font-weight: 700; display: grid; gap: 6px; }
+    input, select { width: 100%; font: inherit; }
+    input[type="number"], select {
+      padding: 8px 9px;
+      border: 1px solid #bfc5cd;
+      border-radius: 5px;
+      background: #fff;
+    }
+    input[type="range"] { width: 100%; }
+    .readout { color: var(--purple); font-weight: 700; }
+    .button-row { display: flex; flex-wrap: wrap; gap: 9px; margin-top: 15px; }
+    button {
+      border: none;
+      background: var(--purple);
+      color: #fff;
+      padding: 10px 14px;
+      border-radius: 5px;
+      cursor: pointer;
+      font-weight: 700;
+    }
+    button.secondary { background: #616873; }
+    button:hover, button:focus { filter: brightness(.94); }
+    .status { margin: 11px 0 0; color: var(--muted); }
+    .summary-grid {
+      display: grid;
+      grid-template-columns: repeat(4, minmax(140px, 1fr));
+      gap: 11px;
+      margin-bottom: 17px;
+    }
+    .metric { background: var(--purple-light); border-left: 4px solid var(--purple); padding: 12px 14px; }
+    .metric span { display: block; color: var(--muted); font-size: .84rem; }
+    .metric strong { display: block; margin-top: 3px; font-size: 1.25rem; }
+    .viz-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 17px; }
+    .panel-heading p { margin: 0 0 10px; color: var(--muted); font-size: .91rem; }
+    canvas { width: 100%; height: auto; display: block; background: #fff; }
+    .legend { display: flex; flex-wrap: wrap; gap: 12px; margin: 8px 0 6px; font-size: .82rem; color: var(--muted); }
+    .legend span { display: inline-flex; align-items: center; gap: 5px; }
+    .key { width: 17px; height: 3px; display: inline-block; }
+    .key.a { background: var(--purple); }
+    .key.b { background: var(--blue); }
+    .key.target { background: var(--orange); }
+    .sequence-box {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 12px;
+      margin-top: 12px;
+    }
+    .sequence {
+      background: var(--soft);
+      border: 1px solid var(--border);
+      padding: 11px;
+      border-radius: 6px;
+      min-width: 0;
+    }
+    .sequence strong { color: var(--purple); }
+    .numbers { margin-top: 6px; font-family: Consolas, Monaco, monospace; font-size: .82rem; overflow-wrap: anywhere; color: #333; }
+    .code {
+      font-family: Consolas, Monaco, monospace;
+      background: #f7f7f7;
+      border: 1px solid var(--border);
+      padding: 12px 14px;
+      border-radius: 6px;
+      overflow-x: auto;
+      white-space: pre;
+      font-size: .9rem;
+    }
+    .takeaway {
+      background: var(--purple-light);
+      border-left: 4px solid var(--purple);
+      padding: 13px 15px;
+    }
+    .fineprint { color: var(--muted); font-size: .9rem; }
+    .try-list { margin-bottom: 0; }
+    @media (max-width: 850px) {
+      .viz-grid { grid-template-columns: 1fr; }
+      .control-grid { grid-template-columns: 1fr 1fr; }
+      .summary-grid { grid-template-columns: 1fr 1fr; }
+    }
+    @media (max-width: 600px) {
+      .app-shell { padding: 11px; }
+      .control-grid, .summary-grid, .sequence-box { grid-template-columns: 1fr; }
+      button { flex: 1 1 45%; }
+    }
+  </style>
+</head>
+<body>
+<main class="app-shell">
+  <header class="hero">
+    <p class="eyebrow">ME 3310 · Experimental Methods I</p>
+    <h1>Pseudo-Random Number Explorer</h1>
+    <p class="lead">See how a deterministic seed can generate a repeatable sequence that still behaves statistically like random samples—and how those samples become measurement noise in Monte Carlo experiments.</p>
+  </header>
+
+  <section class="panel" aria-labelledby="idea-title">
+    <h2 id="idea-title">How can a computer generate “random” numbers?</h2>
+    <p>A pseudo-random number generator (PRNG) begins with a <strong>seed</strong> and repeatedly applies a deterministic rule. The resulting sequence is not fundamentally random, but it can be designed to have statistical properties that make it useful for simulation.</p>
+    <div class="equation" aria-label="Illustrative linear congruential generator equation">
+      Illustrative rule: &nbsp; x<sub>k+1</sub> = (a x<sub>k</sub> + c) mod m, &nbsp;&nbsp; u<sub>k</sub> = x<sub>k</sub>/m
+    </div>
+    <div class="note"><strong>Important:</strong> this explorer uses a simple linear congruential generator so the idea is transparent. MATLAB and other scientific tools may use more sophisticated PRNG algorithms, but the key concept remains: <strong>same algorithm + same seed → same sequence</strong>.</div>
+  </section>
+
+  <section class="panel controls" aria-label="Pseudo-random generator controls">
+    <h2>Generate and compare two sequences</h2>
+    <div class="control-grid">
+      <label>Seed A
+        <input id="seedA" type="number" value="42" step="1" />
+      </label>
+      <label>Seed B
+        <input id="seedB" type="number" value="42" step="1" />
+      </label>
+      <label>Samples in each sequence
+        <select id="sampleCount">
+          <option value="20">20</option>
+          <option value="100">100</option>
+          <option value="1000" selected>1,000</option>
+          <option value="10000">10,000</option>
+        </select>
+      </label>
+      <label>Displayed distribution
+        <select id="distribution">
+          <option value="uniform">Uniform U(0,1)</option>
+          <option value="normal" selected>Normal N(0,1)</option>
+        </select>
+      </label>
+      <label>Calibration noise σ
+        <input id="sigma" type="range" min="0.2" max="2.0" step="0.1" value="1.0" />
+        <span id="sigmaValue" class="readout">1.0</span>
+      </label>
+    </div>
+    <div class="button-row">
+      <button type="button" id="generateBtn">Generate</button>
+      <button type="button" id="sameSeedBtn" class="secondary">Set B = A</button>
+      <button type="button" id="differentSeedBtn" class="secondary">Set B = A + 1</button>
+    </div>
+    <p id="status" class="status" aria-live="polite">Ready. Both seeds are 42, so the generated sequences will match exactly.</p>
+  </section>
+
+  <section class="summary-grid" aria-label="Sequence summary">
+    <div class="metric"><span>Sequence comparison</span><strong id="matchMetric">—</strong></div>
+    <div class="metric"><span>Mean of A</span><strong id="meanMetric">—</strong></div>
+    <div class="metric"><span>SD of A</span><strong id="sdMetric">—</strong></div>
+    <div class="metric"><span>Samples</span><strong id="nMetric">—</strong></div>
+  </section>
+
+  <section class="viz-grid">
+    <article class="panel">
+      <div class="panel-heading">
+        <h2>Sequence Trace</h2>
+        <p>The first values may look irregular even though every value is generated deterministically from the seed.</p>
+      </div>
+      <div class="legend"><span><i class="key a"></i>Sequence A</span><span><i class="key b"></i>Sequence B</span></div>
+      <canvas id="sequenceCanvas" width="760" height="360" role="img" aria-label="Plot comparing the first pseudo-random values generated by two seeds"></canvas>
+      <div class="sequence-box">
+        <div class="sequence"><strong>First values from A</strong><div id="numbersA" class="numbers">—</div></div>
+        <div class="sequence"><strong>First values from B</strong><div id="numbersB" class="numbers">—</div></div>
+      </div>
+    </article>
+
+    <article class="panel">
+      <div class="panel-heading">
+        <h2>Distribution of Sequence A</h2>
+        <p>As the number of samples grows, the histogram should begin to resemble the target distribution.</p>
+      </div>
+      <div class="legend"><span><i class="key a"></i>Sample histogram</span><span><i class="key target"></i>Target shape</span></div>
+      <canvas id="histCanvas" width="760" height="360" role="img" aria-label="Histogram of pseudo-random samples compared with the target probability distribution"></canvas>
+    </article>
+  </section>
+
+  <section class="panel">
+    <div class="panel-heading">
+      <h2>From PRNG to a Monte Carlo Calibration Experiment</h2>
+      <p>Use seed A to generate normal samples zᵢ, convert them to measurement errors εᵢ = σzᵢ, and then create one noisy calibration dataset.</p>
+    </div>
+    <div class="equation" aria-label="Calibration measurement model y i equals 2 plus 3 x i plus epsilon i">
+      ε<sub>i</sub> = σ z<sub>i</sub>, &nbsp;&nbsp; z<sub>i</sub> ~ N(0,1), &nbsp;&nbsp; y<sub>i</sub> = 2 + 3x<sub>i</sub> + ε<sub>i</sub>
+    </div>
+    <canvas id="calibrationCanvas" width="1000" height="390" role="img" aria-label="Noisy calibration dataset generated from seeded pseudo-random normal measurement errors"></canvas>
+    <p class="fineprint">Keep the same seed and press Generate again: the same noise values and the same calibration dataset reappear. Change the seed: the physical model stays fixed, but a different finite dataset appears.</p>
+  </section>
+
+  <section class="panel">
+    <h2>Connection to MATLAB</h2>
+    <p>In MATLAB, the implementation details are handled for you. The seed is useful when you need a simulation to be reproducible.</p>
+    <div class="code">rng(42)                 % Set a reproducible seed
+z = randn(n,1);          % Standard normal pseudo-random samples
+epsilon = sigma*z;       % Measurement noise
+y = 2 + 3*x + epsilon;   % One simulated calibration experiment</div>
+    <p class="fineprint">Running the same code again after resetting <strong>rng(42)</strong> reproduces the same pseudo-random sequence. Changing the seed produces another sequence.</p>
+  </section>
+
+  <section class="panel">
+    <h2>Try This</h2>
+    <ol class="try-list">
+      <li>Set <strong>Seed A = 42</strong> and <strong>Seed B = 42</strong>. Generate the sequences. Do they match?</li>
+      <li>Change only Seed B to 43. The sequences now differ, even though the generator itself has not changed.</li>
+      <li>Compare 20 samples with 10,000 samples. Which histogram better represents the target distribution?</li>
+      <li>Keep Seed A fixed and change σ. The underlying pseudo-random z-values are repeatable, but the physical measurement-noise magnitude changes.</li>
+      <li>Return both seeds to 42. Ask yourself: if the numbers are deterministic, why can they still be useful for Monte Carlo analysis?</li>
+    </ol>
+  </section>
+
+  <div class="takeaway"><strong>Takeaway:</strong> pseudo-random does not mean uselessly fake. A PRNG gives us statistically useful, controllable, and reproducible samples. Monte Carlo then uses those samples to represent repeated uncertain experiments computationally.</div>
+</main>
+
+<script>
+(() => {
+  const TWO32 = 4294967296;
+  const A = 1664525;
+  const C = 1013904223;
+
+  class LCG {
+    constructor(seed) { this.state = Number(seed) >>> 0; }
+    uniform() {
+      this.state = (Math.imul(A, this.state) + C) >>> 0;
+      return (this.state + 0.5) / TWO32;
+    }
+  }
+
+  function uniformSamples(seed, n) {
+    const g = new LCG(seed);
+    const out = new Array(n);
+    for (let i = 0; i < n; i++) out[i] = g.uniform();
+    return out;
+  }
+
+  function normalSamples(seed, n) {
+    const g = new LCG(seed);
+    const out = [];
+    while (out.length < n) {
+      const u1 = Math.max(g.uniform(), 1e-12);
+      const u2 = g.uniform();
+      const r = Math.sqrt(-2 * Math.log(u1));
+      const th = 2 * Math.PI * u2;
+      out.push(r * Math.cos(th));
+      if (out.length < n) out.push(r * Math.sin(th));
+    }
+    return out;
+  }
+
+  function stats(x) {
+    const n = x.length;
+    const mean = x.reduce((s,v) => s + v, 0) / n;
+    const sd = n > 1 ? Math.sqrt(x.reduce((s,v) => s + (v-mean)*(v-mean), 0) / (n-1)) : 0;
+    return { mean, sd };
+  }
+
+  function canvasCtx(id) {
+    const c = document.getElementById(id);
+    const ctx = c.getContext('2d');
+    ctx.clearRect(0,0,c.width,c.height);
+    ctx.fillStyle = '#ffffff';
+    ctx.fillRect(0,0,c.width,c.height);
+    return { c, ctx };
+  }
+
+  function axes(ctx, c, left=54, right=18, top=18, bottom=42) {
+    ctx.strokeStyle = '#9aa1aa';
+    ctx.lineWidth = 1;
+    ctx.beginPath();
+    ctx.moveTo(left, top);
+    ctx.lineTo(left, c.height-bottom);
+    ctx.lineTo(c.width-right, c.height-bottom);
+    ctx.stroke();
+    return { left, right, top, bottom, w:c.width-left-right, h:c.height-top-bottom };
+  }
+
+  function drawSequence(a, b, dist) {
+    const {c, ctx} = canvasCtx('sequenceCanvas');
+    const p = axes(ctx,c);
+    const k = Math.min(100, a.length, b.length);
+    const vals = a.slice(0,k).concat(b.slice(0,k));
+    let ymin = dist === 'uniform' ? 0 : Math.min(-3.5, ...vals);
+    let ymax = dist === 'uniform' ? 1 : Math.max(3.5, ...vals);
+    if (ymax === ymin) ymax = ymin + 1;
+    const X = i => p.left + (k <= 1 ? 0 : i/(k-1))*p.w;
+    const Y = v => p.top + (ymax-v)/(ymax-ymin)*p.h;
+
+    ctx.font = '12px Arial';
+    ctx.fillStyle = '#5e6570';
+    ctx.textAlign = 'right';
+    for (let j=0;j<=4;j++) {
+      const v = ymin + (ymax-ymin)*j/4;
+      const y = Y(v);
+      ctx.fillText(v.toFixed(1), p.left-7, y+4);
+      ctx.strokeStyle = '#eceff2';
+      ctx.beginPath(); ctx.moveTo(p.left,y); ctx.lineTo(c.width-p.right,y); ctx.stroke();
+    }
+    ctx.textAlign = 'center';
+    ctx.fillText('sample index k (first ' + k + ')', p.left+p.w/2, c.height-10);
+
+    function plot(arr, color, offset) {
+      ctx.fillStyle = color;
+      for (let i=0;i<k;i++) {
+        ctx.beginPath();
+        ctx.arc(X(i)+offset, Y(arr[i]), 3.2, 0, 2*Math.PI);
+        ctx.fill();
+      }
+    }
+    plot(a, '#4f2683', -1.6);
+    plot(b, '#2e6f95', 1.6);
+  }
+
+  function drawHistogram(x, dist) {
+    const {c, ctx} = canvasCtx('histCanvas');
+    const p = axes(ctx,c);
+    const bins = 24;
+    let xmin = dist === 'uniform' ? 0 : -4;
+    let xmax = dist === 'uniform' ? 1 : 4;
+    const counts = new Array(bins).fill(0);
+    const bw = (xmax-xmin)/bins;
+    for (const v of x) {
+      if (v < xmin || v > xmax) continue;
+      let j = Math.floor((v-xmin)/bw);
+      if (j === bins) j = bins-1;
+      if (j >= 0 && j < bins) counts[j]++;
+    }
+    let targetMax = 0;
+    if (dist === 'uniform') targetMax = x.length / bins;
+    else targetMax = x.length * bw / Math.sqrt(2*Math.PI);
+    const ymax = Math.max(1, Math.max(...counts), targetMax) * 1.12;
+    const X = v => p.left + (v-xmin)/(xmax-xmin)*p.w;
+    const Y = v => p.top + (ymax-v)/ymax*p.h;
+
+    ctx.fillStyle = '#5e6570'; ctx.font='12px Arial'; ctx.textAlign='center';
+    for (let j=0;j<=4;j++) {
+      const v = xmin + (xmax-xmin)*j/4;
+      ctx.fillText(v.toFixed(dist === 'uniform' ? 2 : 1), X(v), c.height-22);
+    }
+    ctx.fillText(dist === 'uniform' ? 'u' : 'z', p.left+p.w/2, c.height-8);
+
+    for (let j=0;j<bins;j++) {
+      const x0 = X(xmin+j*bw);
+      const x1 = X(xmin+(j+1)*bw);
+      const y = Y(counts[j]);
+      ctx.fillStyle = 'rgba(79,38,131,0.55)';
+      ctx.fillRect(x0+1, y, Math.max(1,x1-x0-2), c.height-p.bottom-y);
+    }
+
+    ctx.strokeStyle = '#a24b2a'; ctx.lineWidth=2.5; ctx.beginPath();
+    const steps = 180;
+    for (let i=0;i<=steps;i++) {
+      const v = xmin + (xmax-xmin)*i/steps;
+      const target = dist === 'uniform'
+        ? x.length/bins
+        : x.length*bw*Math.exp(-0.5*v*v)/Math.sqrt(2*Math.PI);
+      const px = X(v), py = Y(target);
+      if (i===0) ctx.moveTo(px,py); else ctx.lineTo(px,py);
+    }
+    ctx.stroke();
+  }
+
+  function drawCalibration(seed, sigma) {
+    const {c, ctx} = canvasCtx('calibrationCanvas');
+    const p = axes(ctx,c,58,20,18,44);
+    const n = 12;
+    const z = normalSamples(seed,n);
+    const pts = [];
+    for (let i=0;i<n;i++) {
+      const x = 5*i/(n-1);
+      const y = 2 + 3*x + sigma*z[i];
+      pts.push({x,y});
+    }
+    const ymin = Math.min(0, ...pts.map(q=>q.y)) - 0.5;
+    const ymax = Math.max(18, ...pts.map(q=>q.y)) + 0.5;
+    const X = v => p.left + v/5*p.w;
+    const Y = v => p.top + (ymax-v)/(ymax-ymin)*p.h;
+
+    ctx.font='12px Arial'; ctx.fillStyle='#5e6570';
+    ctx.textAlign='center';
+    for (let j=0;j<=5;j++) ctx.fillText(String(j), X(j), c.height-24);
+    ctx.fillText('known input x', p.left+p.w/2, c.height-8);
+    ctx.textAlign='right';
+    for (let j=0;j<=4;j++) {
+      const v = ymin + (ymax-ymin)*j/4;
+      const y = Y(v);
+      ctx.fillText(v.toFixed(1), p.left-7, y+4);
+      ctx.strokeStyle='#eceff2'; ctx.beginPath(); ctx.moveTo(p.left,y); ctx.lineTo(c.width-p.right,y); ctx.stroke();
+    }
+
+    ctx.strokeStyle='#2e6f95'; ctx.lineWidth=2.5; ctx.beginPath();
+    ctx.moveTo(X(0),Y(2)); ctx.lineTo(X(5),Y(17)); ctx.stroke();
+
+    ctx.fillStyle='#4f2683';
+    for (const q of pts) { ctx.beginPath(); ctx.arc(X(q.x),Y(q.y),5,0,2*Math.PI); ctx.fill(); }
+
+    ctx.fillStyle='#2e6f95'; ctx.textAlign='left';
+    ctx.fillText('true model y = 2 + 3x', X(2.9), Y(2+3*2.9)-10);
+  }
+
+  const el = id => document.getElementById(id);
+  const seedA = el('seedA');
+  const seedB = el('seedB');
+  const count = el('sampleCount');
+  const distribution = el('distribution');
+  const sigma = el('sigma');
+
+  function seedValue(input) {
+    const v = Number(input.value);
+    return Number.isFinite(v) ? (Math.trunc(v) >>> 0) : 0;
+  }
+
+  function generate() {
+    const sa = seedValue(seedA);
+    const sb = seedValue(seedB);
+    seedA.value = sa;
+    seedB.value = sb;
+    const n = Number(count.value);
+    const dist = distribution.value;
+    const make = dist === 'uniform' ? uniformSamples : normalSamples;
+    const a = make(sa,n);
+    const b = make(sb,n);
+    const s = stats(a);
+    const match = a.length === b.length && a.every((v,i)=>v===b[i]);
+
+    el('matchMetric').textContent = match ? 'Exact match' : 'Different';
+    el('meanMetric').textContent = s.mean.toFixed(4);
+    el('sdMetric').textContent = s.sd.toFixed(4);
+    el('nMetric').textContent = n.toLocaleString();
+    el('numbersA').textContent = a.slice(0,12).map(v=>v.toFixed(4)).join(', ');
+    el('numbersB').textContent = b.slice(0,12).map(v=>v.toFixed(4)).join(', ');
+    el('status').textContent = match
+      ? `Seeds A and B are both ${sa}. The sequences are reproduced exactly.`
+      : `Seed A = ${sa} and Seed B = ${sb}. The deterministic generator now follows two different sequences.`;
+
+    drawSequence(a,b,dist);
+    drawHistogram(a,dist);
+    drawCalibration(sa,Number(sigma.value));
+  }
+
+  sigma.addEventListener('input', () => {
+    el('sigmaValue').textContent = Number(sigma.value).toFixed(1);
+    drawCalibration(seedValue(seedA), Number(sigma.value));
+  });
+  el('generateBtn').addEventListener('click', generate);
+  el('sameSeedBtn').addEventListener('click', () => { seedB.value = seedA.value; generate(); });
+  el('differentSeedBtn').addEventListener('click', () => { seedB.value = (seedValue(seedA)+1) >>> 0; generate(); });
+  count.addEventListener('change', generate);
+  distribution.addEventListener('change', generate);
+  seedA.addEventListener('change', generate);
+  seedB.addEventListener('change', generate);
+
+  generate();
+})();
+</script>
+</body>
+</html>
