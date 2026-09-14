@@ -1,0 +1,154 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Mohr's Circle for Strain Explorer | ME 3310</title>
+  <link rel="stylesheet" href="styles.css" />
+  <script>
+    window.MathJax = { tex: { inlineMath: [['\\(', '\\)']], displayMath: [['$$', '$$']] }, svg: { fontCache: 'global' } };
+  </script>
+  <script defer src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-svg.js"></script>
+</head>
+<body>
+  <main class="wrap">
+    <header class="hero">
+      <p class="eyebrow">ME 3310 · Experimental Methods I · Week 04</p>
+      <h1>Mohr's Circle for Strain Explorer</h1>
+      <p class="lead">Rotate a virtual strain gauge on a 2D strain state and watch the corresponding point move around Mohr's circle. Connect a physical rotation by \(\theta\) with an angular movement of \(2\theta\) on the circle.</p>
+    </header>
+
+    <section class="panel">
+      <div class="section-head">
+        <div>
+          <p class="step">Measurement direction matters</p>
+          <h2>What does a strain gauge read as it rotates?</h2>
+        </div>
+        <p class="prompt"><strong>Question:</strong> If the material strain state stays fixed but the gauge orientation changes, why does the measured normal strain change?</p>
+      </div>
+
+      <div class="model-strip">
+        <div><span class="model-label">Normal strain transformation</span><strong>\(\epsilon_\theta=\bar\epsilon+\frac{\epsilon_x-\epsilon_y}{2}\cos2\theta+\frac{\gamma_{xy}}{2}\sin2\theta\)</strong></div>
+        <div><span class="model-label">Physical rotation</span><strong id="model-theta">θ = 0.0°</strong></div>
+        <div><span class="model-label">Mohr-circle movement</span><strong id="model-double-theta">2θ = 0.0°</strong></div>
+        <div><span class="model-label">Gauge reading</span><strong id="model-reading">εθ = —</strong></div>
+      </div>
+
+      <div class="explorer-grid">
+        <aside class="controls-card">
+          <h3>Define the strain state</h3>
+          <p class="help">All strain inputs are in microstrain (με). Engineering shear strain is \(\gamma_{xy}\).</p>
+
+          <label for="eps-x">Axial strain, εx (με)</label>
+          <input id="eps-x" type="number" step="10" value="400" />
+
+          <label for="eps-y">Transverse strain, εy (με)</label>
+          <input id="eps-y" type="number" step="10" value="-100" />
+
+          <label for="gamma-xy">Engineering shear strain, γxy (με)</label>
+          <input id="gamma-xy" type="number" step="10" value="300" />
+
+          <label for="theta">Gauge angle, θ</label>
+          <div class="range-row">
+            <input id="theta" type="range" min="-90" max="90" step="0.5" value="0" />
+            <output id="theta-output" for="theta">0.0°</output>
+          </div>
+
+          <div class="button-grid">
+            <button id="principal-angle" type="button">Go to principal direction</button>
+            <button id="zero-angle" type="button" class="secondary">Return to θ = 0°</button>
+          </div>
+
+          <label for="preset">Example strain state</label>
+          <select id="preset">
+            <option value="general" selected>General 2D state</option>
+            <option value="beam">Beam surface: axial + Poisson strain</option>
+            <option value="tension">Uniaxial tension with lateral contraction</option>
+            <option value="shear">Pure shear</option>
+          </select>
+
+          <div class="warning"><strong>Sign convention:</strong> this viewer plots \(\gamma/2\) positive upward. With this convention, a positive physical rotation \(\theta\) moves the strain point clockwise by \(2\theta\) around Mohr's circle.</div>
+        </aside>
+
+        <div>
+          <div class="stats-grid" aria-live="polite">
+            <div class="stat"><span>Measured normal strain</span><strong id="stat-eps-theta">—</strong><small>what a gauge at θ reads</small></div>
+            <div class="stat"><span>Transformed shear strain</span><strong id="stat-gamma-theta">—</strong><small>engineering shear γx′y′</small></div>
+            <div class="stat"><span>Major principal strain</span><strong id="stat-e1">—</strong><small>maximum normal strain</small></div>
+            <div class="stat"><span>Minor principal strain</span><strong id="stat-e2">—</strong><small>minimum normal strain</small></div>
+          </div>
+
+          <div class="visual-grid">
+            <figure class="chart-card">
+              <figcaption>
+                <strong>Physical strain element and gauge direction</strong>
+                <span>Deformation is exaggerated for visibility. The purple line represents the strain-gauge direction.</span>
+              </figcaption>
+              <svg id="element-svg" viewBox="0 0 520 380" role="img" aria-label="Exaggerated two-dimensional strain element with a rotatable strain gauge direction"></svg>
+            </figure>
+
+            <figure class="chart-card">
+              <figcaption>
+                <strong>Mohr's circle for strain</strong>
+                <span>The moving point represents the strain state seen by the rotated x′ direction.</span>
+              </figcaption>
+              <svg id="mohr-svg" viewBox="0 0 620 420" role="img" aria-label="Mohr's circle for strain showing the current measurement direction and principal strains"></svg>
+              <div class="legend">
+                <span><i class="dot start"></i> θ = 0° state</span>
+                <span><i class="dot current"></i> current θ state</span>
+                <span><i class="dot principal"></i> principal strains</span>
+              </div>
+            </figure>
+          </div>
+
+          <div class="stats-grid compact">
+            <div class="stat"><span>Principal direction</span><strong id="stat-theta-p">—</strong><small>orientation of ε1 from x</small></div>
+            <div class="stat"><span>Circle center</span><strong id="stat-center">—</strong><small>(εx + εy)/2</small></div>
+            <div class="stat"><span>Circle radius</span><strong id="stat-radius">—</strong><small>distance to principal strain</small></div>
+            <div class="stat"><span>Current circle angle</span><strong id="stat-circle-angle">—</strong><small>relative movement = −2θ</small></div>
+          </div>
+        </div>
+      </div>
+
+      <div id="observation" class="callout"></div>
+
+      <div class="reflection-grid">
+        <div class="reflection"><h3>Observe</h3><p>Move θ slowly. Does the point on Mohr's circle move through the same angle as the physical gauge?</p></div>
+        <div class="reflection"><h3>Interpret</h3><p>Find the orientation where transformed shear strain becomes zero. What normal strain does the gauge read there?</p></div>
+        <div class="reflection"><h3>Engineering judgment</h3><p>If you measured strain in only one direction, could you reconstruct this entire 2D strain state?</p></div>
+      </div>
+    </section>
+
+    <section class="panel">
+      <p class="step">Connect to the three-element rosette</p>
+      <h2>What would a 0° / 45° / 90° rosette measure?</h2>
+      <p>A rectangular strain rosette samples the same local strain state in three directions. Those three measurements are enough to recover \(\epsilon_x\), \(\epsilon_y\), and \(\gamma_{xy}\) for the assumed 2D strain state.</p>
+
+      <div class="rosette-grid">
+        <div class="rosette-reading"><span>ε0</span><strong id="rosette-0">—</strong><small>0° gauge</small></div>
+        <div class="rosette-reading"><span>ε45</span><strong id="rosette-45">—</strong><small>45° gauge</small></div>
+        <div class="rosette-reading"><span>ε90</span><strong id="rosette-90">—</strong><small>90° gauge</small></div>
+      </div>
+
+      <div class="formula">\(\gamma_{xy}=2\epsilon_{45}-\epsilon_0-\epsilon_{90}\)</div>
+      <p id="rosette-check" class="note"></p>
+    </section>
+
+    <section class="panel">
+      <p class="step">Equations behind the visualization</p>
+      <h2>Strain transformation and principal strain</h2>
+
+      <div class="formula">\(\epsilon_\theta=\dfrac{\epsilon_x+\epsilon_y}{2}+\dfrac{\epsilon_x-\epsilon_y}{2}\cos2\theta+\dfrac{\gamma_{xy}}{2}\sin2\theta\)</div>
+
+      <div class="formula">\(\dfrac{\gamma_{x'y'}}{2}=-\dfrac{\epsilon_x-\epsilon_y}{2}\sin2\theta+\dfrac{\gamma_{xy}}{2}\cos2\theta\)</div>
+
+      <div class="formula">\(\epsilon_{1,2}=\dfrac{\epsilon_x+\epsilon_y}{2}\pm\sqrt{\left(\dfrac{\epsilon_x-\epsilon_y}{2}\right)^2+\left(\dfrac{\gamma_{xy}}{2}\right)^2}\)</div>
+
+      <div class="formula">\(\theta_p=\dfrac{1}{2}\operatorname{atan2}(\gamma_{xy},\epsilon_x-\epsilon_y)\)</div>
+    </section>
+
+    <footer><p><strong>Experimental reasoning:</strong> A strain gauge gives one directional measurement. A rosette provides enough directional evidence to infer the local 2D strain state, and Mohr's circle helps us interpret the principal strains and their directions.</p></footer>
+  </main>
+  <script src="app.js"></script>
+</body>
+</html>
