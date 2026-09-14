@@ -15,7 +15,8 @@ me3310-interactive/
 ├── sampling-distribution/
 ├── confidence-interval/
 ├── least-squares/
-└── regression-confidence/
+├── regression-confidence/
+└── mohrs-circle/
 ```
 
 Each explorer directory contains its own `index.html`, `styles.css`, and `app.js`.
@@ -48,6 +49,10 @@ Supports Week 02 and Lab 02 sensor calibration. A simulated accelerator-pedal se
 
 Extends the Week 02 calibration example from point estimation to inference. Students begin with only three calibration measurements and add evidence one point at a time. The explorer updates the least-squares sensitivity, residual standard deviation, Student-t critical value, 95% confidence interval for the slope, and the 95% confidence band for the mean calibration response. A second plot shows how the slope estimate and its confidence bounds evolve with sample size. The page emphasizes that confidence intervals do not have to shrink after every individual measurement and that a narrow interval does not prove that the assumed linear physical model is correct.
 
+## Explorer 07 — Mohr's Circle for Strain
+
+Supports Week 04 strain-gauge and rosette material. Students define a 2D strain state, rotate a virtual strain-gauge direction, and watch the corresponding point move around Mohr's circle. The explorer emphasizes the physical-angle / double-angle relationship, identifies principal strains and their orientation, and shows the readings that a 0°/45°/90° rectangular rosette would produce. It also verifies the rosette relation `gamma_xy = 2 epsilon_45 - epsilon_0 - epsilon_90`.
+
 ## Netlify
 
 Commits to `main` automatically redeploy.
@@ -62,6 +67,7 @@ https://me3310-interactive.netlify.app/sampling-distribution/
 https://me3310-interactive.netlify.app/confidence-interval/
 https://me3310-interactive.netlify.app/least-squares/
 https://me3310-interactive.netlify.app/regression-confidence/
+https://me3310-interactive.netlify.app/mohrs-circle/
 ```
 
 Each explorer URL can be embedded directly in Canvas using an iframe.
