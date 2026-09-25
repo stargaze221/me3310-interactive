@@ -1,0 +1,30 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>RC Frequency Response Explorer</title>
+<style>
+body{font-family:Arial,sans-serif;margin:0;background:#f7f7f8;color:#222;line-height:1.5}.wrap{max-width:1000px;margin:auto;padding:22px}.hero,.card{background:#fff;padding:18px 22px;margin-bottom:16px;border:1px solid #ddd;border-radius:10px}.hero{border-left:6px solid #4f2683}.hero h1{margin:0;color:#2d1b46}.controls{display:grid;grid-template-columns:1fr 1fr;gap:24px}.control label{font-weight:bold}.control input{width:100%}.value{color:#4f2683}.readout{margin-top:14px;font-size:1.05rem}.plot{height:420px}canvas{width:100%;height:100%}.choices{display:flex;gap:24px;flex-wrap:wrap;margin-top:12px}.note{background:#f3eff8;padding:12px 15px;border-left:4px solid #4f2683;margin-top:14px}@media(max-width:650px){.controls{grid-template-columns:1fr}}
+</style>
+</head>
+<body><main class="wrap">
+<section class="hero"><h1>RC Frequency Response Explorer</h1><p>Change R and C and observe how the cutoff frequency and frequency response change.</p></section>
+<section class="card">
+<div class="controls">
+<div class="control"><label>Resistance R: <span id="rv" class="value"></span></label><input id="r" type="range" min="0" max="100" value="43"></div>
+<div class="control"><label>Capacitance C: <span id="cv" class="value"></span></label><input id="c" type="range" min="0" max="100" value="67"></div>
+</div>
+<div class="readout">Cutoff frequency: <strong id="fc"></strong> &nbsp; | &nbsp; At cutoff: <strong>-3.01 dB</strong></div>
+<div class="choices"><label><input id="lp" type="checkbox" checked> Measure across C: low-pass</label><label><input id="hp" type="checkbox" checked> Measure across R: high-pass</label></div>
+</section>
+<section class="card"><div class="plot"><canvas id="plot" aria-label="Bode magnitude plot"></canvas></div><div class="note"><strong>Observe:</strong> The physical R-C circuit is the same. Measuring the capacitor voltage gives a low-pass response; measuring the resistor voltage gives a high-pass response. Increasing either R or C lowers the cutoff frequency.</div></section>
+</main>
+<script>
+const r=document.querySelector('#r'),c=document.querySelector('#c'),rv=document.querySelector('#rv'),cv=document.querySelector('#cv'),fcv=document.querySelector('#fc'),lp=document.querySelector('#lp'),hp=document.querySelector('#hp'),can=document.querySelector('#plot'),g=can.getContext('2d');
+function li(v,a,b){return 10**(Math.log10(a)+v/100*(Math.log10(b)-Math.log10(a)))}
+function fr(x){return x>=1000?(x/1000).toFixed(2)+' kOhm':x.toFixed(0)+' Ohm'}
+function fcmt(x){let u=x*1e6;return u>=1?u.toFixed(2)+' uF':(x*1e9).toFixed(0)+' nF'}
+function draw(){let d=devicePixelRatio||1,w=can.clientWidth,h=can.clientHeight;if(can.width!=w*d){can.width=w*d;can.height=h*d;g.setTransform(d,0,0,d,0,0)}let R=li(+r.value,100,100000),C=li(+c.value,1e-8,1e-4),fc=1/(2*Math.PI*R*C);rv.textContent=fr(R);cv.textContent=fcmt(C);fcv.textContent=fc>=1000?(fc/1000).toFixed(2)+' kHz':fc.toFixed(1)+' Hz';let L=58,T=18,B=42,RR=18,pw=w-L-RR,ph=h-T-B,f0=.1,f1=1e5,y0=-60,y1=3;let X=f=>L+(Math.log10(f)-Math.log10(f0))/(Math.log10(f1)-Math.log10(f0))*pw,Y=db=>T+(y1-db)/(y1-y0)*ph;g.clearRect(0,0,w,h);g.font='12px Arial';g.strokeStyle='#ddd';g.fillStyle='#555';g.lineWidth=1;for(let e=-1;e<=5;e++){let f=10**e,x=X(f);g.beginPath();g.moveTo(x,T);g.lineTo(x,T+ph);g.stroke();g.textAlign='center';g.fillText(f>=1000?(f/1000)+'k':f,x,h-20)}for(let db=0;db>=-60;db-=10){let y=Y(db);g.beginPath();g.moveTo(L,y);g.lineTo(L+pw,y);g.stroke();g.textAlign='right';g.fillText(db,L-7,y+4)}g.fillStyle='#333';g.textAlign='center';g.fillText('Frequency (Hz)',L+pw/2,h-3);let xf=X(fc);if(xf>=L&&xf<=L+pw){g.save();g.setLineDash([5,5]);g.strokeStyle='#666';g.beginPath();g.moveTo(xf,T);g.lineTo(xf,T+ph);g.stroke();g.restore();g.fillText('fc',xf+10,T+12)}function curve(kind,col){g.strokeStyle=col;g.lineWidth=3;g.beginPath();for(let i=0;i<=500;i++){let f=10**(Math.log10(f0)+i/500*(Math.log10(f1)-Math.log10(f0))),q=f/fc,a=kind==='lp'?1/Math.sqrt(1+q*q):q/Math.sqrt(1+q*q),db=Math.max(y0,20*Math.log10(a)),x=X(f),y=Y(db);i?g.lineTo(x,y):g.moveTo(x,y)}g.stroke()}if(lp.checked)curve('lp','#4f2683');if(hp.checked)curve('hp','#b45f06')}
+[r,c,lp,hp].forEach(x=>x.addEventListener('input',draw));addEventListener('resize',draw);draw();
+</script></body></html>
