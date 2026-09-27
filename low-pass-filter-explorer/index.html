@@ -1,0 +1,28 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>What Does a Low-Pass Filter Do?</title>
+<style>
+body{font-family:Arial,sans-serif;margin:0;background:#f7f7f8;color:#222;line-height:1.5}.wrap{max-width:1050px;margin:auto;padding:22px}.hero,.card{background:#fff;padding:18px 22px;margin-bottom:16px;border:1px solid #ddd;border-radius:10px}.hero{border-left:6px solid #4f2683}.hero h1{margin:0;color:#2d1b46;font-size:1.8rem}.controls{display:grid;grid-template-columns:1fr 1fr;gap:24px;align-items:end}.control label{font-weight:bold}.control input[type=range]{width:100%}.value{color:#4f2683}.plots{display:grid;grid-template-columns:1fr 1fr;gap:18px}.plot h2{font-size:1.05rem;margin:0 0 8px}.plot canvas{display:block;width:100%;height:300px;border:1px solid #eee;background:#fff}.note{background:#f3eff8;padding:12px 15px;border-left:4px solid #4f2683;margin-top:14px}.question{font-size:1.08rem;border:2px solid #4f2683;padding:14px 16px;border-radius:8px;margin:0}.small{font-size:.92rem;color:#555}.legend{display:flex;gap:18px;flex-wrap:wrap;font-size:.9rem;margin-top:8px}.sw{display:inline-block;width:22px;height:3px;vertical-align:middle;margin-right:6px}.desired{background:#4f2683}.measured{background:#b45f06}.filtered{background:#2f6f4e}@media(max-width:760px){.controls,.plots{grid-template-columns:1fr}.plot canvas{height:280px}.hero h1{font-size:1.45rem}}
+</style></head>
+<body><main class="wrap">
+<section class="hero"><h1>What Does a Low-Pass Filter Do?</h1><p>Start with a 5 Hz square-wave signal contaminated by a 60 Hz disturbance. Change the cutoff frequency and watch what happens to both the noise and the desired signal.</p></section>
+<section class="card"><div class="controls"><div class="control"><label>Cutoff frequency: <span id="fcv" class="value">25 Hz</span></label><input id="cutoff" type="range" min="5" max="120" value="25" step="1"><div class="small">Lower cutoff → stronger attenuation of higher-frequency components</div></div><div><strong>First-order low-pass response</strong><div class="small">Each frequency component is scaled by G(f) = 1 / √(1 + (f/fc)²).</div></div></div></section>
+<section class="card"><div class="plots"><div class="plot"><h2>Before Filtering</h2><canvas id="before" width="500" height="300"></canvas></div><div class="plot"><h2>After Filtering</h2><canvas id="after" width="500" height="300"></canvas></div></div><div class="legend"><span><i class="sw desired"></i>Desired 5 Hz square wave</span><span><i class="sw measured"></i>Measured signal + 60 Hz noise</span><span><i class="sw filtered"></i>Filtered output</span></div><div class="note"><strong>Observe:</strong> Lower the cutoff frequency. The 60 Hz disturbance becomes smaller—but the sharp edges of the square wave also begin to change.</div></section>
+<section class="card"><p class="question"><strong>Think:</strong> Is the lowest possible cutoff frequency always the best choice? What are we trading when we reject more high-frequency content?</p></section>
+</main>
+<script>
+(function(){'use strict';var slider=document.getElementById('cutoff'),label=document.getElementById('fcv'),bc=document.getElementById('before'),ac=document.getElementById('after'),bg=bc.getContext('2d'),ag=ac.getContext('2d');var f0=5,noiseF=60,noiseA=.32,N=31;
+function setup(c,g){var r=c.getBoundingClientRect(),w=Math.max(300,Math.round(r.width)),h=Math.max(240,Math.round(r.height)),d=window.devicePixelRatio||1;c.width=Math.round(w*d);c.height=Math.round(h*d);g.setTransform(d,0,0,d,0,0);return{w:w,h:h};}
+function ln(g,x1,y1,x2,y2,col,lw){g.beginPath();g.moveTo(x1,y1);g.lineTo(x2,y2);g.strokeStyle=col;g.lineWidth=lw||1;g.stroke();}
+function sq(t){return Math.sin(2*Math.PI*f0*t)>=0?1:-1;}
+function noisy(t){return sq(t)+noiseA*Math.sin(2*Math.PI*noiseF*t);}
+function gain(f,fc){return 1/Math.sqrt(1+(f/fc)*(f/fc));}
+function phase(f,fc){return-Math.atan(f/fc);}
+function filtered(t,fc){var s=0,n,f;for(n=1;n<=N;n+=2){f=n*f0;s+=(4/(Math.PI*n))*gain(f,fc)*Math.sin(2*Math.PI*f*t+phase(f,fc));}s+=noiseA*gain(noiseF,fc)*Math.sin(2*Math.PI*noiseF*t+phase(noiseF,fc));return s;}
+function base(c,g){var s=setup(c,g),w=s.w,h=s.h,L=44,R=12,T=15,B=35,pw=w-L-R,ph=h-T-B,tmax=.6,ymin=-1.7,ymax=1.7;function X(t){return L+t/tmax*pw}function Y(y){return T+(ymax-y)/(ymax-ymin)*ph}g.clearRect(0,0,w,h);g.font='12px Arial';g.fillStyle='#666';var t,x,y;for(y=-1;y<=1;y++){var yy=Y(y);ln(g,L,yy,w-R,yy,y===0?'#bbb':'#eee',1);g.textAlign='right';g.fillText(String(y),L-6,yy+4)}for(t=0;t<=.6001;t+=.1){x=X(t);ln(g,x,T,x,h-B,'#eee',1);g.textAlign='center';g.fillText(t.toFixed(1),x,h-B+18)}ln(g,L,T,L,h-B,'#666',1.5);ln(g,L,h-B,w-R,h-B,'#666',1.5);g.fillStyle='#333';g.textAlign='center';g.fillText('Time (s)',L+pw/2,h-5);return{w:w,h:h,X:X,Y:Y,tmax:tmax};}
+function curve(g,b,fn,col,lw,dash){g.save();if(dash)g.setLineDash(dash);g.strokeStyle=col;g.lineWidth=lw;g.beginPath();for(var i=0;i<=1800;i++){var t=b.tmax*i/1800,x=b.X(t),y=b.Y(fn(t));if(i===0)g.moveTo(x,y);else g.lineTo(x,y)}g.stroke();g.restore();}
+function draw(){var fc=+slider.value;label.textContent=fc+' Hz';var b=base(bc,bg);curve(bg,b,sq,'#4f2683',2,[6,4]);curve(bg,b,noisy,'#b45f06',2.5,null);var a=base(ac,ag);curve(ag,a,sq,'#4f2683',2,[6,4]);curve(ag,a,function(t){return filtered(t,fc)},'#2f6f4e',3,null);}
+slider.addEventListener('input',draw);window.addEventListener('resize',draw);setTimeout(draw,50);})();
+</script></body></html>
