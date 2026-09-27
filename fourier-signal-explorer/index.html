@@ -10,7 +10,7 @@ body{font-family:Arial,sans-serif;margin:0;background:#f7f7f8;color:#222;line-he
 </head>
 <body><main class="wrap">
 <section class="hero"><h1>Seeing a Square Wave as Frequency Components</h1><p>A square wave can be represented as a sum of sinusoidal components. Change the number of odd harmonics and compare the time-domain signal with its frequency components.</p></section>
-<section class="card"><div class="controls"><div class="control"><label>Highest odd harmonic: <span id="hv" class="value">7f₀</span></label><input id="harm" type="range" min="0" max="6" value="3" step="1"><div class="small">1f₀, 3f₀, 5f₀, ...</div></div><label class="toggle"><input id="noise" type="checkbox"> Add a 60 Hz sinusoidal disturbance</label></div><div class="small" style="margin-top:12px">Fundamental frequency: <strong>f₀ = 5 Hz</strong>. Dashed line: ideal square wave. Solid line: Fourier partial sum.</div></section>
+<section class="card"><div class="controls"><div class="control"><label>Highest odd harmonic: <span id="hv" class="value">7f₀</span></label><input id="harm" type="range" min="0" max="15" value="3" step="1"><div class="small">1f₀, 3f₀, 5f₀, ... , 31f₀</div></div><label class="toggle"><input id="noise" type="checkbox"> Add a 60 Hz sinusoidal disturbance</label></div><div class="small" style="margin-top:12px">Fundamental frequency: <strong>f₀ = 5 Hz</strong>. Dashed line: ideal square wave. Solid line: Fourier partial sum.</div></section>
 <section class="card"><div class="plots"><div class="plot"><h2>Time-Domain View</h2><canvas id="time" width="600" height="330" aria-label="Time-domain Fourier representation"></canvas></div><div class="plot"><h2>Frequency-Domain View</h2><canvas id="freq" width="440" height="330" aria-label="Frequency components"></canvas></div></div><div class="note"><strong>Observe:</strong> Higher harmonics help represent the sharp transitions of the square wave. Turn on the 60 Hz disturbance and look for what changes in both views.</div></section>
 <section class="card"><p class="question"><strong>Think:</strong> If the unwanted disturbance appears at a higher frequency than most of the useful signal content, could a measurement system respond differently to different frequencies?</p></section>
 </main>
@@ -25,54 +25,13 @@ var fc=document.getElementById('freq');
 var tg=tc.getContext('2d');
 var fg=fc.getContext('2d');
 var f0=5, noiseA=0.32;
-
-function setup(canvas,ctx){
-  var rect=canvas.getBoundingClientRect();
-  var w=Math.max(300,Math.round(rect.width));
-  var h=Math.max(240,Math.round(rect.height));
-  var d=window.devicePixelRatio||1;
-  canvas.width=Math.round(w*d);
-  canvas.height=Math.round(h*d);
-  ctx.setTransform(d,0,0,d,0,0);
-  return {w:w,h:h};
-}
+function setup(canvas,ctx){var rect=canvas.getBoundingClientRect();var w=Math.max(300,Math.round(rect.width));var h=Math.max(240,Math.round(rect.height));var d=window.devicePixelRatio||1;canvas.width=Math.round(w*d);canvas.height=Math.round(h*d);ctx.setTransform(d,0,0,d,0,0);return {w:w,h:h};}
 function line(ctx,x1,y1,x2,y2,color,width){ctx.beginPath();ctx.moveTo(x1,y1);ctx.lineTo(x2,y2);ctx.strokeStyle=color;ctx.lineWidth=width||1;ctx.stroke();}
 function square(t){return Math.sin(2*Math.PI*f0*t)>=0?1:-1;}
 function partial(t,nmax){var s=0,n;for(n=1;n<=nmax;n+=2){s+=Math.sin(2*Math.PI*n*f0*t)/n;}return 4*s/Math.PI;}
-
-function drawTime(nmax){
-  var s=setup(tc,tg),w=s.w,h=s.h,L=48,R=14,T=16,B=38;
-  var pw=w-L-R,ph=h-T-B,tmax=0.6,ymin=-1.7,ymax=1.7;
-  function X(t){return L+t/tmax*pw;} function Y(y){return T+(ymax-y)/(ymax-ymin)*ph;}
-  tg.clearRect(0,0,w,h);tg.font='12px Arial';tg.fillStyle='#555';
-  var y,t,i,x,yy;
-  for(y=-1;y<=1;y++) {yy=Y(y);line(tg,L,yy,w-R,yy,y===0?'#bbb':'#eee',1);tg.textAlign='right';tg.fillText(String(y),L-7,yy+4);}
-  for(t=0;t<=0.6001;t+=0.1){x=X(t);line(tg,x,T,x,h-B,'#eee',1);tg.textAlign='center';tg.fillText(t.toFixed(1),x,h-B+18);}
-  line(tg,L,T,L,h-B,'#666',1.5);line(tg,L,h-B,w-R,h-B,'#666',1.5);
-  tg.fillStyle='#333';tg.textAlign='center';tg.fillText('Time (s)',L+pw/2,h-5);
-  tg.save();tg.translate(13,T+ph/2);tg.rotate(-Math.PI/2);tg.fillText('Amplitude',0,0);tg.restore();
-  tg.save();tg.setLineDash([6,5]);tg.strokeStyle='#999';tg.lineWidth=2;tg.beginPath();
-  for(i=0;i<=1200;i++){t=tmax*i/1200;x=X(t);yy=Y(square(t));if(i===0)tg.moveTo(x,yy);else tg.lineTo(x,yy);}tg.stroke();tg.restore();
-  tg.strokeStyle='#4f2683';tg.lineWidth=3;tg.beginPath();
-  for(i=0;i<=1600;i++){t=tmax*i/1600;y=partial(t,nmax);if(noise.checked)y+=noiseA*Math.sin(2*Math.PI*60*t);x=X(t);yy=Y(y);if(i===0)tg.moveTo(x,yy);else tg.lineTo(x,yy);}tg.stroke();
-}
-
-function drawFreq(nmax){
-  var s=setup(fc,fg),w=s.w,h=s.h,L=48,R=14,T=16,B=42;
-  var pw=w-L-R,ph=h-T-B,fmax=70,ymax=1.4;
-  function X(f){return L+f/fmax*pw;} function Y(a){return T+(ymax-a)/ymax*ph;}
-  fg.clearRect(0,0,w,h);fg.font='12px Arial';fg.fillStyle='#555';
-  var f,a,x,y,n;
-  for(f=0;f<=70;f+=10){x=X(f);line(fg,x,T,x,h-B,'#eee',1);fg.textAlign='center';fg.fillText(String(f),x,h-B+18);}
-  for(a=0;a<=1.21;a+=0.3){y=Y(a);line(fg,L,y,w-R,y,'#eee',1);fg.textAlign='right';fg.fillText(a.toFixed(1),L-6,y+4);}
-  line(fg,L,T,L,h-B,'#666',1.5);line(fg,L,h-B,w-R,h-B,'#666',1.5);
-  fg.fillStyle='#333';fg.textAlign='center';fg.fillText('Frequency (Hz)',L+pw/2,h-5);
-  fg.save();fg.translate(13,T+ph/2);fg.rotate(-Math.PI/2);fg.fillText('Amplitude',0,0);fg.restore();
-  for(n=1;n<=nmax;n+=2){f=n*f0;if(f>fmax)break;a=4/(Math.PI*n);x=X(f);line(fg,x,Y(0),x,Y(a),'#4f2683',6);fg.fillStyle='#4f2683';fg.textAlign='center';fg.fillText(n+'f₀',x,Math.max(T+12,Y(a)-8));}
-  if(noise.checked){x=X(60);a=noiseA;line(fg,x,Y(0),x,Y(a),'#b45f06',7);fg.fillStyle='#b45f06';fg.textAlign='center';fg.fillText('60 Hz noise',x,Y(a)-9);}
-}
+function drawTime(nmax){var s=setup(tc,tg),w=s.w,h=s.h,L=48,R=14,T=16,B=38;var pw=w-L-R,ph=h-T-B,tmax=0.6,ymin=-1.7,ymax=1.7;function X(t){return L+t/tmax*pw;}function Y(y){return T+(ymax-y)/(ymax-ymin)*ph;}tg.clearRect(0,0,w,h);tg.font='12px Arial';tg.fillStyle='#555';var y,t,i,x,yy;for(y=-1;y<=1;y++){yy=Y(y);line(tg,L,yy,w-R,yy,y===0?'#bbb':'#eee',1);tg.textAlign='right';tg.fillText(String(y),L-7,yy+4);}for(t=0;t<=0.6001;t+=0.1){x=X(t);line(tg,x,T,x,h-B,'#eee',1);tg.textAlign='center';tg.fillText(t.toFixed(1),x,h-B+18);}line(tg,L,T,L,h-B,'#666',1.5);line(tg,L,h-B,w-R,h-B,'#666',1.5);tg.fillStyle='#333';tg.textAlign='center';tg.fillText('Time (s)',L+pw/2,h-5);tg.save();tg.translate(13,T+ph/2);tg.rotate(-Math.PI/2);tg.fillText('Amplitude',0,0);tg.restore();tg.save();tg.setLineDash([6,5]);tg.strokeStyle='#999';tg.lineWidth=2;tg.beginPath();for(i=0;i<=1800;i++){t=tmax*i/1800;x=X(t);yy=Y(square(t));if(i===0)tg.moveTo(x,yy);else tg.lineTo(x,yy);}tg.stroke();tg.restore();tg.strokeStyle='#4f2683';tg.lineWidth=3;tg.beginPath();for(i=0;i<=3000;i++){t=tmax*i/3000;y=partial(t,nmax);if(noise.checked)y+=noiseA*Math.sin(2*Math.PI*60*t);x=X(t);yy=Y(y);if(i===0)tg.moveTo(x,yy);else tg.lineTo(x,yy);}tg.stroke();}
+function drawFreq(nmax){var s=setup(fc,fg),w=s.w,h=s.h,L=48,R=14,T=16,B=42;var pw=w-L-R,ph=h-T-B,fmax=160,ymax=1.4;function X(f){return L+f/fmax*pw;}function Y(a){return T+(ymax-a)/ymax*ph;}fg.clearRect(0,0,w,h);fg.font='12px Arial';fg.fillStyle='#555';var f,a,x,y,n;for(f=0;f<=160;f+=20){x=X(f);line(fg,x,T,x,h-B,'#eee',1);fg.textAlign='center';fg.fillText(String(f),x,h-B+18);}for(a=0;a<=1.21;a+=0.3){y=Y(a);line(fg,L,y,w-R,y,'#eee',1);fg.textAlign='right';fg.fillText(a.toFixed(1),L-6,y+4);}line(fg,L,T,L,h-B,'#666',1.5);line(fg,L,h-B,w-R,h-B,'#666',1.5);fg.fillStyle='#333';fg.textAlign='center';fg.fillText('Frequency (Hz)',L+pw/2,h-5);fg.save();fg.translate(13,T+ph/2);fg.rotate(-Math.PI/2);fg.fillText('Amplitude',0,0);fg.restore();for(n=1;n<=nmax;n+=2){f=n*f0;if(f>fmax)break;a=4/(Math.PI*n);x=X(f);line(fg,x,Y(0),x,Y(a),'#4f2683',4);if(n===1||n===3||n===5||n===nmax){fg.fillStyle='#4f2683';fg.textAlign='center';fg.fillText(n+'f₀',x,Math.max(T+12,Y(a)-8));}}if(noise.checked){x=X(60);a=noiseA;line(fg,x,Y(0),x,Y(a),'#b45f06',7);fg.fillStyle='#b45f06';fg.textAlign='center';fg.fillText('60 Hz noise',x,Y(a)-9);}}
 function draw(){var nmax=1+2*parseInt(harm.value,10);hv.textContent=nmax+'f₀';drawTime(nmax);drawFreq(nmax);}
-harm.addEventListener('input',draw);noise.addEventListener('change',draw);window.addEventListener('resize',draw);
-window.setTimeout(draw,50);
+harm.addEventListener('input',draw);noise.addEventListener('change',draw);window.addEventListener('resize',draw);window.setTimeout(draw,50);
 })();
 </script></body></html>
