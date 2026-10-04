@@ -1,0 +1,200 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Sampling & Aliasing Explorer</title>
+<style>
+:root{--navy:#17365d;--blue:#2f75b5;--green:#3d8b40;--gold:#d89b00;--red:#b3261e;--ink:#222;--muted:#5b6572;--line:#d7dfe8;--bg:#f4f7fb}
+*{box-sizing:border-box}
+body{font-family:Arial,Helvetica,sans-serif;margin:0;background:var(--bg);color:var(--ink);line-height:1.5}
+.wrap{max-width:1180px;margin:auto;padding:22px}
+.hero{background:linear-gradient(135deg,var(--navy),var(--blue));color:white;padding:22px 26px;border-radius:12px;margin-bottom:16px}
+.hero h1{margin:0 0 6px;font-size:1.85rem}.hero p{margin:0;max-width:920px}
+.grid{display:grid;grid-template-columns:320px 1fr;gap:16px;align-items:start}
+.card,.plotcard,.prompt{background:white;border:1px solid var(--line);border-radius:11px;box-shadow:0 2px 8px rgba(0,0,0,.04)}
+.card{padding:18px}.card h2,.plotcard h2,.prompt h2{margin:0 0 12px;color:var(--navy);font-size:1.15rem}
+.control{padding-bottom:14px;margin-bottom:14px;border-bottom:1px solid #e8edf3}.control:last-child{border-bottom:0;margin-bottom:0}
+.control label{display:block;font-weight:700;color:var(--navy)}
+.row{display:flex;justify-content:space-between;gap:12px;margin:4px 0 7px;font-size:.88rem;color:var(--muted)}.row output{font-weight:700;color:var(--ink)}
+input[type=range]{width:100%}
+.buttons{display:flex;flex-wrap:wrap;gap:7px}.buttons button{border:1px solid #c8d6e6;border-radius:7px;background:#eef4fb;color:var(--navy);padding:7px 9px;font-weight:700;cursor:pointer}.buttons button:hover{background:#dfeafa}
+.metrics{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-top:14px}.metric{background:#f8fafc;border:1px solid #dce5ef;border-radius:8px;padding:10px}.metric .name{font-size:.78rem;color:var(--muted)}.metric .value{font-weight:700;color:var(--navy);margin-top:2px}
+.status{margin-top:12px;padding:12px 14px;border-left:5px solid var(--green);background:#eef8ef;border-radius:6px;font-size:.92rem}
+.status.warn{border-left-color:var(--gold);background:#fff8e7}.status.bad{border-left-color:var(--red);background:#fff1f0}
+.plots{display:grid;gap:16px}.plotcard{padding:16px}.plotcard h2{margin-bottom:5px}.plotcard p{margin:0 0 10px;color:var(--muted);font-size:.91rem}
+canvas{display:block;width:100%;height:380px;border:1px solid #edf1f5;border-radius:7px;background:white}
+.legend{display:flex;gap:18px;flex-wrap:wrap;font-size:.85rem;color:#4b5563;margin-top:8px}.sw{display:inline-block;width:22px;height:3px;vertical-align:middle;margin-right:6px}.dot{display:inline-block;width:8px;height:8px;border-radius:50%;vertical-align:middle;margin-right:6px}
+.prompt{margin-top:16px;padding:16px 18px}.prompt ol{margin-bottom:0}
+.eq{font-family:"Times New Roman",serif;font-style:italic;white-space:nowrap}
+.small{font-size:.86rem;color:var(--muted)}
+@media(max-width:850px){.grid{grid-template-columns:1fr}.metrics{grid-template-columns:1fr 1fr}}
+@media(max-width:500px){.wrap{padding:12px}.metrics{grid-template-columns:1fr}.hero h1{font-size:1.45rem}}
+</style>
+</head>
+<body>
+<main class="wrap">
+<section class="hero">
+  <h1>Sampling & Aliasing Explorer</h1>
+  <p>Change the physical signal frequency and the sampling rate. Watch the same continuous motion turn into sparse data—and, when sampling is too slow, into a convincing but incorrect lower-frequency pattern.</p>
+</section>
+
+<div class="grid">
+  <aside class="card" aria-label="Sampling controls">
+    <h2>Change the Experiment</h2>
+
+    <div class="control">
+      <label for="signalF">Physical signal frequency, f</label>
+      <div class="row"><span>actual continuous motion</span><output id="signalOut">1.0 Hz</output></div>
+      <input id="signalF" type="range" min=".5" max="30" step=".1" value="1">
+    </div>
+
+    <div class="control">
+      <label for="sampleF">Sampling rate, f<sub>s</sub></label>
+      <div class="row"><span>measurements per second</span><output id="sampleOut">20.0 Hz</output></div>
+      <input id="sampleF" type="range" min="2" max="60" step=".5" value="20">
+    </div>
+
+    <div class="control">
+      <label>Try a case</label>
+      <div class="buttons">
+        <button type="button" data-preset="hand">1 Hz @ 20 Hz</button>
+        <button type="button" data-preset="sparse">4 Hz @ 10 Hz</button>
+        <button type="button" data-preset="near">9 Hz @ 20 Hz</button>
+        <button type="button" data-preset="alias">17 Hz @ 20 Hz</button>
+      </div>
+    </div>
+
+    <div class="metrics" aria-live="polite">
+      <div class="metric"><div class="name">Nyquist frequency</div><div class="value" id="nyqOut">—</div></div>
+      <div class="metric"><div class="name">Samples per cycle</div><div class="value" id="spcOut">—</div></div>
+      <div class="metric"><div class="name">Observed alias</div><div class="value" id="aliasOut">—</div></div>
+      <div class="metric"><div class="name">Sampling interval</div><div class="value" id="dtOut">—</div></div>
+    </div>
+
+    <div class="status" id="statusBox">—</div>
+
+    <p class="small" style="margin-bottom:0;">
+      The dashed curve is one continuous sinusoid that produces the <strong>same sample values</strong> as the true signal. Above Nyquist, the samples alone cannot tell which continuous frequency was present.
+    </p>
+  </aside>
+
+  <section class="plots">
+    <div class="plotcard">
+      <h2>Continuous Motion vs. Recorded Samples</h2>
+      <p>Solid blue = actual physical signal. Dots = recorded measurements. Dashed red = a sampled-data-equivalent sinusoid.</p>
+      <canvas id="timePlot" role="img" aria-label="Continuous sinusoidal signal, discrete sample points, and an equivalent aliased sinusoid"></canvas>
+      <div class="legend">
+        <span><span class="sw" style="background:#2f75b5"></span>true continuous signal</span>
+        <span><span class="dot" style="background:#111827"></span>samples</span>
+        <span><span class="sw" style="background:#b3261e"></span>equivalent sampled waveform</span>
+      </div>
+    </div>
+
+    <div class="plotcard">
+      <h2>What the Data File Actually Contains</h2>
+      <p>The computer receives only the sequence <span class="eq">x[k]</span>. It does not receive the blue continuous curve.</p>
+      <canvas id="samplePlot" role="img" aria-label="Discrete sampled values versus sample number"></canvas>
+    </div>
+  </section>
+</div>
+
+<section class="prompt">
+  <h2>Explore, Then Decide</h2>
+  <ol>
+    <li>Start with <strong>1 Hz @ 20 Hz</strong>. How many samples describe each cycle?</li>
+    <li>Try <strong>9 Hz @ 20 Hz</strong>. Nyquist is satisfied, but does the waveform look richly measured?</li>
+    <li>Try <strong>17 Hz @ 20 Hz</strong>. Why can the recorded data look like a 3 Hz oscillation?</li>
+    <li>Increase <span class="eq">f<sub>s</sub></span> until the 17 Hz motion is no longer aliased. What changed: the sensor bandwidth or the sampling process?</li>
+  </ol>
+</section>
+</main>
+
+<script>
+const signalF=document.getElementById('signalF'),sampleF=document.getElementById('sampleF');
+const signalOut=document.getElementById('signalOut'),sampleOut=document.getElementById('sampleOut'),nyqOut=document.getElementById('nyqOut'),spcOut=document.getElementById('spcOut'),aliasOut=document.getElementById('aliasOut'),dtOut=document.getElementById('dtOut'),statusBox=document.getElementById('statusBox');
+const timePlot=document.getElementById('timePlot'),samplePlot=document.getElementById('samplePlot');
+
+function setCanvas(canvas){
+  const d=window.devicePixelRatio||1,w=Math.max(300,canvas.clientWidth),h=canvas.clientHeight;
+  canvas.width=w*d;canvas.height=h*d;
+  const g=canvas.getContext('2d');g.setTransform(d,0,0,d,0,0);return {g,w,h};
+}
+function signedAlias(f,fs){
+  let a=f-Math.round(f/fs)*fs;
+  if(a>fs/2)a-=fs;if(a<-fs/2)a+=fs;
+  return a;
+}
+function fmt(x,d=1){return Number(x).toLocaleString(undefined,{maximumFractionDigits:d})}
+function drawTime(f,fs,fa){
+  const {g,w,h}=setCanvas(timePlot);g.clearRect(0,0,w,h);
+  const L=55,R=18,T=18,B=45,pw=w-L-R,ph=h-T-B;
+  const cyclesToShow=Math.max(2,Math.min(5,2.5));
+  const windowSec=Math.max(0.25,Math.min(3,cyclesToShow/f));
+  const X=t=>L+t/windowSec*pw,Y=y=>T+(1.25-y)/2.5*ph;
+
+  g.strokeStyle='#e2e8f0';g.fillStyle='#59636f';g.font='12px Arial';
+  [-1,-.5,0,.5,1].forEach(v=>{const y=Y(v);g.beginPath();g.moveTo(L,y);g.lineTo(L+pw,y);g.stroke();g.textAlign='right';g.fillText(v.toFixed(v%1?1:0),L-7,y+4)});
+  for(let i=0;i<=5;i++){const t=windowSec*i/5,x=X(t);g.beginPath();g.moveTo(x,T);g.lineTo(x,T+ph);g.stroke();g.textAlign='center';g.fillText(fmt(t,2),x,h-20)}
+
+  function curve(freq,color,dash){
+    g.save();if(dash)g.setLineDash(dash);g.strokeStyle=color;g.lineWidth=3;g.beginPath();
+    for(let i=0;i<=900;i++){const t=windowSec*i/900,y=Math.sin(2*Math.PI*freq*t),x=X(t),py=Y(y);i?g.lineTo(x,py):g.moveTo(x,py)}
+    g.stroke();g.restore();
+  }
+  curve(f,'#2f75b5',null);
+  curve(fa,'#b3261e',[7,5]);
+
+  g.fillStyle='#111827';
+  const nmax=Math.floor(windowSec*fs+1e-9);
+  for(let n=0;n<=nmax;n++){const t=n/fs,y=Math.sin(2*Math.PI*f*t),x=X(t),py=Y(y);g.beginPath();g.arc(x,py,4.3,0,2*Math.PI);g.fill()}
+
+  g.fillStyle='#17365d';g.textAlign='center';g.font='13px Arial';g.fillText('Time (s)',L+pw/2,h-4);
+  g.save();g.translate(15,T+ph/2);g.rotate(-Math.PI/2);g.fillText('Signal amplitude',0,0);g.restore();
+}
+function drawSamples(f,fs){
+  const {g,w,h}=setCanvas(samplePlot);g.clearRect(0,0,w,h);
+  const L=55,R=18,T=18,B=45,pw=w-L-R,ph=h-T-B;
+  const N=25,X=n=>L+n/(N-1)*pw,Y=y=>T+(1.25-y)/2.5*ph;
+  g.strokeStyle='#e2e8f0';g.fillStyle='#59636f';g.font='12px Arial';
+  [-1,-.5,0,.5,1].forEach(v=>{const y=Y(v);g.beginPath();g.moveTo(L,y);g.lineTo(L+pw,y);g.stroke();g.textAlign='right';g.fillText(v.toFixed(v%1?1:0),L-7,y+4)});
+  [0,5,10,15,20,24].forEach(n=>{const x=X(n);g.beginPath();g.moveTo(x,T);g.lineTo(x,T+ph);g.stroke();g.textAlign='center';g.fillText(n,x,h-20)});
+  g.strokeStyle='#7c8da3';g.lineWidth=1.5;g.beginPath();
+  for(let n=0;n<N;n++){const y=Math.sin(2*Math.PI*f*n/fs),x=X(n),py=Y(y);g.moveTo(x,Y(0));g.lineTo(x,py)}g.stroke();
+  g.fillStyle='#111827';
+  for(let n=0;n<N;n++){const y=Math.sin(2*Math.PI*f*n/fs),x=X(n),py=Y(y);g.beginPath();g.arc(x,py,4.1,0,2*Math.PI);g.fill()}
+  g.fillStyle='#17365d';g.textAlign='center';g.font='13px Arial';g.fillText('Sample number, k',L+pw/2,h-4);
+  g.save();g.translate(15,T+ph/2);g.rotate(-Math.PI/2);g.fillText('x[k]',0,0);g.restore();
+}
+function update(){
+  const f=+signalF.value,fs=+sampleF.value,nyq=fs/2,spc=fs/f,fa=signedAlias(f,fs),alias=Math.abs(fa),dt=1/fs;
+  signalOut.value=f.toFixed(1)+' Hz';sampleOut.value=fs.toFixed(1)+' Hz';
+  nyqOut.textContent=fmt(nyq,1)+' Hz';spcOut.textContent=fmt(spc,2);
+  aliasOut.textContent=alias.toFixed(2)+' Hz';dtOut.textContent=(1000*dt).toFixed(1)+' ms';
+
+  statusBox.className='status';
+  if(f>nyq+1e-9){
+    statusBox.classList.add('bad');
+    statusBox.innerHTML='<strong>Aliasing:</strong> f = '+f.toFixed(1)+' Hz is above the '+nyq.toFixed(1)+' Hz Nyquist frequency. These samples are also consistent with a '+alias.toFixed(1)+' Hz sinusoid.';
+  }else if(spc<5){
+    statusBox.classList.add('warn');
+    statusBox.innerHTML='<strong>Nyquist may be satisfied, but the waveform is sparse:</strong> only '+spc.toFixed(2)+' samples describe each cycle.';
+  }else{
+    statusBox.innerHTML='<strong>Comfortable sampling for this simple sinusoid:</strong> about '+spc.toFixed(1)+' samples describe each cycle.';
+  }
+  drawTime(f,fs,fa);drawSamples(f,fs);
+}
+document.querySelectorAll('[data-preset]').forEach(b=>b.addEventListener('click',()=>{
+  const p=b.dataset.preset;
+  if(p==='hand'){signalF.value=1;sampleF.value=20}
+  if(p==='sparse'){signalF.value=4;sampleF.value=10}
+  if(p==='near'){signalF.value=9;sampleF.value=20}
+  if(p==='alias'){signalF.value=17;sampleF.value=20}
+  update();
+}));
+[signalF,sampleF].forEach(e=>e.addEventListener('input',update));
+window.addEventListener('resize',update);
+update();
+</script>
+</body>
+</html>
