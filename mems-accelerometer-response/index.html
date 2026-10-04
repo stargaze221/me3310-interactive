@@ -1,0 +1,194 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>MEMS Accelerometer Response Explorer</title>
+<style>
+:root{--navy:#17365d;--blue:#2f75b5;--green:#3d8b40;--gold:#d89b00;--ink:#222;--muted:#5b6572;--line:#d7dfe8;--bg:#f4f7fb}
+*{box-sizing:border-box}
+body{font-family:Arial,Helvetica,sans-serif;margin:0;background:var(--bg);color:var(--ink);line-height:1.5}
+.wrap{max-width:1180px;margin:auto;padding:22px}
+.hero{background:linear-gradient(135deg,var(--navy),var(--blue));color:#fff;padding:22px 26px;border-radius:12px;margin-bottom:16px}
+.hero h1{margin:0 0 6px;font-size:1.85rem}.hero p{margin:0;max-width:900px}
+.grid{display:grid;grid-template-columns:320px 1fr;gap:16px;align-items:start}
+.card{background:#fff;border:1px solid var(--line);border-radius:11px;padding:18px;box-shadow:0 2px 8px rgba(0,0,0,.04)}
+.card h2{margin:0 0 14px;color:var(--navy);font-size:1.15rem}
+.control{padding:0 0 14px;margin:0 0 14px;border-bottom:1px solid #e8edf3}
+.control:last-child{border-bottom:0;margin-bottom:0}.control label{font-weight:700;color:var(--navy);display:block}
+.row{display:flex;justify-content:space-between;gap:12px;font-size:.88rem;color:var(--muted);margin:4px 0 7px}.row output{font-weight:700;color:var(--ink)}
+input[type=range]{width:100%}
+.buttons{display:flex;flex-wrap:wrap;gap:7px}.buttons button{border:1px solid #c8d6e6;border-radius:7px;background:#eef4fb;color:var(--navy);padding:7px 9px;font-weight:700;cursor:pointer}.buttons button:hover{background:#dfeafa}
+.metrics{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-top:14px}.metric{background:#f8fafc;border:1px solid #dce5ef;border-radius:8px;padding:10px}.metric .name{font-size:.78rem;color:var(--muted)}.metric .value{font-weight:700;color:var(--navy);margin-top:2px}
+.note{margin-top:14px;padding:12px 14px;border-left:5px solid var(--gold);background:#fff8e7;border-radius:6px;font-size:.92rem}
+.interpret{margin-top:12px;padding:12px 14px;border-left:5px solid var(--green);background:#eef8ef;border-radius:6px;font-size:.92rem}
+.plots{display:grid;gap:16px}.plotcard{background:#fff;border:1px solid var(--line);border-radius:11px;padding:16px;box-shadow:0 2px 8px rgba(0,0,0,.04)}
+.plotcard h2{margin:0 0 5px;color:var(--navy);font-size:1.13rem}.plotcard p{margin:0 0 10px;color:var(--muted);font-size:.91rem}
+canvas{display:block;width:100%;height:350px;border:1px solid #edf1f5;border-radius:7px;background:white}
+.prompt{margin-top:16px;background:#fff;border:1px solid var(--line);border-radius:11px;padding:16px 18px}.prompt h2{margin:0 0 8px;color:var(--navy);font-size:1.15rem}.prompt ol{margin-bottom:0}
+.eq{font-family:"Times New Roman",serif;font-style:italic;white-space:nowrap}
+@media(max-width:850px){.grid{grid-template-columns:1fr}.metrics{grid-template-columns:1fr 1fr}}
+@media(max-width:500px){.wrap{padding:12px}.metrics{grid-template-columns:1fr}.hero h1{font-size:1.45rem}}
+</style>
+</head>
+<body>
+<main class="wrap">
+<section class="hero">
+  <h1>MEMS Accelerometer Response Explorer</h1>
+  <p>Change proof mass, suspension stiffness, and damping. Watch how mechanical bandwidth and proof-mass displacement trade against each other.</p>
+</section>
+
+<div class="grid">
+  <aside class="card" aria-label="Accelerometer model controls">
+    <h2>Change the MEMS Design</h2>
+
+    <div class="control">
+      <label for="mass">Proof mass, m</label>
+      <div class="row"><span>smaller mass → faster mechanics</span><output id="massOut">10.0 µg</output></div>
+      <input id="mass" type="range" min="1" max="100" step=".5" value="10">
+    </div>
+
+    <div class="control">
+      <label for="stiff">Suspension stiffness, k</label>
+      <div class="row"><span>stiffer flexure → faster mechanics</span><output id="stiffOut">10.0 N/m</output></div>
+      <input id="stiff" type="range" min=".5" max="50" step=".5" value="10">
+    </div>
+
+    <div class="control">
+      <label for="zeta">Damping ratio, ζ</label>
+      <div class="row"><span>changes behavior near resonance</span><output id="zetaOut">0.70</output></div>
+      <input id="zeta" type="range" min=".05" max="1.5" step=".01" value=".70">
+    </div>
+
+    <div class="control">
+      <label>Try a comparison</label>
+      <div class="buttons">
+        <button type="button" data-preset="base">Baseline</button>
+        <button type="button" data-preset="small">Smaller m</button>
+        <button type="button" data-preset="soft">Softer k</button>
+        <button type="button" data-preset="lowz">Low ζ</button>
+      </div>
+    </div>
+
+    <div class="metrics" aria-live="polite">
+      <div class="metric"><div class="name">Natural frequency</div><div class="value" id="fnOut">—</div></div>
+      <div class="metric"><div class="name">1g displacement, low f</div><div class="value" id="zgOut">—</div></div>
+      <div class="metric"><div class="name">ωn</div><div class="value" id="wnOut">—</div></div>
+      <div class="metric"><div class="name">z/a ≈ m/k</div><div class="value" id="sensOut">—</div></div>
+    </div>
+
+    <div class="note">
+      <strong>Design tradeoff</strong><br>
+      <span class="eq">ω<sub>n</sub> = √(k/m)</span> rises when <em>m</em> is reduced or <em>k</em> is increased.
+      But <span class="eq">z/a ≈ m/k = 1/ω<sub>n</sub><sup>2</sup></span> becomes smaller.
+    </div>
+
+    <div class="interpret" id="interpret">—</div>
+  </aside>
+
+  <section class="plots">
+    <div class="plotcard">
+      <h2>Normalized Acceleration Response</h2>
+      <p>The horizontal axis is <span class="eq">r = ω/ω<sub>n</sub></span>. The dashed line marks the mechanical natural frequency.</p>
+      <canvas id="responsePlot" role="img" aria-label="Normalized accelerometer amplitude response versus normalized frequency"></canvas>
+    </div>
+
+    <div class="plotcard">
+      <h2>How Far Does the Proof Mass Actually Move?</h2>
+      <p>For the same 1g sinusoidal acceleration, the internal displacement can be only a few nanometers at low frequency.</p>
+      <canvas id="dispPlot" role="img" aria-label="Proof mass displacement in nanometers for a one g sinusoidal acceleration versus frequency"></canvas>
+    </div>
+  </section>
+</div>
+
+<section class="prompt">
+  <h2>Explore, Then Decide</h2>
+  <ol>
+    <li>Choose <strong>Smaller m</strong>. What happens to natural frequency? What happens to displacement per g?</li>
+    <li>Choose <strong>Softer k</strong>. Which direction do those two quantities move?</li>
+    <li>Move ζ. Which part of the frequency response changes most?</li>
+    <li>Why is sensitive capacitive displacement measurement important in a high-bandwidth MEMS accelerometer?</li>
+  </ol>
+</section>
+</main>
+
+<script>
+const G=9.80665;
+const mass=document.getElementById('mass'),stiff=document.getElementById('stiff'),zeta=document.getElementById('zeta');
+const massOut=document.getElementById('massOut'),stiffOut=document.getElementById('stiffOut'),zetaOut=document.getElementById('zetaOut');
+const fnOut=document.getElementById('fnOut'),zgOut=document.getElementById('zgOut'),wnOut=document.getElementById('wnOut'),sensOut=document.getElementById('sensOut'),interpret=document.getElementById('interpret');
+const c1=document.getElementById('responsePlot'),c2=document.getElementById('dispPlot');
+
+function response(r,z){return 1/Math.sqrt((1-r*r)**2+(2*z*r)**2)}
+function logspace(a,b,n){return Array.from({length:n},(_,i)=>10**(a+(b-a)*i/(n-1)))}
+function fmt(x,d=2){return Number(x).toLocaleString(undefined,{maximumFractionDigits:d})}
+function setCanvas(canvas){
+  const d=window.devicePixelRatio||1,w=Math.max(300,canvas.clientWidth),h=canvas.clientHeight;
+  canvas.width=w*d;canvas.height=h*d;
+  const g=canvas.getContext('2d');g.setTransform(d,0,0,d,0,0);return {g,w,h};
+}
+function axes(g,w,h,xlab,ylab){
+  const L=64,R=20,T=18,B=52,pw=w-L-R,ph=h-T-B;
+  g.strokeStyle='#dfe5eb';g.lineWidth=1;g.font='12px Arial';g.fillStyle='#4b5563';
+  return {L,R,T,B,pw,ph};
+}
+function drawResponse(z){
+  const {g,w,h}=setCanvas(c1),A=axes(g,w,h,'',''),{L,T,pw,ph}=A;
+  g.clearRect(0,0,w,h);
+  const rs=logspace(-2,1,450),ys=rs.map(r=>response(r,z)),maxY=Math.max(1.4,Math.min(6,Math.max(...ys)*1.08));
+  const X=r=>L+(Math.log10(r)+2)/3*pw,Y=y=>T+(maxY-y)/maxY*ph;
+
+  g.fillStyle='rgba(61,139,64,.10)';g.fillRect(X(.01),T,X(.2)-X(.01),ph);
+  g.strokeStyle='#e2e8f0';g.fillStyle='#59636f';g.font='12px Arial';
+  [-2,-1,0,1].forEach(e=>{const r=10**e,x=X(r);g.beginPath();g.moveTo(x,T);g.lineTo(x,T+ph);g.stroke();g.textAlign='center';g.fillText(r<1?r.toFixed(Math.abs(e)):String(r),x,h-25)});
+  [0,.5,1,1.5,2,3,4,5,6].filter(v=>v<=maxY).forEach(v=>{const y=Y(v);g.beginPath();g.moveTo(L,y);g.lineTo(L+pw,y);g.stroke();g.textAlign='right';g.fillText(v.toFixed(v%1?1:0),L-7,y+4)});
+
+  g.save();g.setLineDash([6,5]);g.strokeStyle='#c62828';g.beginPath();g.moveTo(X(1),T);g.lineTo(X(1),T+ph);g.stroke();g.restore();
+  g.save();g.setLineDash([3,4]);g.strokeStyle='#7a7f87';g.beginPath();g.moveTo(L,Y(1));g.lineTo(L+pw,Y(1));g.stroke();g.restore();
+  g.save();g.setLineDash([3,4]);g.strokeStyle='#b07a00';g.beginPath();g.moveTo(L,Y(.707));g.lineTo(L+pw,Y(.707));g.stroke();g.restore();
+
+  g.strokeStyle='#2f75b5';g.lineWidth=3;g.beginPath();
+  rs.forEach((r,i)=>{const x=X(r),y=Y(Math.min(maxY,response(r,z)));i?g.lineTo(x,y):g.moveTo(x,y)});g.stroke();
+
+  g.fillStyle='#17365d';g.textAlign='center';g.font='13px Arial';g.fillText('Normalized frequency ratio, r = ω / ωn',L+pw/2,h-5);
+  g.save();g.translate(15,T+ph/2);g.rotate(-Math.PI/2);g.fillText('Measured / true acceleration amplitude',0,0);g.restore();
+  g.fillStyle='#2e6b2e';g.textAlign='left';g.font='12px Arial';g.fillText('low-frequency approximation',X(.018),T+17);
+  g.fillStyle='#b3261e';g.fillText('r = 1',X(1)+6,T+17);
+}
+function drawDisp(fn,z,zLowNm){
+  const {g,w,h}=setCanvas(c2),A=axes(g,w,h,'',''),{L,T,pw,ph}=A;
+  g.clearRect(0,0,w,h);
+  const fs=logspace(Math.log10(fn)-2,Math.log10(fn)+1,450),vals=fs.map(f=>zLowNm*response(f/fn,z)),maxY=Math.max(1,Math.min(500,Math.max(...vals)*1.08));
+  const f0=fn*.01,f1=fn*10,X=f=>L+(Math.log10(f)-Math.log10(f0))/(Math.log10(f1)-Math.log10(f0))*pw,Y=y=>T+(maxY-y)/maxY*ph;
+  g.strokeStyle='#e2e8f0';g.fillStyle='#59636f';g.font='12px Arial';
+  [f0,fn*.1,fn,fn*10].forEach(f=>{const x=X(f);g.beginPath();g.moveTo(x,T);g.lineTo(x,T+ph);g.stroke();g.textAlign='center';g.fillText(f>=1000?(f/1000).toFixed(f>=10000?0:1)+'k':fmt(f,1),x,h-25)});
+  for(let i=0;i<=4;i++){const v=maxY*i/4,y=Y(v);g.beginPath();g.moveTo(L,y);g.lineTo(L+pw,y);g.stroke();g.textAlign='right';g.fillText(fmt(v,1),L-7,y+4)}
+  g.save();g.setLineDash([6,5]);g.strokeStyle='#c62828';g.beginPath();g.moveTo(X(fn),T);g.lineTo(X(fn),T+ph);g.stroke();g.restore();
+  g.strokeStyle='#3d8b40';g.lineWidth=3;g.beginPath();fs.forEach((f,i)=>{const x=X(f),y=Y(Math.min(maxY,zLowNm*response(f/fn,z)));i?g.lineTo(x,y):g.moveTo(x,y)});g.stroke();
+  g.fillStyle='#17365d';g.textAlign='center';g.font='13px Arial';g.fillText('Excitation frequency (Hz)',L+pw/2,h-5);
+  g.save();g.translate(15,T+ph/2);g.rotate(-Math.PI/2);g.fillText('Proof-mass displacement for 1g (nm)',0,0);g.restore();
+  g.fillStyle='#b3261e';g.textAlign='left';g.font='12px Arial';g.fillText('fn',X(fn)+6,T+17);
+}
+function update(){
+  const mug=+mass.value,k=+stiff.value,z=+zeta.value,m=mug*1e-9;
+  const wn=Math.sqrt(k/m),fn=wn/(2*Math.PI),sens=m/k,zLowNm=G*sens*1e9;
+  massOut.value=mug.toFixed(1)+' µg';stiffOut.value=k.toFixed(1)+' N/m';zetaOut.value=z.toFixed(2);
+  fnOut.textContent=fn>=1000?(fn/1000).toFixed(2)+' kHz':fmt(fn,1)+' Hz';
+  wnOut.textContent=fmt(wn,0)+' rad/s';zgOut.textContent=fmt(zLowNm,2)+' nm/g';sensOut.textContent=sens.toExponential(2)+' s²';
+  interpret.innerHTML='<strong>Current design:</strong> 1g produces about <strong>'+fmt(zLowNm,2)+' nm</strong> of low-frequency proof-mass motion, while the mechanical natural frequency is about <strong>'+fmt(fn,0)+' Hz</strong>.';
+  drawResponse(z);drawDisp(fn,z,zLowNm);
+}
+document.querySelectorAll('[data-preset]').forEach(b=>b.addEventListener('click',()=>{
+  const p=b.dataset.preset;
+  if(p==='base'){mass.value=10;stiff.value=10;zeta.value=.70}
+  if(p==='small'){mass.value=3;stiff.value=10;zeta.value=.70}
+  if(p==='soft'){mass.value=10;stiff.value=2;zeta.value=.70}
+  if(p==='lowz'){mass.value=10;stiff.value=10;zeta.value=.20}
+  update();
+}));
+[mass,stiff,zeta].forEach(e=>e.addEventListener('input',update));
+window.addEventListener('resize',update);
+update();
+</script>
+</body>
+</html>
