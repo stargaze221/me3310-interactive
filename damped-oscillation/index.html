@@ -1,0 +1,33 @@
+<!doctype html>
+<html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>Lab 07 | Damped Oscillation</title>
+<style>body{font:16px Arial,sans-serif;color:#111;background:#fff;max-width:930px;margin:24px auto;padding:0 16px;line-height:1.5}h1{font-size:25px;margin-bottom:5px}p{margin:8px 0}canvas{display:block;width:100%;border:1px solid #aaa;margin:16px 0 8px}label{display:block;margin:12px 0}input{width:220px;vertical-align:middle}table{border-collapse:collapse;margin:12px 0}td,th{padding:6px 16px 6px 0;text-align:left;border-bottom:1px solid #ddd}small{color:#555}.numbers{display:flex;gap:32px;flex-wrap:wrap}button{padding:6px 12px;background:white;border:1px solid #555;cursor:pointer}</style></head><body>
+<h1>Lab 07 | Damped Oscillation</h1>
+<p>Peak spacing gives the damped frequency. Peak decay gives the damping ratio.</p>
+<label>Undamped frequency ω<sub>n</sub>: <b id="wnv"></b> rad/s <input id="wn" type="range" min="5" max="30" step="1" value="12"></label>
+<label>Damping ratio ζ: <b id="zv"></b> <input id="z" type="range" min="0.01" max="0.18" step="0.01" value="0.06"></label>
+<label>Cycles between selected peaks n: <b id="nv"></b> <input id="n" type="range" min="1" max="10" step="1" value="5"></label>
+<canvas id="plot" width="900" height="360" aria-label="Damped vibration response and selected positive peaks"></canvas>
+<p><small>Blue: displacement (normalized). Black circles: selected positive peaks. Dashed: amplitude envelope.</small></p>
+<div class="numbers"><table><tr><th>Measured from peaks</th><th>Value</th></tr><tr><td>Δt = t₂ − t₁</td><td id="dt"></td></tr><tr><td>T<sub>d</sub> = Δt/n</td><td id="period"></td></tr><tr><td>ω<sub>d</sub> = 2π/T<sub>d</sub></td><td id="wd"></td></tr><tr><td>x₁ / x₂</td><td id="ratio"></td></tr><tr><td>δ = ln(x₁/x₂)/n</td><td id="delta"></td></tr><tr><td>ζ = δ/√(4π² + δ²)</td><td id="zeta"></td></tr></table></div>
+<p><b>Observe:</b> Change one slider. Which changes peak spacing? Which changes peak decay?</p>
+<script>
+const c=document.getElementById('plot'),g=c.getContext('2d'),W=c.width,H=c.height;
+const el=id=>document.getElementById(id);
+function paint(){
+const wn=+el('wn').value,z=+el('z').value,n=+el('n').value,wd=wn*Math.sqrt(1-z*z),T=2*Math.PI/wd;
+el('wnv').textContent=wn.toFixed(0);el('zv').textContent=z.toFixed(2);el('nv').textContent=n;
+const duration=12*T, left=55,right=24,top=20,bottom=43,cw=W-left-right,ch=H-top-bottom,mid=top+ch/2;
+const X=t=>left+t/duration*cw,Y=a=>mid-a*ch*.43;
+g.clearRect(0,0,W,H);g.strokeStyle='#aaa';g.lineWidth=1;g.beginPath();g.moveTo(left,mid);g.lineTo(W-right,mid);g.moveTo(left,top);g.lineTo(left,H-bottom);g.stroke();
+g.fillStyle='#222';g.font='15px Arial';g.fillText('Amplitude',left+6,top+15);g.fillText('Time (s)',W-90,H-12);
+for(let i=0;i<=6;i++){let t=duration*i/6;g.fillText(t.toFixed(1),X(t)-12,H-bottom+20)}
+function line(fn,color,dash){g.beginPath();g.strokeStyle=color;g.lineWidth=2;g.setLineDash(dash||[]);for(let i=0;i<=1400;i++){let t=duration*i/1400;let y=Y(fn(t));i?g.lineTo(X(t),y):g.moveTo(X(t),y)}g.stroke();g.setLineDash([])}
+line(t=>Math.exp(-z*wn*t)*Math.cos(wd*t),'#1762a8');
+line(t=>Math.exp(-z*wn*t),'#666',[5,5]);line(t=>-Math.exp(-z*wn*t),'#666',[5,5]);
+const t1=T,t2=(n+1)*T,x1=Math.exp(-z*wn*t1),x2=Math.exp(-z*wn*t2);
+for(const [t,x,name] of [[t1,x1,'x₁'],[t2,x2,'x₂']]){g.fillStyle='#111';g.beginPath();g.arc(X(t),Y(x),5,0,Math.PI*2);g.fill();g.fillText(name,X(t)+8,Y(x)-10)}
+const delta=Math.log(x1/x2)/n,zcalc=delta/Math.sqrt(4*Math.PI**2+delta**2);
+el('dt').textContent=(t2-t1).toFixed(3)+' s';el('period').textContent=T.toFixed(3)+' s';el('wd').textContent=(2*Math.PI/T).toFixed(3)+' rad/s';el('ratio').textContent=(x1/x2).toFixed(3);el('delta').textContent=delta.toFixed(4);el('zeta').textContent=zcalc.toFixed(4);
+}
+for(const id of ['wn','z','n'])el(id).addEventListener('input',paint);paint();
+</script></body></html>
