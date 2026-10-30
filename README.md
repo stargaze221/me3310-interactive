@@ -71,3 +71,34 @@ https://me3310-interactive.netlify.app/mohrs-circle/
 ```
 
 Each explorer URL can be embedded directly in Canvas using an iframe.
+
+## Explorer 11 — How a Linear Classifier Learns (Week 11)
+
+Live: https://me3310-interactive.netlify.app/motion-classifier/
+
+This visualization uses 140 **actual USC-HAD Upstairs and Downstairs
+original trials** from 14 participants. The reproducible source-data
+conversion is in motion-classifier/build_features.py. Only derived real
+feature summaries are published, not simulated signals.
+
+Training uses 10 development participants; the four held-out participants
+have previously been inspected in the course and are diagnostic only,
+not an untouched final test. Each point represents one original trial
+after averaging 3-second, 0.5-second-hop window features within that trial.
+Standardization is learned from development participants only.
+
+Full-batch gradient descent optimizes logistic cross-entropy in JavaScript.
+The course MATLAB fitglm uses IRLS for the same logistic model; intermediate
+optimization paths are not identical.
+
+The updated lesson covers the weighted linear score, sigmoid probability,
+per-trial binary cross-entropy, and average training cross-entropy.
+Students can choose a real trial in the dropdown or click a scatter point.
+The selected trial's weighted feature contributions, bias, score,
+probability, class prediction, and per-trial loss change with each step.
+An additional theoretical loss curve explains the penalty for an
+overconfident wrong prediction.
+
+Training a simple 2D linear classifier longer does not guarantee
+visible overfitting. Subject-to-subject differences are not automatically
+evidence of overfitting either.
