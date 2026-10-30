@@ -21,7 +21,24 @@ button:disabled{opacity:.45;cursor:not-allowed}input[type=range]{accent-color:va
 .plot .caption{font-size:13px;color:var(--sub);margin-top:5px}.note{background:#fff9ed;border-left:4px solid #b88740;padding:12px 16px}
 code{background:#edf1f6;padding:2px 5px}.error{color:#a43c30}.ok{color:#226f52}
 .legend{display:inline-block;width:10px;height:10px;border-radius:50%;margin:0 4px 0 9px}.two{display:flex;gap:14px;flex-wrap:wrap}
-@media(max-width:810px){.graphs{grid-template-columns:1fr}.kpis{grid-template-columns:repeat(2,1fr)}}
+
+.concept{background:#f5f8fc;border:1px solid #d6e0ec;border-radius:8px;padding:13px 16px;margin:11px 0 16px}
+.formula{font-family:Georgia,serif;font-size:20px;color:#23456b;text-align:center;padding:11px 5px}
+.explain-steps{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:10px}
+.explain-step{padding:10px;border-left:3px solid #7490b1;background:#fff;border-radius:4px}
+.selected-chip{display:inline-block;padding:2px 9px;border-radius:12px;background:#eef2f8;font-size:12px;color:#40546c}
+.contribution{display:grid;grid-template-columns:130px 1fr 80px;gap:9px;align-items:center;margin:10px 0}
+.term-track{height:20px;position:relative;background:#eef2f7;border-radius:4px;overflow:hidden}
+.term-track:after{position:absolute;content:"";left:50%;top:0;bottom:0;width:2px;background:#8695a4}
+.term-bar{position:absolute;top:3px;bottom:3px;border-radius:2px;background:#5185b9}
+.term-bar.negative{background:#da8e56}
+.term-value{font-variant-numeric:tabular-nums;text-align:right;font-weight:bold}
+.sample-result{padding:12px 15px;border-radius:7px;background:#f5f7fb;margin:10px 0}
+.sample-grid{display:grid;grid-template-columns:1fr 1fr;gap:15px}
+#sampleLossPlot{width:100%;height:auto;border:1px solid #e1e6ee;border-radius:6px}
+@media(max-width:810px){.graphs,.sample-grid,.explain-steps{grid-template-columns:1fr}.kpis{grid-template-columns:repeat(2,1fr)}}
+@media(max-width:520px){.contribution{grid-template-columns:90px 1fr 65px;gap:5px}.formula{font-size:17px}}
+
 </style></head>
 <body><main>
 <header class="hero"><div class="tag">ME 3310 · EXPERIMENTAL METHODS I · WEEK 11</div>
@@ -36,7 +53,23 @@ code{background:#edf1f6;padding:2px 5px}.error{color:#a43c30}.ok{color:#226f52}
 <small>Source: <a href="https://sipi.usc.edu/had/">official USC-HAD</a>; Zhang &amp; Sawchuk, SAGAware 2012. <a href="https://github.com/stargaze221/me3310-interactive/blob/main/motion-classifier/build_features.py">Reproducible extraction script</a>.</small>
 </section>
 <section class="card">
-<h2>2. Train logistic regression with iterative optimization</h2>
+<h2>2. The weighted linear discriminant and its training</h2>
+<div class="concept">
+  <p><strong>From measured features to one classification score.</strong> A linear classifier does not learn directly from the raw accelerometer waveform here. Each original trial becomes a two-feature vector, and the model takes a <strong>weighted sum</strong>:</p>
+  <div class="formula">z = w₁x₁ + w₂x₂ + b &nbsp; → &nbsp; p(Downstairs) = 1 / (1 + e<sup>−z</sup>)</div>
+  <div class="explain-steps">
+    <div class="explain-step"><strong>x₁, x₂ — measured evidence</strong><br><small>Acceleration STD and PSD band power, each standardized using training data (z-scores).</small></div>
+    <div class="explain-step"><strong>w₁, w₂ — learned weights</strong><br><small>How each feature contributes to the decision score. Their signs and combined direction rotate the boundary.</small></div>
+    <div class="explain-step"><strong>b — learned bias</strong><br><small>Shifts the decision boundary. The line <strong>z = 0</strong> corresponds to probability <strong>p = 0.5</strong>.</small></div>
+  </div>
+  <p class="muted">This weighted-sum structure resembles the LDA projection from Page 02, but logistic regression learns its weights by <strong>minimizing cross-entropy</strong>, not by maximizing Fisher's criterion. These weights are in standardized-feature coordinates; their values are not direct physical sensor coefficients.</p>
+</div>
+<div class="concept">
+  <p><strong>What does cross-entropy measure?</strong> Each real trial has a known label y: <strong>0 = Upstairs</strong>, <strong>1 = Downstairs</strong>. The model assigns probability p to Downstairs. A confident correct prediction has small loss; a confident wrong prediction has large loss.</p>
+  <div class="formula">ℓ(y,p) = −[y log(p) + (1−y) log(1−p)]</div>
+  <p>For an <strong>Upstairs</strong> trial (y = 0), loss = −log(1−p). For a <strong>Downstairs</strong> trial (y = 1), loss = −log(p). The <strong>training loss</strong> is the average of this quantity across the <em>development</em> trials.</p>
+  <p class="muted">Gradient descent adjusts the weights and bias to reduce that average loss. The held-out subjects are only evaluated—not used for gradient updates. At step 0, all three parameters start at zero, so p = 0.5 and each trial has loss ln(2) ≈ 0.693.</p>
+</div>
 <div class="tools">
 <button id="play" class="primary" disabled>▶ Play training</button>
 <button id="reset" disabled>↺ Reset</button>
@@ -60,7 +93,39 @@ code{background:#edf1f6;padding:2px 5px}.error{color:#a43c30}.ok{color:#226f52}
 <p id="weights" class="muted">Classifier parameters will appear here.</p>
 <p class="muted">This demonstration uses <strong>full-batch gradient descent</strong> to minimize logistic cross-entropy. The course MATLAB <code>fitglm</code> function uses IRLS for the same logistic model, so its intermediate iterations need not follow this path.</p>
 </section>
-<section class="card"><h2>3. When is a well-trained model trustworthy?</h2>
+<section class="card">
+<h2>3. Follow one actual trial: weighted sum → probability → loss</h2>
+<p>Select one measured USC-HAD original trial, or <strong>click a point in the 2D graph</strong>. As training proceeds, see exactly how its two features and the current weights produce a score, a probability, and an individual cross-entropy loss.</p>
+<div class="tools">
+  <label for="sample">Measured original trial:</label>
+  <select id="sample" disabled aria-label="Select a measured USC-HAD trial"><option>Loading real trial data…</option></select>
+  <span class="selected-chip" id="sampleGroup">—</span>
+</div>
+<p class="muted" id="sampleRaw">Measured feature values will appear here.</p>
+<div class="sample-grid">
+  <div>
+    <h2>How the weighted sum is assembled</h2>
+    <p class="muted">Each contribution below changes with the training step. Blue is positive; orange is negative. The zero marker is at the center of each bar.</p>
+    <div class="contribution"><strong>w₁ × x₁</strong><div class="term-track"><div id="contrib1" class="term-bar"></div></div><span class="term-value" id="term1">—</span></div>
+    <div class="contribution"><strong>w₂ × x₂</strong><div class="term-track"><div id="contrib2" class="term-bar"></div></div><span class="term-value" id="term2">—</span></div>
+    <div class="contribution"><strong>Bias b</strong><div class="term-track"><div id="contrib3" class="term-bar"></div></div><span class="term-value" id="term3">—</span></div>
+    <div class="sample-result">
+      <div id="scoreLine"><strong>Linear score z:</strong> —</div>
+      <div id="probLine"><strong>Probability of Downstairs:</strong> —</div>
+      <div id="predictionLine"><strong>Classification:</strong> —</div>
+      <div id="sampleLossLine"><strong>This trial's cross-entropy loss:</strong> —</div>
+    </div>
+  </div>
+  <div>
+    <h2>What probability does cross-entropy penalize?</h2>
+    <canvas id="sampleLossPlot" width="620" height="340" role="img" aria-label="Theoretical binary cross-entropy loss curves, with selected measured trial prediction highlighted"></canvas>
+    <p class="muted" id="sampleInterpretation">The highlighted point will show one real trial's current prediction and loss.</p>
+    <p class="muted"><strong>Why is the curve asymmetric for a given class?</strong> Confidently predicting the wrong class is penalized much more than giving the correct class a moderate probability.</p>
+  </div>
+</div>
+<p class="note"><strong>Individual trial loss ≠ training loss.</strong> The selected point contributes one loss term. Training minimizes the <strong>average over all development trials</strong>. Changing this selection only changes the explanation shown—it does not retrain the classifier.</p>
+</section>
+<section class="card"><h2>4. When is a well-trained model trustworthy?</h2>
 <p><strong>Observe:</strong> Does training loss decrease? Does the decision boundary change? Does a lower training loss necessarily mean fewer mistakes on new participants? What if the loss curves behave differently?</p>
 <div class="note"><strong>Do not force an overfitting story.</strong> A simple 2D linear classifier may not exhibit classic increasing validation loss with more training. Differences between participants are another possible explanation. The four held-out participants have already been examined in this course; their results are <strong>diagnostic</strong>, not untouched final-test performance.</div>
 <details><summary><strong>Show the mathematical model</strong></summary>
@@ -101,6 +166,7 @@ function load(d){
  get("status").textContent="Verified: "+rows.length+" actual original USC-HAD trials · "+train.length+" development trials (10 subjects) · "+held.length+" held-out diagnostic trials (4 subjects).";
  get("play").disabled=false;get("reset").disabled=false;get("epoch").disabled=false;
  calc();
+ if(window.initTrialExplanation)window.initTrialExplanation();
 }
 function summarize(data,w){
  let loss=0,correct=0;
@@ -167,6 +233,7 @@ function drawScatter(w){
   ctx.globalAlpha=r.group==="diagnostic"?.96:.66;
   ctx.fillStyle=r.y===0?COLOR0:COLOR1;ctx.fill();ctx.globalAlpha=1;
   if(r.group==="diagnostic"){ctx.lineWidth=1.8;ctx.strokeStyle="#18283e";ctx.stroke();}
+  if(r===window.selectedMeasuredTrial){ctx.beginPath();ctx.arc(sx(r.z[0]),sy(r.z[1]),9,0,Math.PI*2);ctx.lineWidth=2.6;ctx.strokeStyle="#5d2587";ctx.stroke();}
  });
  if(Math.hypot(w[0],w[1])>1e-10){
   const q=[];
@@ -222,6 +289,7 @@ function render(){
  get("weights").textContent="Current model: p(Downstairs) = sigmoid("+
   fixed(h.w[0])+" × z1 + "+fixed(h.w[1])+" × z2 + "+fixed(h.w[2])+")";
  drawScatter(h.w);drawLoss(i);
+ if(window.renderTrialExplanation)window.renderTrialExplanation(i,h);
 }
 get("eta").addEventListener("change",()=>{if(rows.length)calc();});
 get("epoch").addEventListener("input",()=>{pause();render();});
@@ -244,4 +312,6 @@ fetch("./data/usc_had_up_down_trials.json")
   get("status").textContent="Cannot load verified USC-HAD measurements: "+err.message+
     ". Do not use this explorer until authentic source data are available.";
  });
-</script></body></html>
+</script>
+<script src="./explain.js"></script>
+</body></html>
