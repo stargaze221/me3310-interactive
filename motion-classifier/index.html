@@ -1,0 +1,247 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>ME 3310 — How a Linear Classifier Learns</title>
+<style>
+:root{--ink:#233044;--sub:#596d80;--purple:#4f2683;--blue:#2a76af;--orange:#d37b42}
+*{box-sizing:border-box}body{font:15px/1.55 Arial,Helvetica,sans-serif;background:#f5f7fa;color:var(--ink);margin:0}
+main{max-width:1190px;margin:auto;padding:22px 18px 45px}.hero{border-left:6px solid var(--purple);background:#f2eef7;padding:19px 23px;border-radius:4px}
+h1{margin:4px 0 6px;color:#322047;font-size:27px}h2{font-size:18px;color:#24415e;margin:0 0 12px}
+small,.muted{color:var(--sub)}.tag{color:#604c78;font-weight:bold;font-size:12px;letter-spacing:.08em}
+section{margin-top:14px}.card{background:white;padding:18px;border:1px solid #dae1e9;border-radius:9px}
+.tools{display:flex;align-items:center;flex-wrap:wrap;gap:12px;margin:8px 0 15px}
+button,select{font:inherit;cursor:pointer;border:1px solid #aebaca;border-radius:6px;padding:8px 13px;background:white}
+button.primary{background:var(--purple);border-color:var(--purple);color:white;font-weight:bold}
+button:disabled{opacity:.45;cursor:not-allowed}input[type=range]{accent-color:var(--purple);flex:1;min-width:180px}
+.kpis{display:grid;grid-template-columns:repeat(4,1fr);gap:9px;margin:13px 0}
+.kpi{background:#f5f7fa;border-radius:8px;padding:10px 12px}.kpi strong{display:block;font-size:24px;font-variant-numeric:tabular-nums;color:#24415e}
+.graphs{display:grid;grid-template-columns:1fr 1fr;gap:17px}.plot{min-width:0}.plot canvas{display:block;width:100%;height:auto;border:1px solid #e5ebf0;border-radius:6px}
+.plot .caption{font-size:13px;color:var(--sub);margin-top:5px}.note{background:#fff9ed;border-left:4px solid #b88740;padding:12px 16px}
+code{background:#edf1f6;padding:2px 5px}.error{color:#a43c30}.ok{color:#226f52}
+.legend{display:inline-block;width:10px;height:10px;border-radius:50%;margin:0 4px 0 9px}.two{display:flex;gap:14px;flex-wrap:wrap}
+@media(max-width:810px){.graphs{grid-template-columns:1fr}.kpis{grid-template-columns:repeat(2,1fr)}}
+</style></head>
+<body><main>
+<header class="hero"><div class="tag">ME 3310 · EXPERIMENTAL METHODS I · WEEK 11</div>
+<h1>How a Linear Classifier Learns</h1>
+<p>Real IMU measurements → two features → cross-entropy → gradient descent → decision boundary → engineering judgment.</p>
+</header>
+<section class="card">
+<h2>1. The measurements are real</h2>
+<p id="status">Loading original USC-HAD feature summaries…</p>
+<p>USC-SIPI: <strong>Walking Upstairs vs. Walking Downstairs</strong>, 100 Hz, six-axis IMU. A plotted dot is <strong>one original recorded trial</strong>, represented by the mean of its 3-second sliding-window features (0.5-second hop). No synthetic signals or simulated points are used.</p>
+<p><strong>Feature 1</strong>: acceleration magnitude STD (g). <strong>Feature 2</strong>: acceleration-magnitude Welch PSD power, 0.8–3 Hz (g²). Both features are standardized using the <em>development subjects only</em>.</p>
+<small>Source: <a href="https://sipi.usc.edu/had/">official USC-HAD</a>; Zhang &amp; Sawchuk, SAGAware 2012. <a href="https://github.com/stargaze221/me3310-interactive/blob/main/motion-classifier/build_features.py">Reproducible extraction script</a>.</small>
+</section>
+<section class="card">
+<h2>2. Train logistic regression with iterative optimization</h2>
+<div class="tools">
+<button id="play" class="primary" disabled>▶ Play training</button>
+<button id="reset" disabled>↺ Reset</button>
+<label for="eta">Learning rate:</label>
+<select id="eta"><option value="0.02">0.02</option><option value="0.1" selected>0.10</option><option value="0.3">0.30</option></select>
+<label><input type="checkbox" id="showHold" checked> Show held-out subjects</label>
+</div>
+<div class="tools"><label for="epoch">Optimization step:</label><input id="epoch" type="range" min="0" max="200" value="0" disabled><strong id="epochText">0 / 200</strong></div>
+<div class="kpis">
+<div class="kpi"><small>Training loss</small><strong id="tl">—</strong></div>
+<div class="kpi"><small>Held-out loss</small><strong id="vl">—</strong></div>
+<div class="kpi"><small>Training accuracy</small><strong id="ta">—</strong></div>
+<div class="kpi"><small>Held-out accuracy</small><strong id="va">—</strong></div>
+</div>
+<div class="graphs">
+<div class="plot"><h2>2D feature space + moving decision boundary</h2><canvas id="scatter" width="620" height="440"></canvas>
+<div class="caption"><span class="legend" style="background:var(--blue)"></span>Upstairs <span class="legend" style="background:var(--orange)"></span>Downstairs <span class="legend" style="background:white;border:2px solid #233044"></span>Outlined = held-out participant. Purple line: <em>p(Downstairs) = 0.5</em>.</div></div>
+<div class="plot"><h2>Cross-entropy loss vs. optimization step</h2><canvas id="loss" width="620" height="440"></canvas>
+<div class="caption"><span style="color:var(--blue)">━━ Training</span> <span style="color:var(--orange)">━━ Held-out</span> · · · Current step</div></div>
+</div>
+<p id="weights" class="muted">Classifier parameters will appear here.</p>
+<p class="muted">This demonstration uses <strong>full-batch gradient descent</strong> to minimize logistic cross-entropy. The course MATLAB <code>fitglm</code> function uses IRLS for the same logistic model, so its intermediate iterations need not follow this path.</p>
+</section>
+<section class="card"><h2>3. When is a well-trained model trustworthy?</h2>
+<p><strong>Observe:</strong> Does training loss decrease? Does the decision boundary change? Does a lower training loss necessarily mean fewer mistakes on new participants? What if the loss curves behave differently?</p>
+<div class="note"><strong>Do not force an overfitting story.</strong> A simple 2D linear classifier may not exhibit classic increasing validation loss with more training. Differences between participants are another possible explanation. The four held-out participants have already been examined in this course; their results are <strong>diagnostic</strong>, not untouched final-test performance.</div>
+<details><summary><strong>Show the mathematical model</strong></summary>
+<p>Logistic regression: <code>p = sigmoid(w1*x1 + w2*x2 + b)</code>. Cross-entropy: <code>L = −mean[y log(p) + (1−y) log(1−p)]</code>. Gradient descent: <code>theta(k+1) = theta(k) − learningRate * gradient(L)</code>. The zero-score line is the current linear decision boundary.</p>
+</details>
+<p><strong>Think–Pair–Discuss:</strong> If a model fits these measurements well, what one additional <em>independent</em> experiment would best test whether you can trust its decisions?</p>
+</section>
+<footer class="muted">Interactive explorer: <a href="https://github.com/stargaze221/me3310-interactive/tree/main/motion-classifier">ME3310 Interactive GitHub</a>. Data and numerical feature extraction are open to inspection; the browser never fabricates samples.</footer>
+</main>
+<script>
+"use strict";
+const get=id=>document.getElementById(id), TOTAL=200;
+const COLOR0="#2a76af",COLOR1="#d37b42",PURPLE="#4f2683";
+let rows=[],train=[],held=[],history=[],ticker=null,bounds=null;
+const sig=z=>z>=0?1/(1+Math.exp(-z)):Math.exp(z)/(1+Math.exp(z));
+const ce=(z,y)=>Math.max(0,z)-y*z+Math.log1p(Math.exp(-Math.abs(z)));
+const fixed=(v,n=3)=>Number.isFinite(v)?v.toFixed(n):"—";
+function load(d){
+ if(!d||!Array.isArray(d.rows)||d.rows.length!==140)throw Error("Expected the 140 verified USC-HAD original trials.");
+ const input=d.rows.map(r=>({subject:+r.subject,trial:+r.trial,y:+r.classId,
+  x:[+r.feature1,+r.feature2],group:r.split}));
+ if(input.some(r=>!Number.isInteger(r.subject)||!Number.isInteger(r.trial)||
+   ![0,1].includes(r.y)||r.x.some(v=>!Number.isFinite(v))||
+   !["development","diagnostic"].includes(r.group)))throw Error("Invalid data fields.");
+ const subjects=[...new Set(input.map(r=>r.subject))];
+ if(subjects.length!==14)throw Error("Expected fourteen distinct measurement subjects.");
+ train=input.filter(r=>r.group==="development");
+ held=input.filter(r=>r.group==="diagnostic");
+ if(new Set(train.map(r=>r.subject)).size!==10||new Set(held.map(r=>r.subject)).size!==4)
+  throw Error("Unexpected development/held-out subject split.");
+ if(train.some(r=>held.some(s=>s.subject===r.subject)))throw Error("Subject leakage detected.");
+ const mean=[0,1].map(k=>train.reduce((a,r)=>a+r.x[k],0)/train.length);
+ const sd=[0,1].map(k=>Math.sqrt(train.reduce((a,r)=>a+(r.x[k]-mean[k])**2,0)/train.length));
+ if(sd.some(v=>v<=0))throw Error("Degenerate feature variation.");
+ input.forEach(r=>r.z=r.x.map((v,k)=>(v-mean[k])/sd[k]));
+ rows=input;
+ get("status").className="ok";
+ get("status").textContent="Verified: "+rows.length+" actual original USC-HAD trials · "+train.length+" development trials (10 subjects) · "+held.length+" held-out diagnostic trials (4 subjects).";
+ get("play").disabled=false;get("reset").disabled=false;get("epoch").disabled=false;
+ calc();
+}
+function summarize(data,w){
+ let loss=0,correct=0;
+ data.forEach(r=>{
+  const z=w[0]*r.z[0]+w[1]*r.z[1]+w[2];
+  loss+=ce(z,r.y);
+  correct+=((z>=0?1:0)===r.y)?1:0;
+ });
+ return {loss:loss/data.length,acc:100*correct/data.length};
+}
+function pause(){if(ticker!==null)clearInterval(ticker);ticker=null;get("play").textContent="▶ Play training";}
+function calc(){
+ pause();
+ let w=[0,0,0];
+ history=[];
+ const save=()=>history.push({w:w.slice(),tr:summarize(train,w),val:summarize(held,w)});
+ save();
+ const rate=+get("eta").value;
+ for(let k=0;k<TOTAL;k++){
+  const g=[0,0,0];
+  train.forEach(r=>{
+   const diff=sig(w[0]*r.z[0]+w[1]*r.z[1]+w[2])-r.y;
+   g[0]+=diff*r.z[0];g[1]+=diff*r.z[1];g[2]+=diff;
+  });
+  for(let j=0;j<3;j++)w[j]-=rate*g[j]/train.length;
+  save();
+ }
+ get("epoch").value=0;render();
+}
+function axes(ctx,x1,y1,x2,y2){
+ ctx.strokeStyle="#dce4ed";ctx.lineWidth=1;
+ for(let i=0;i<=4;i++){
+  const x=x1+(x2-x1)*i/4,y=y1+(y2-y1)*i/4;
+  ctx.beginPath();ctx.moveTo(x,y1);ctx.lineTo(x,y2);ctx.moveTo(x1,y);ctx.lineTo(x2,y);ctx.stroke();
+ }
+ ctx.strokeStyle="#8291a2";ctx.lineWidth=1.5;
+ ctx.beginPath();ctx.moveTo(x1,y1);ctx.lineTo(x1,y2);ctx.lineTo(x2,y2);ctx.stroke();
+}
+function drawScatter(w){
+ const c=get("scatter"),ctx=c.getContext("2d");
+ ctx.clearRect(0,0,c.width,c.height);
+ const x1=62,x2=596,y1=28,y2=377;
+ const zx=rows.map(r=>r.z[0]),zy=rows.map(r=>r.z[1]);
+ let loX=Math.min(...zx),hiX=Math.max(...zx),loY=Math.min(...zy),hiY=Math.max(...zy);
+ const px=Math.max(0.4,(hiX-loX)*.1),py=Math.max(0.4,(hiY-loY)*.1);
+ loX-=px;hiX+=px;loY-=py;hiY+=py;
+ const sx=v=>x1+(v-loX)/(hiX-loX)*(x2-x1);
+ const sy=v=>y2-(v-loY)/(hiY-loY)*(y2-y1);
+ axes(ctx,x1,y1,x2,y2);
+ ctx.fillStyle="#536579";ctx.font="12px Arial";ctx.textAlign="center";
+ for(let i=0;i<=4;i++){
+  ctx.fillText(fixed(loX+(hiX-loX)*i/4,1),x1+(x2-x1)*i/4,y2+17);
+  ctx.textAlign="right";
+  ctx.fillText(fixed(loY+(hiY-loY)*i/4,1),x1-9,y2-(y2-y1)*i/4+4);
+  ctx.textAlign="center";
+ }
+ ctx.fillText("Feature 1: Acceleration magnitude STD (standardized)",320,429);
+ ctx.save();ctx.translate(16,210);ctx.rotate(-Math.PI/2);
+ ctx.fillText("Feature 2: PSD band power (standardized)",0,0);ctx.restore();
+ ctx.save();ctx.beginPath();ctx.rect(x1,y1,x2-x1,y2-y1);ctx.clip();
+ rows.forEach(r=>{
+  if(r.group==="diagnostic"&&!get("showHold").checked)return;
+  ctx.beginPath();ctx.arc(sx(r.z[0]),sy(r.z[1]),r.group==="diagnostic"?5:3.7,0,Math.PI*2);
+  ctx.globalAlpha=r.group==="diagnostic"?.96:.66;
+  ctx.fillStyle=r.y===0?COLOR0:COLOR1;ctx.fill();ctx.globalAlpha=1;
+  if(r.group==="diagnostic"){ctx.lineWidth=1.8;ctx.strokeStyle="#18283e";ctx.stroke();}
+ });
+ if(Math.hypot(w[0],w[1])>1e-10){
+  const q=[];
+  if(Math.abs(w[1])>1e-11)for(const x of [loX,hiX]){
+   const y=-(w[0]*x+w[2])/w[1];if(y>=loY&&y<=hiY)q.push([x,y]);
+  }
+  if(Math.abs(w[0])>1e-11)for(const y of [loY,hiY]){
+   const x=-(w[1]*y+w[2])/w[0];if(x>=loX&&x<=hiX)q.push([x,y]);
+  }
+  if(q.length>=2){
+   ctx.strokeStyle=PURPLE;ctx.lineWidth=3;ctx.beginPath();
+   ctx.moveTo(sx(q[0][0]),sy(q[0][1]));ctx.lineTo(sx(q[1][0]),sy(q[1][1]));ctx.stroke();
+  }
+ }
+ ctx.restore();
+ if(Math.hypot(w[0],w[1])<=1e-10){
+  ctx.fillStyle=PURPLE;ctx.font="14px Arial";ctx.textAlign="center";
+  ctx.fillText("Step 0: no discriminating direction yet",330,21);
+ }
+}
+function drawLoss(epoch){
+ const c=get("loss"),ctx=c.getContext("2d");ctx.clearRect(0,0,c.width,c.height);
+ const x1=62,x2=595,y1=28,y2=377;
+ const values=history.flatMap(h=>[h.tr.loss,h.val.loss]);
+ const min=Math.max(0,Math.min(...values)*.7),max=Math.max(...values)*1.1;
+ const sx=i=>x1+i/TOTAL*(x2-x1),sy=v=>y2-(v-min)/(max-min)*(y2-y1);
+ axes(ctx,x1,y1,x2,y2);
+ ctx.font="12px Arial";ctx.fillStyle="#536579";ctx.textAlign="center";
+ for(let i=0;i<=4;i++){
+  ctx.fillText(String(TOTAL*i/4),sx(TOTAL*i/4),y2+18);
+  ctx.textAlign="right";ctx.fillText(fixed(min+(max-min)*i/4,2),x1-10,y2-(y2-y1)*i/4+4);
+  ctx.textAlign="center";
+ }
+ ctx.fillText("Gradient descent step",328,427);
+ ctx.save();ctx.translate(16,210);ctx.rotate(-Math.PI/2);ctx.fillText("Cross-entropy loss",0,0);ctx.restore();
+ for(const [key,color] of [["tr",COLOR0],["val",COLOR1]]){
+  ctx.strokeStyle=color;ctx.lineWidth=2.7;ctx.beginPath();
+  history.forEach((h,i)=>{if(i===0)ctx.moveTo(sx(i),sy(h[key].loss));else ctx.lineTo(sx(i),sy(h[key].loss));});
+  ctx.stroke();
+  ctx.beginPath();ctx.fillStyle=color;ctx.arc(sx(epoch),sy(history[epoch][key].loss),5,0,Math.PI*2);ctx.fill();
+ }
+ ctx.strokeStyle="#65758a";ctx.lineWidth=1.5;ctx.setLineDash([5,5]);
+ ctx.beginPath();ctx.moveTo(sx(epoch),y1);ctx.lineTo(sx(epoch),y2);ctx.stroke();ctx.setLineDash([]);
+}
+function render(){
+ if(!history.length)return;
+ const i=+get("epoch").value,h=history[i];
+ get("epochText").textContent=i+" / "+TOTAL;
+ get("tl").textContent=fixed(h.tr.loss);
+ get("vl").textContent=fixed(h.val.loss);
+ get("ta").textContent=fixed(h.tr.acc,1)+"%";
+ get("va").textContent=fixed(h.val.acc,1)+"%";
+ get("weights").textContent="Current model: p(Downstairs) = sigmoid("+
+  fixed(h.w[0])+" × z1 + "+fixed(h.w[1])+" × z2 + "+fixed(h.w[2])+")";
+ drawScatter(h.w);drawLoss(i);
+}
+get("eta").addEventListener("change",()=>{if(rows.length)calc();});
+get("epoch").addEventListener("input",()=>{pause();render();});
+get("showHold").addEventListener("change",()=>{if(history.length)render();});
+get("reset").addEventListener("click",()=>{pause();get("epoch").value=0;render();});
+get("play").addEventListener("click",()=>{
+ if(ticker!==null){pause();return;}
+ if(+get("epoch").value>=TOTAL)get("epoch").value=0;
+ get("play").textContent="Ⅱ Pause";
+ ticker=setInterval(()=>{
+  const i=+get("epoch").value;
+  if(i>=TOTAL){pause();return;}
+  get("epoch").value=i+1;render();
+ },60);
+});
+fetch("./data/usc_had_up_down_trials.json")
+ .then(r=>{if(!r.ok)throw Error("Missing measured-data file, HTTP "+r.status);return r.json();})
+ .then(load).catch(err=>{
+  get("status").className="error";
+  get("status").textContent="Cannot load verified USC-HAD measurements: "+err.message+
+    ". Do not use this explorer until authentic source data are available.";
+ });
+</script></body></html>
