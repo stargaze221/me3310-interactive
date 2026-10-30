@@ -35,6 +35,14 @@ code{background:#edf1f6;padding:2px 5px}.error{color:#a43c30}.ok{color:#226f52}
 .term-value{font-variant-numeric:tabular-nums;text-align:right;font-weight:bold}
 .sample-result{padding:12px 15px;border-radius:7px;background:#f5f7fb;margin:10px 0}
 .sample-grid{display:grid;grid-template-columns:1fr 1fr;gap:15px}
+.boundary-guide{padding:13px 16px;background:#f5f8fc;border-left:4px solid #4f2683;border-radius:5px;margin:14px 0}
+.boundary-guide p{margin:4px 0}
+.boundary-eq{font-family:Georgia,serif;color:#362055;font-size:19px;font-weight:600}
+.predict-legend{display:flex;flex-wrap:wrap;gap:9px;margin:9px 0}
+.predict-legend span{font-size:13px;padding:5px 10px;border-radius:5px;font-weight:bold}
+.predict-legend .up{background:#e9f3fa;color:#225c86}
+.predict-legend .down{background:#fff0e6;color:#92501f}
+.predict-legend .gradient{background:#e5f5ef;color:#236958}
 #sampleLossPlot{width:100%;height:auto;border:1px solid #e1e6ee;border-radius:6px}
 @media(max-width:810px){.graphs,.sample-grid,.explain-steps{grid-template-columns:1fr}.kpis{grid-template-columns:repeat(2,1fr)}}
 @media(max-width:520px){.contribution{grid-template-columns:90px 1fr 65px;gap:5px}.formula{font-size:17px}}
@@ -86,9 +94,21 @@ code{background:#edf1f6;padding:2px 5px}.error{color:#a43c30}.ok{color:#226f52}
 </div>
 <div class="graphs">
 <div class="plot"><h2>2D feature space + moving decision boundary</h2><canvas id="scatter" width="620" height="440"></canvas>
-<div class="caption"><span class="legend" style="background:var(--blue)"></span>Upstairs <span class="legend" style="background:var(--orange)"></span>Downstairs <span class="legend" style="background:white;border:2px solid #233044"></span>Outlined = held-out participant. Purple line: <em>p(Downstairs) = 0.5</em>.</div></div>
+<div class="caption"><span class="legend" style="background:var(--blue)"></span>Measured Upstairs <span class="legend" style="background:var(--orange)"></span>Measured Downstairs <span class="legend" style="background:white;border:2px solid #233044"></span>Outlined = held-out participant. The pale background shows <em>predictions</em>, not the recorded labels.</div></div>
 <div class="plot"><h2>Cross-entropy loss vs. optimization step</h2><canvas id="loss" width="620" height="440"></canvas>
 <div class="caption"><span style="color:var(--blue)">━━ Training</span> <span style="color:var(--orange)">━━ Held-out</span> · · · Current step</div></div>
+</div>
+<div class="boundary-guide" aria-live="off">
+  <strong>How to read the purple line</strong>
+  <p>The purple line is <strong>not</strong> a trendline fitted through the dots. It contains all feature combinations for which the model is exactly undecided: <strong>p(Downstairs) = 0.5</strong>. The model predicts a class from which side a feature point lies on—even when that prediction disagrees with the dot's measured label.</p>
+  <p class="boundary-eq" id="boundaryEquation">Decision boundary will appear once training begins.</p>
+  <div class="predict-legend">
+    <span class="up">Pale blue: predict Upstairs (p &lt; 0.5)</span>
+    <span class="down">Pale orange: predict Downstairs (p &gt; 0.5)</span>
+    <span class="gradient">Green arrow: increasing Downstairs probability (+w direction)</span>
+  </div>
+  <p id="boundaryStatus" class="muted">The weights and prediction regions will update with each training step.</p>
+  <p class="muted">The learned weight vector <strong>w = (w₁,w₂)</strong> is <strong>normal (perpendicular) to the decision boundary in standardized feature coordinates</strong>, not tangent to the purple line. Visual angles may appear slightly distorted because the graph's horizontal and vertical scales differ.</p>
 </div>
 <p id="weights" class="muted">Classifier parameters will appear here.</p>
 <p class="muted">This demonstration uses <strong>full-batch gradient descent</strong> to minimize logistic cross-entropy. The course MATLAB <code>fitglm</code> function uses IRLS for the same logistic model, so its intermediate iterations need not follow this path.</p>
@@ -205,6 +225,23 @@ function axes(ctx,x1,y1,x2,y2){
  ctx.strokeStyle="#8291a2";ctx.lineWidth=1.5;
  ctx.beginPath();ctx.moveTo(x1,y1);ctx.lineTo(x1,y2);ctx.lineTo(x2,y2);ctx.stroke();
 }
+// Clip the standardized feature rectangle against the linear score half-space.
+// The background represents MODEL PREDICTIONS, never fabricated measurements.
+function classRegion(rect,w,wantDownstairs){
+ const sign=wantDownstairs?1:-1,eps=1e-10;
+ const f=p=>sign*(w[0]*p[0]+w[1]*p[1]+w[2]);
+ const out=[];
+ for(let i=0;i<rect.length;i++){
+  const a=rect[i],b=rect[(i+1)%rect.length],da=f(a),db=f(b);
+  const insideA=da>=-eps,insideB=db>=-eps;
+  if(insideA)out.push(a);
+  if(insideA!==insideB){
+   const t=da/(da-db);
+   out.push([a[0]+t*(b[0]-a[0]),a[1]+t*(b[1]-a[1])]);
+  }
+ }
+ return out;
+}
 function drawScatter(w){
  const c=get("scatter"),ctx=c.getContext("2d");
  ctx.clearRect(0,0,c.width,c.height);
@@ -227,6 +264,19 @@ function drawScatter(w){
  ctx.save();ctx.translate(16,210);ctx.rotate(-Math.PI/2);
  ctx.fillText("Feature 2: PSD band power (standardized)",0,0);ctx.restore();
  ctx.save();ctx.beginPath();ctx.rect(x1,y1,x2-x1,y2-y1);ctx.clip();
+ const nonzero=Math.hypot(w[0],w[1])>1e-10;
+ if(nonzero){
+  const rect=[[loX,loY],[hiX,loY],[hiX,hiY],[loX,hiY]];
+  for(const [isDown,color] of [[false,"rgba(42,118,175,.105)"],[true,"rgba(211,123,66,.105)"]]){
+   const polygon=classRegion(rect,w,isDown);
+   if(polygon.length<3)continue;
+   ctx.fillStyle=color;
+   ctx.beginPath();
+   polygon.forEach((p,i)=>i?ctx.lineTo(sx(p[0]),sy(p[1])):ctx.moveTo(sx(p[0]),sy(p[1])));
+   ctx.closePath();ctx.fill();
+  }
+ }
+ // Raw measured dots always sit ABOVE the predictive region tint.
  rows.forEach(r=>{
   if(r.group==="diagnostic"&&!get("showHold").checked)return;
   ctx.beginPath();ctx.arc(sx(r.z[0]),sy(r.z[1]),r.group==="diagnostic"?5:3.7,0,Math.PI*2);
@@ -235,7 +285,7 @@ function drawScatter(w){
   if(r.group==="diagnostic"){ctx.lineWidth=1.8;ctx.strokeStyle="#18283e";ctx.stroke();}
   if(r===window.selectedMeasuredTrial){ctx.beginPath();ctx.arc(sx(r.z[0]),sy(r.z[1]),9,0,Math.PI*2);ctx.lineWidth=2.6;ctx.strokeStyle="#5d2587";ctx.stroke();}
  });
- if(Math.hypot(w[0],w[1])>1e-10){
+ if(nonzero){
   const q=[];
   if(Math.abs(w[1])>1e-11)for(const x of [loX,hiX]){
    const y=-(w[0]*x+w[2])/w[1];if(y>=loY&&y<=hiY)q.push([x,y]);
@@ -244,14 +294,43 @@ function drawScatter(w){
    const x=-(w[1]*y+w[2])/w[0];if(x>=loX&&x<=hiX)q.push([x,y]);
   }
   if(q.length>=2){
-   ctx.strokeStyle=PURPLE;ctx.lineWidth=3;ctx.beginPath();
-   ctx.moveTo(sx(q[0][0]),sy(q[0][1]));ctx.lineTo(sx(q[1][0]),sy(q[1][1]));ctx.stroke();
+   const mid=[(q[0][0]+q[1][0])/2,(q[0][1]+q[1][1])/2];
+   ctx.strokeStyle=PURPLE;ctx.lineWidth=3.6;ctx.beginPath();
+   ctx.moveTo(sx(q[0][0]),sy(q[0][1]));
+   ctx.lineTo(sx(q[1][0]),sy(q[1][1]));ctx.stroke();
+
+   // The vector w is NORMAL to the boundary in standardized feature space.
+   // Draw its positive direction, which increases the Downstairs score.
+   const norm=Math.hypot(w[0],w[1]);
+   let len=.68;
+   const dir=[w[0]/norm,w[1]/norm];
+   const extent=(mx,my,dx,dy)=>{
+    let t=Infinity;
+    if(dx>0)t=Math.min(t,(hiX-mx)/dx);
+    if(dx<0)t=Math.min(t,(loX-mx)/dx);
+    if(dy>0)t=Math.min(t,(hiY-my)/dy);
+    if(dy<0)t=Math.min(t,(loY-my)/dy);
+    return t;
+   };
+   len=Math.min(len,Math.max(0,extent(mid[0],mid[1],dir[0],dir[1])-.12));
+   if(len>.2){
+    const ax=sx(mid[0]),ay=sy(mid[1]);
+    const bx=sx(mid[0]+len*dir[0]),by=sy(mid[1]+len*dir[1]);
+    const theta=Math.atan2(by-ay,bx-ax);
+    ctx.lineWidth=2.8;ctx.strokeStyle="#166b5d";ctx.fillStyle="#166b5d";
+    ctx.beginPath();ctx.moveTo(ax,ay);ctx.lineTo(bx,by);ctx.stroke();
+    ctx.beginPath();ctx.moveTo(bx,by);
+    ctx.lineTo(bx-11*Math.cos(theta-.48),by-11*Math.sin(theta-.48));
+    ctx.lineTo(bx-11*Math.cos(theta+.48),by-11*Math.sin(theta+.48));
+    ctx.closePath();ctx.fill();
+    // Avoid writing numerical weights across measured dots; legend explains arrow.
+   }
   }
  }
  ctx.restore();
- if(Math.hypot(w[0],w[1])<=1e-10){
+ if(!nonzero){
   ctx.fillStyle=PURPLE;ctx.font="14px Arial";ctx.textAlign="center";
-  ctx.fillText("Step 0: no discriminating direction yet",330,21);
+  ctx.fillText("Step 0: no unique decision boundary yet",330,21);
  }
 }
 function drawLoss(epoch){
@@ -288,6 +367,17 @@ function render(){
  get("va").textContent=fixed(h.val.acc,1)+"%";
  get("weights").textContent="Current model: p(Downstairs) = sigmoid("+
   fixed(h.w[0])+" × z1 + "+fixed(h.w[1])+" × z2 + "+fixed(h.w[2])+")";
+ const w=h.w;
+ const boundaryEquation=get("boundaryEquation");
+ const boundaryStatus=get("boundaryStatus");
+ if(Math.hypot(w[0],w[1])<=1e-10){
+  boundaryEquation.textContent="Step 0: w₁ = w₂ = b = 0, so p = 0.5 at every point.";
+  boundaryStatus.textContent="With no learned feature direction, there is no unique separating line. The code assigns exact 0.5 ties to Downstairs.";
+ }else{
+  const showSigned=(v)=>v<0?" − "+fixed(Math.abs(v)):" + "+fixed(v);
+  boundaryEquation.textContent=fixed(w[0])+" × x₁"+showSigned(w[1])+" × x₂"+showSigned(w[2])+" = 0";
+  boundaryStatus.textContent="Current model: points with weighted score greater than 0 are predicted Downstairs; scores below 0 are predicted Upstairs. The green arrow points toward higher Downstairs probability.";
+ }
  drawScatter(h.w);drawLoss(i);
  if(window.renderTrialExplanation)window.renderTrialExplanation(i,h);
 }
