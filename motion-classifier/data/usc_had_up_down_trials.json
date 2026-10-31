@@ -2,7 +2,7 @@
   "source": "https://sipi.usc.edu/had/USC-HAD.zip",
   "citation": "Mi Zhang and Alexander A. Sawchuk, USC-HAD, SAGAware (UbiComp), 2012",
   "dataset": "USC-HAD original recorded trials (no simulated signals)",
-  "generatedDate": "2026-10-30",
+  "generatedDate": "2026-10-31",
   "fsHz": 100,
   "windowSeconds": 3.0,
   "hopSeconds": 0.5,
