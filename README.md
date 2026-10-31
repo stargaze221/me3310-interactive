@@ -102,3 +102,37 @@ overconfident wrong prediction.
 Training a simple 2D linear classifier longer does not guarantee
 visible overfitting. Subject-to-subject differences are not automatically
 evidence of overfitting either.
+
+## Explorer 12 — Real USC-HAD Model Complexity & Generalization
+
+**Live viewer:** https://me3310-interactive.netlify.app/motion-overfitting/
+
+Compares four fixed nested feature sets (the FIRST 4, 8, 12, or 16
+ME3310 MATLAB step03 features) using real 100-Hz USC-HAD six-axis
+measurement records. The official 14-subject 140-original-trial
+archive is processed by motion-classifier/build_features.py;
+the verified derived data are at motion-overfitting/data/usc_had_16_features.json.
+No synthetic sensor records are generated or substituted.
+
+Each original trial contributes ONE sample after trial-wise averaging
+of 3-second, 0.5-second-hop window feature vectors. The feature counts
+are predeclared; there is NO Fisher feature ranking or tuning on held-out
+people. The classifiers are logistic regression fitted using an identical
+full-batch gradient descent procedure (900 iterations, learning rate .18,
+no L2 penalty), with standardization fitted to training people only.
+
+Two evaluation choices:
+- Development leave-one-subject-out cross validation across 10 subjects:
+  each model is trained on 9 subjects and evaluated on the remaining one.
+  Each score is the equal-subject-weight average across these 10 folds;
+  in-sample training results are from the matching folds.
+- Four previously viewed diagnostic subjects: one model trained on
+  all 10 development subjects and evaluated on the four excluded people.
+  This is NOT an untouched final test set.
+
+Choose accuracy or logistic cross-entropy, click feature counts to see
+which measurement features are included, and inspect subject-by-subject
+held-out classification errors. More features are NOT guaranteed to
+lower held-out loss; the empirical results should guide interpretation.
+Hold-out generalization gaps and overfitting are related concepts but
+not identical proof of model overfitting.
