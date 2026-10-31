@@ -1,0 +1,127 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>ME 3310 · Model Complexity &amp; Generalization</title>
+<style>
+:root{--ink:#233044;--muted:#596c80;--purple:#4f2683;--blue:#2776ac;--orange:#cc7540;--line:#d6dfe9;--green:#237563}
+*{box-sizing:border-box}html{scroll-behavior:smooth}body{font-family:Arial,Helvetica,sans-serif;color:var(--ink);background:#f6f7fa;margin:0;line-height:1.56}
+main{max-width:1190px;margin:auto;padding:22px 18px 48px}.hero{border-left:6px solid var(--purple);background:#f2eef7;border-radius:5px;padding:19px 22px}
+h1{font-size:28px;color:#302044;margin:3px 0 8px}h2{font-size:19px;color:#27435f;margin:0 0 12px}h3{font-size:15px;margin:0 0 10px}
+p{margin:8px 0}.kicker{font-size:12px;font-weight:bold;letter-spacing:.075em;color:#604b79}
+.card{padding:18px;border:1px solid var(--line);border-radius:9px;background:white;margin-top:14px}
+.grid2{display:grid;grid-template-columns:1fr 1fr;gap:15px}.mini2{display:grid;grid-template-columns:1fr 1fr;gap:10px}.controls{display:flex;align-items:center;gap:12px;flex-wrap:wrap;margin:10px 0 13px}
+button,select{font:inherit;border-radius:6px;background:white;color:var(--ink);border:1px solid #b2bfcc;padding:8px 12px;cursor:pointer}
+button:disabled{opacity:.5;cursor:default}button.primary{background:var(--purple);border-color:var(--purple);color:white;font-weight:700}
+select{padding:8px}.button-group{display:flex;flex-wrap:wrap;gap:5px}.button-group button.active{background:var(--purple);color:white;border-color:var(--purple)}
+.kpis{display:grid;grid-template-columns:repeat(4,1fr);gap:9px}.kpi{border-radius:7px;background:#f3f6f9;padding:10px 12px}
+.kpi .number{display:block;font-size:24px;font-weight:700;color:#264664;font-variant-numeric:tabular-nums}.small,.kpi small{font-size:12px;color:var(--muted)}
+canvas{display:block;width:100%;height:auto;border:1px solid #e3e9ef;border-radius:7px;cursor:crosshair}
+.chart-caption{color:var(--muted);font-size:13px;margin:6px 0 0}
+.legend{display:flex;flex-wrap:wrap;gap:14px;font-size:12px;color:var(--muted);margin:8px 0 0}
+.splot{display:inline-block;width:13px;height:3px;vertical-align:middle;margin-right:5px;background:var(--blue)}
+.splot.orange{background:var(--orange)}.splot.purple{background:var(--purple)}
+.note{background:#fff9ec;border-left:4px solid #bb8542;padding:12px 15px;margin:13px 0}
+.concept{border:1px solid #d7e1ee;background:#f6f9fc;border-radius:7px;padding:13px 15px}
+.feature-list{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:7px;list-style:none;padding:0;margin:12px 0}
+.feature-list li{font-size:13px;border:1px solid #e0e6ed;padding:8px 10px;border-radius:5px;background:#fff}
+.feature-list li.included{background:#eef6fb;border-color:#afd1e9}.feature-list li.extra{background:#f8fafc;color:#8792a0}
+.feature-list .index{display:inline-block;margin-right:8px;color:#586c83;font-weight:bold}
+.formula{font-family:Georgia,serif;font-size:18px;color:#29496b;padding:8px 0}
+.subject-results{overflow-x:auto}.subject-results table{border-collapse:collapse;width:100%;font-size:13px}
+.subject-results th,.subject-results td{padding:8px 10px;border-bottom:1px solid #e4eaf0;text-align:left}
+.subject-results td.num{text-align:right;font-variant-numeric:tabular-nums}
+.indicator{display:inline-block;width:8px;height:8px;border-radius:50%;background:var(--blue);margin-right:5px}
+.error{color:#a13b2d}.success{color:#236951}
+@media(max-width:830px){.grid2{grid-template-columns:1fr}.kpis{grid-template-columns:repeat(2,1fr)}}
+@media(max-width:560px){.feature-list,.mini2{grid-template-columns:1fr}main{padding:12px 9px 28px}h1{font-size:24px}}
+</style>
+</head>
+<body><main>
+<header class="hero">
+  <div class="kicker">ME 3310 · EXPERIMENTAL METHODS I · WEEK 11 EXPLORER 12</div>
+  <h1>More Features: Better Model, or Overfitting?</h1>
+  <p>Train the same linear classifier on <strong>4, 8, 12, or 16 measured IMU features</strong>. Does improvement in the training data carry over to an unfamiliar participant?</p>
+</header>
+<section class="card">
+  <h2>1. The experimental comparison</h2>
+  <p id="status" role="status">Loading actual USC-HAD measurements…</p>
+  <div class="mini2">
+    <div class="concept"><strong>Controlled:</strong> same 140 original trials, fixed preprocessing, same linear logistic regression, same full-batch optimization method.</div>
+    <div class="concept"><strong>Varied:</strong> number of input features: <strong>4 → 8 → 12 → 16</strong>. The feature order is fixed <em>before</em> looking at held-out performance.</div>
+  </div>
+  <p class="small">Data: 14 subjects × 5 original Upstairs trials × 5 original Downstairs trials. Each trial has one 16-feature vector formed by averaging feature measurements over 3-second windows with 0.5-second hop. <strong>Overlapping windows are not independent experimental trials.</strong> Actual USC-HAD 100 Hz acceleration and gyro measurements only; no artificial points.</p>
+</section>
+<section class="card">
+  <h2>2. Compare model complexity</h2>
+  <div class="controls">
+    <label for="evaluation"><strong>Evaluation:</strong></label>
+    <select id="evaluation" disabled>
+      <option value="loso">Leave-one-subject-out CV (10 development subjects)</option>
+      <option value="diagnostic">Previously viewed diagnostic subjects (4)</option>
+    </select>
+    <label for="metric"><strong>Metric:</strong></label>
+    <select id="metric" disabled>
+      <option value="accuracy">Balanced accuracy (%)</option>
+      <option value="loss">Cross-entropy loss</option>
+    </select>
+    <button id="recalculate" disabled>Recalculate models</button>
+  </div>
+  <p class="small" id="evaluationNote">Feature standardization uses training data only, separately in each fold. Four previously inspected people are diagnostic examples—not an untouched final test.</p>
+  <div class="grid2">
+    <div>
+      <h3>Training vs. held-out performance by feature count</h3>
+      <canvas id="complexity" width="610" height="365" aria-label="Measured training and held-out classification performance versus feature count"></canvas>
+      <div class="legend"><span><i class="splot"></i>Training (in-sample)</span><span><i class="splot orange"></i>Held-out subject</span><span><i class="splot purple"></i>Selected model</span></div>
+      <p class="chart-caption">Click a model point to inspect its features and subject-level results. A larger training-to-held-out gap suggests a generalization concern; it does <strong>not</strong> prove overfitting by itself.</p>
+    </div>
+    <div>
+      <h3>Performance of different real participants</h3>
+      <canvas id="subjects" width="610" height="365" aria-label="Per-subject validation scores for selected feature count"></canvas>
+      <p class="chart-caption" id="subjectCaption">One independent original trial is one observation. Each subject has 10 trials (five per motion).</p>
+    </div>
+  </div>
+  <div class="controls" style="margin-top:14px">
+    <strong>Inspect feature set:</strong>
+    <div id="modelButtons" class="button-group" aria-label="Choose the feature count">
+      <button data-n="4" disabled>4 features</button>
+      <button data-n="8" class="active" disabled>8 features</button>
+      <button data-n="12" disabled>12 features</button>
+      <button data-n="16" disabled>16 features</button>
+    </div>
+  </div>
+  <div class="kpis">
+    <div class="kpi"><small>Selected features</small><span id="numFeatures" class="number">—</span></div>
+    <div class="kpi"><small>Training score</small><span id="trainMetric" class="number">—</span></div>
+    <div class="kpi"><small>Held-out score</small><span id="testMetric" class="number">—</span></div>
+    <div class="kpi"><small>Held-out − training</small><span id="gapMetric" class="number">—</span></div>
+  </div>
+  <div class="concept" id="interpretation" style="margin-top:13px">Once measured data are loaded, compare how in-sample and held-out results change as more features are added.</div>
+</section>
+<section class="card">
+  <h2>3. What information did we give the model?</h2>
+  <p>The comparison uses <strong>nested, predeclared feature sets</strong>: columns 1–4, 1–8, 1–12, and 1–16 in our existing MATLAB extraction order. These are <strong>not</strong> Fisher-ranked or tuned using the evaluation subjects.</p>
+  <ul id="features" class="feature-list" aria-label="List of sixteen original measured features"></ul>
+  <p class="small">Adding features increases the number of learned coefficients, but it does not automatically mean the model will overfit. Some new features may be redundant, some informative, and some sensitive to noise. This example is not a controlled feature-selection search.</p>
+</section>
+<section class="card">
+  <h2>4. Interpreting evidence: overfitting versus generalization</h2>
+  <div class="grid2">
+    <div class="concept">
+      <strong>Training fit</strong>
+      <div class="formula">z = b + w₁x₁ + ··· + w<sub>p</sub>x<sub>p</sub></div>
+      <p>For each feature count <em>p</em>, optimize the same logistic cross-entropy objective on training participants. More features let a linear classifier use more directions, but optimization and finite data still matter.</p>
+    </div>
+    <div class="concept">
+      <strong>New-subject prediction</strong>
+      <div class="formula">p(Downstairs) = 1/(1 + e<sup>−z</sup>)</div>
+      <p>Evaluate on participants excluded from that particular model fit. Accuracy tests the predicted class; cross-entropy additionally penalizes confident incorrect predictions.</p>
+    </div>
+  </div>
+  <div class="note"><strong>Evidence is not a predetermined story.</strong> If 16 features improve held-out performance, the measured evidence supports that improvement under these conditions. If training improves but held-out performance declines, investigate possible overfitting, noise, correlation, or subject differences. A single split is not enough to establish a universal model ranking.</div>
+  <p><strong>Think–Pair–Discuss:</strong> Which model would you choose for a new person? What do the subject-level scores reveal that the overall average hides? What entirely new trial or participant would you measure next?</p>
+</section>
+<footer class="small">Original data: <a href="https://sipi.usc.edu/had/">USC-SIPI Human Activity Dataset</a> (Zhang &amp; Sawchuk, 2012). <a href="https://github.com/stargaze221/me3310-interactive/tree/main/motion-overfitting">Source code and 16-feature extraction details</a>. Compare with <a href="../motion-classifier/">How a Linear Classifier Learns</a>.</footer>
+</main><script src="./app.js"></script></body>
+</html>
