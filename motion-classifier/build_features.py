@@ -25,6 +25,23 @@ from scipy.signal import welch
 
 URL = "https://sipi.usc.edu/had/USC-HAD.zip"
 OUTPUT = Path(__file__).with_name("data").joinpath("usc_had_up_down_trials.json")
+OUTPUT_16 = Path(__file__).parent.parent.joinpath(
+    "motion-overfitting", "data", "usc_had_16_features.json"
+)
+# Exact ordering matches step03_extract_window_features.m in the course repo.
+EXTRA_BANDS = [(0.3, 0.8), (0.8, 1.5), (1.5, 3.0), (3.0, 5.0),
+               (5.0, 8.0), (8.0, 12.0), (12.0, 20.0), (20.0, 40.0)]
+FEATURE_NAMES_16 = [
+    "Acceleration magnitude STD (g)",
+    "Acceleration PSD power 0.8–3.0 Hz (g²)",
+    "Gyroscope X RMS (deg/s)",
+    "Gyroscope Y RMS (deg/s)",
+    "Gyroscope Z RMS (deg/s)",
+    "Gyroscope X mean (deg/s)",
+    "Gyroscope Y mean (deg/s)",
+    "Gyroscope Z mean (deg/s)",
+] + [f"Acceleration PSD {lo:.1f}–{hi:.1f} Hz power (g²)"
+     for lo, hi in EXTRA_BANDS]
 FS, N, H = 100, 300, 50  # 100 Hz, 3-s feature windows, 0.5-s hop
 F1, F2 = 0.8, 3.0
 # Same participant split as the course demonstrations; diagnostic subjects
@@ -53,6 +70,7 @@ def extract_trial_features(six_axis):
         return None
     a = six_axis[:, :3]  # acceleration measured in g
     magnitude = np.linalg.norm(a, axis=1)
+    gyro = six_axis[:, 3:6]   # recorded angular rate, deg/s
     features = []
     # MATLAB step03: 3 s windows, hop 0.5 s; mean features over windows
     for start in range(0, len(magnitude) - N + 1, H):
@@ -68,12 +86,20 @@ def extract_trial_features(six_axis):
         )
         band = (f >= F1) & (f <= F2)
         power = float(np.trapezoid(pxx[band], f[band]))
-        features.append([std, power])
+        gy = gyro[start:start + N, :]
+        gyro_rms = np.sqrt(np.mean(gy * gy, axis=0)).tolist()
+        gyro_mean = np.mean(gy, axis=0).tolist()
+        extras = []
+        for lower, upper in EXTRA_BANDS:
+            include = (f >= lower) & (f <= upper)
+            extras.append(float(np.trapezoid(pxx[include], f[include])))
+        features.append([std, power] + gyro_rms + gyro_mean + extras)
     if not features:
         return None
     averaged = np.mean(np.asarray(features), axis=0)
-    return [round(float(averaged[0]), 9),
-            round(float(averaged[1]), 9)], len(features)
+    if len(averaged) != 16 or not np.isfinite(averaged).all():
+        raise ValueError("Incomplete 16-feature measurement extraction.")
+    return [round(float(x), 9) for x in averaged], len(features)
 
 
 def main():
@@ -81,6 +107,7 @@ def main():
     if not zipfile.is_zipfile(io.BytesIO(payload)):
         raise ValueError("Source is not a valid ZIP containing official USC-HAD MAT files.")
     rows = []
+    full_rows = []
     with zipfile.ZipFile(io.BytesIO(payload)) as archive:
         for entry in archive.namelist():
             norm = entry.replace("\\", "/")
@@ -98,6 +125,15 @@ def main():
             if summary is None:
                 raise ValueError(f"Invalid or too-short real original trial: {entry}")
             vals, n_windows = summary
+            full_rows.append({
+                "subject": subject, "trial": trial,
+                "classId": int(activity == 5),
+                "motion": "Downstairs" if activity == 5 else "Upstairs",
+                "features": vals,
+                "windowCount": n_windows,
+                "split": "development" if subject in DEV else "diagnostic",
+                "source": f"Subject{subject}/a{activity}t{trial}.mat",
+            })
             rows.append({
                 "subject": subject, "trial": trial,
                 "classId": int(activity == 5),
@@ -108,6 +144,7 @@ def main():
                 "source": f"Subject{subject}/a{activity}t{trial}.mat",
             })
     rows.sort(key=lambda row: (row["subject"], row["classId"], row["trial"]))
+    full_rows.sort(key=lambda row: (row["subject"], row["classId"], row["trial"]))
     classes = {row["classId"] for row in rows}
     subjects = {row["subject"] for row in rows}
     assert classes == {0, 1} and len(subjects) == 14, (
@@ -142,6 +179,41 @@ def main():
     OUTPUT.parent.mkdir(parents=True, exist_ok=True)
     OUTPUT.write_text(json.dumps(result, indent=2, ensure_ascii=False) + "\n", encoding="utf8")
     print(f"Wrote {len(rows)} REAL original USC-HAD trials to {OUTPUT}")
+    assert len(full_rows) == 140
+    assert len(FEATURE_NAMES_16) == 16
+    result16 = {
+        "dataset": "USC-HAD actual original recordings, no synthetic signals",
+        "source": URL,
+        "citation": "M. Zhang and A. A. Sawchuk, USC-HAD, SAGAware, 2012",
+        "generatedDate": date.today().isoformat(),
+        "fsHz": FS, "windowSeconds": 3.0, "hopSeconds": 0.5,
+        "originalTrialCount": len(full_rows),
+        "featureNames": FEATURE_NAMES_16,
+        "fixedFeatureSets": [4, 8, 12, 16],
+        "featureSelection": (
+            "PREDECLARED nested sets: columns 1–4, 1–8, 1–12, 1–16 "
+            "in the existing ME3310 extraction order. No test-set ranking."
+        ),
+        "featureMethod": (
+            "3-s feature windows, 0.5-s hop. MATLAB step03 feature ordering: "
+            "acc magnitude STD, Welch 0.8–3Hz power, gyro XYZ RMS, gyro XYZ mean, "
+            "8 more accel PSD-band powers. Welch 2-s symmetric Hamming, "
+            "50% overlap, 512-point FFT, 100Hz. Independent units are "
+            "original trials; their window features are averaged."
+        ),
+        "splitNote": (
+            "10 training/development subjects; 4 previously inspected "
+            "diagnostic subjects. Diagnostic comparisons are not pristine "
+            "final test performance. Subject-wise LOSO also available."
+        ),
+        "rows": full_rows,
+    }
+    OUTPUT_16.parent.mkdir(parents=True, exist_ok=True)
+    OUTPUT_16.write_text(
+        json.dumps(result16, ensure_ascii=False, separators=(",", ":")) + "\n",
+        encoding="utf8"
+    )
+    print(f"Wrote {len(full_rows)} REAL 16-feature trial vectors to {OUTPUT_16}")
 
 
 if __name__ == "__main__":
