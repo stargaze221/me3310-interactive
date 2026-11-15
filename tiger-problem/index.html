@@ -1,0 +1,309 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>ME 3310 — The Tiger Problem</title>
+<style>
+:root{--purple:#4f2683;--ink:#253047;--soft:#f7f5fa;--gold:#ffd100;--line:#dad5e3;--danger:#a52b37;--good:#126947;--quiet:#5c6475}
+*{box-sizing:border-box}
+body{margin:0;background:#f4f3f7;color:var(--ink);font-family:Arial,Helvetica,sans-serif;line-height:1.5}
+.wrap{max-width:1120px;margin:0 auto;padding:25px 17px 70px}
+.hero{border-top:5px solid var(--gold);border-left:6px solid var(--purple);background:#fff;padding:21px 24px;margin-bottom:18px;box-shadow:0 2px 14px #3024460e}
+.eyebrow{color:var(--purple);font-size:.77rem;font-weight:800;letter-spacing:.1em;text-transform:uppercase}
+h1{margin:7px 0 8px;font-size:clamp(1.6rem,3vw,2.3rem);line-height:1.15;color:var(--purple)}
+h2{font-size:1.25rem;margin:0 0 11px;color:var(--purple)}
+h3{font-size:1.02rem;margin:0 0 8px}
+p{margin:8px 0 0}
+.lead{font-size:1.05rem;max-width:800px}
+.card{background:#fff;border:1px solid var(--line);border-radius:12px;padding:20px;margin-bottom:17px}
+.grid{display:grid;grid-template-columns:minmax(0,1.45fr) minmax(300px,1fr);gap:16px;align-items:start}
+.rulebar{display:flex;gap:10px;flex-wrap:wrap;margin-top:16px}
+.pill{background:var(--soft);padding:7px 10px;border-radius:7px;font-size:.87rem}
+.pill b{color:var(--purple)}
+.mode-row{display:flex;gap:9px;flex-wrap:wrap;margin:12px 0}
+.mode{border:1px solid #c9bfd8;background:#fff;color:var(--purple);padding:10px 13px;border-radius:8px;cursor:pointer;font-weight:700;font-size:.91rem}
+.mode[aria-pressed="true"]{background:var(--purple);color:#fff;border-color:var(--purple)}
+.mode:focus-visible,button:focus-visible{outline:3px solid #d19b00;outline-offset:3px}
+.note{font-size:.87rem;color:var(--quiet)}
+.scene{background:linear-gradient(155deg,#f4efe6,#e9e2d7);border:1px solid #dfd6c7;border-radius:10px;padding:18px 12px 15px;margin:12px 0}
+.doors{display:grid;grid-template-columns:1fr 1fr;gap:clamp(13px,4vw,40px);max-width:540px;margin:auto}
+.door-wrap{text-align:center}
+.door-name{font-size:.9rem;font-weight:800;letter-spacing:.07em;color:#5d4a3f;margin-bottom:9px;text-transform:uppercase}
+.door{height:196px;position:relative;border:7px solid #76503a;border-bottom:11px solid #65422b;background:repeating-linear-gradient(90deg,#a36d44 0,#a36d44 15px,#97603b 17px,#af794c 34px);border-radius:8px 8px 2px 2px;box-shadow:inset 0 0 0 9px #b9865c,inset 0 0 0 12px #754c30,0 9px 12px #3e2f2233;display:flex;align-items:center;justify-content:center}
+.door:after{content:"";position:absolute;right:18px;top:51%;width:12px;height:12px;background:radial-gradient(circle at 32% 30%,#ffe8a1,#a46e20);border-radius:50%;border:1px solid #715018;box-shadow:0 1px 2px #0005}
+.door .secret{font-size:4.8rem;display:none;filter:drop-shadow(0 4px 3px #0002)}
+.door.revealed{background:#fdfaf1;border-color:#998474;box-shadow:inset 0 0 22px #d2bda2}
+.door.revealed:after{display:none}
+.door.revealed .secret{display:block}
+.door button{position:absolute;inset:0;width:100%;height:100%;opacity:0;cursor:pointer}
+.door button:focus-visible{opacity:1;background:#ffffff33;outline:3px solid var(--gold);outline-offset:4px}
+button.action{background:var(--purple);border:1px solid var(--purple);color:white;font-size:1rem;border-radius:8px;padding:11px 14px;cursor:pointer;font-weight:700}
+button.action:hover:not(:disabled){filter:brightness(1.08)}
+button.outline{background:#fff;color:var(--purple)}
+button.action:disabled{opacity:.45;cursor:not-allowed}
+.button-row{display:flex;flex-wrap:wrap;gap:9px;align-items:center;justify-content:center;margin:13px 0 3px}
+.door-open{display:block;width:100%;margin-top:12px}
+.status{padding:12px 14px;border-left:4px solid var(--purple);background:#f7f5fa;border-radius:4px;min-height:61px;margin:12px 0;color:#302642;font-weight:700}
+.status.win{border-color:var(--good);background:#ecf8f0;color:var(--good)}
+.status.loss{border-color:var(--danger);background:#fff0f0;color:var(--danger)}
+.mini-stats{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:8px;margin-top:16px}
+.metric{background:var(--soft);border-radius:8px;text-align:center;padding:11px 5px}
+.metric .value{font-size:1.35rem;font-weight:800;color:var(--purple)}
+.metric .name{font-size:.73rem;color:var(--quiet)}
+.prob-heading{display:flex;justify-content:space-between;font-weight:700;gap:10px;margin-bottom:8px;font-size:.89rem}
+.meter{height:26px;border-radius:7px;display:flex;overflow:hidden;background:#dfd5ee}
+.leftfill{background:#7452a8;transition:width .28s ease}
+.rightfill{background:#ceb5ec;flex:1;transition:width .28s ease}
+.legend{display:flex;justify-content:space-between;font-size:.86rem;color:var(--quiet);margin:6px 0 15px}
+.observation{border:1px solid #e6dfd0;background:#fffcf5;padding:12px;border-radius:8px;margin:13px 0}
+.observation strong{color:#4b315d}
+.formula{background:#f6f4f9;border:1px solid #e5e1ed;padding:12px;border-radius:8px;font-size:.9rem;overflow-wrap:anywhere;line-height:1.65}
+.formula code{font-family:Consolas,monospace;font-size:.9rem}
+.ev{display:grid;grid-template-columns:1fr 1fr;gap:9px;margin:12px 0}
+.ev>div{padding:10px;background:#f8f6fb;border:1px solid var(--line);border-radius:8px}
+.ev strong{font-size:1.3rem;color:var(--purple);display:block}
+.ev small{color:var(--quiet)}
+.log{padding-left:19px;margin:8px 0;max-height:130px;overflow:auto;font-size:.87rem}
+.log li{margin:4px 0}
+.batch{display:grid;grid-template-columns:1fr 1fr;gap:13px;margin-top:13px}
+.simtable{width:100%;border-collapse:collapse;font-size:.88rem;margin-top:14px}
+.simtable th,.simtable td{padding:9px 8px;border-bottom:1px solid var(--line);text-align:right}
+.simtable th:first-child,.simtable td:first-child{text-align:left}
+.simtable thead{background:var(--soft)}
+.details{font-size:.92rem}
+details{border-top:1px solid var(--line);margin-top:15px;padding-top:13px}
+summary{cursor:pointer;font-weight:700;color:var(--purple)}
+.callout{background:#fff8e6;border-left:4px solid #c6941e;padding:14px 17px;border-radius:4px;margin-top:14px}
+.question{font-size:1.06rem;font-weight:700}
+.foot{margin-top:18px;font-size:.82rem;color:var(--quiet)}
+a{color:var(--purple)}
+@media(max-width:800px){.grid{grid-template-columns:1fr}.door{height:175px}.wrap{padding:14px 10px 50px}.card{padding:15px}.batch{grid-template-columns:1fr}}
+@media(max-width:430px){.door{height:145px}.door .secret{font-size:3.7rem}.metric .value{font-size:1.08rem}.button-row button{flex:1}}
+</style>
+</head>
+<body>
+<main class="wrap">
+<header class="hero">
+<div class="eyebrow">ME 3310 · Week 13 · Interactive Thought Experiment</div>
+<h1>The Tiger Problem</h1>
+<p class="lead">Two closed doors. One hides a tiger 🐅 and the other a treasure 💰. You cannot see the hidden state. You can pay to <strong>listen</strong> before you decide which door to open.</p>
+<div class="rulebar"><div class="pill">Listen: <b>−1 point</b></div><div class="pill">Find treasure: <b>+10</b></div><div class="pill">Open tiger door: <b>−100</b></div><div class="pill">Default hearing accuracy: <b>85%</b></div></div>
+</header>
+
+<section class="card">
+<h2>1 · Choose your observation environment</h2>
+<div class="mode-row" role="group" aria-label="Sensor reliability scenario">
+<button class="mode" id="modeReliable" aria-pressed="true" type="button">Reliable hearing · 85%</button>
+<button class="mode" id="modeMiscalibrated" aria-pressed="false" type="button">Miscalibrated hearing · 60%</button>
+</div>
+<p class="note" id="modeInfo">The real observation accuracy is 85%, and your belief-update model correctly assumes 85%.</p>
+<p class="note">Changing the scenario starts a fresh session. In the miscalibrated case, actual observations are only 60% accurate, but your belief calculation <strong>still assumes 85%</strong>.</p>
+</section>
+
+<div class="grid">
+<section class="card">
+<h2>2 · Make the decision</h2>
+<p class="note">Choose <strong>Listen</strong> for another noisy measurement, or commit by opening one door. The tiger stays in the same place until you open a door.</p>
+<div class="scene">
+<div class="doors">
+<div class="door-wrap">
+<div class="door-name">Door A · Left</div>
+<div class="door" id="doorL"><span class="secret" id="revealL" aria-hidden="true"></span></div>
+<button type="button" class="action door-open" id="openL">Open left door</button>
+</div>
+<div class="door-wrap">
+<div class="door-name">Door B · Right</div>
+<div class="door" id="doorR"><span class="secret" id="revealR" aria-hidden="true"></span></div>
+<button type="button" class="action door-open" id="openR">Open right door</button>
+</div>
+</div>
+</div>
+<div class="button-row">
+<button type="button" class="action" id="listen">👂 Listen (−1)</button>
+<button type="button" class="action outline" id="next" disabled>Next round</button>
+<button type="button" class="action outline" id="reset">Reset session</button>
+</div>
+<div class="status" id="status" role="status" aria-live="polite">Where is the tiger? You start with no information: 50% left, 50% right.</div>
+<div class="mini-stats">
+<div class="metric"><div class="value" id="points">0</div><div class="name">Total points</div></div>
+<div class="metric"><div class="value" id="completed">0</div><div class="name">Doors opened</div></div>
+<div class="metric"><div class="value" id="survived">0</div><div class="name">Treasures found</div></div>
+</div>
+</section>
+
+<aside class="card">
+<h2>3 · Belief is not the hidden state</h2>
+<div class="prob-heading"><span id="pLeft">P(tiger left) = 50.0%</span><span id="pRight">P(tiger right) = 50.0%</span></div>
+<div class="meter" role="img" id="meterLabel" aria-label="Belief: tiger left 50 percent, tiger right 50 percent"><div class="leftfill" id="barLeft" style="width:50%"></div><div class="rightfill"></div></div>
+<div class="legend"><span>◀ Tiger on left</span><span>Tiger on right ▶</span></div>
+<div class="observation" id="lastObservation">No observation yet. You may listen repeatedly, but every listen costs 1 point.</div>
+<h3>Bayesian update after listening</h3>
+<div class="formula" id="bayes">
+Prior: P(tiger left) = 0.500<br>When you hear a roar, the observation changes the relative likelihood of the two states.
+</div>
+<h3 style="margin-top:14px">Expected points if you open now</h3>
+<div class="ev">
+<div><small>Open left</small><strong id="evLeft">−45.0</strong><small>10 × P(tiger right) − 100 × P(tiger left)</small></div>
+<div><small>Open right</small><strong id="evRight">−45.0</strong><small>10 × P(tiger left) − 100 × P(tiger right)</small></div>
+</div>
+<p class="note">These expectations use your <strong>current belief</strong>. They are not guarantees. If the observation model is wrong, the computed confidence can be misleading.</p>
+<details><summary>View the observations collected this round</summary><ol class="log" id="history"><li>No observations yet.</li></ol></details>
+</aside>
+</div>
+
+<section class="card">
+<h2>4 · Repeat the experiment: Does more listening help?</h2>
+<p>Compare two simple policies over <strong>500 simulated rounds</strong> under the selected hearing scenario. These are illustrations, <strong>not claimed to be optimal POMDP policies</strong>.</p>
+<div class="batch">
+<div style="background:var(--soft);border-radius:9px;padding:15px"><h3>Policy A · No exploration</h3><p>Open the left door immediately without listening.</p></div>
+<div style="background:var(--soft);border-radius:9px;padding:15px"><h3>Policy B · Listen before commitment</h3><p>Listen until the model assigns at least 95% probability to one state (maximum 12 listens); then open the safer door.</p></div>
+</div>
+<div class="button-row" style="justify-content:flex-start;margin-top:17px"><button class="action" type="button" id="compare">Run 500 trials</button></div>
+<div id="batchResult" class="note" aria-live="polite" style="margin-top:12px">Run the comparison, then switch scenarios and run it again.</div>
+<details class="details"><summary>What is being simulated?</summary>
+<p>Each trial starts with a new randomly placed tiger and a 50/50 prior. A listen costs −1 and reports the true tiger side with the scenario's <em>actual</em> reliability. Policy B updates its probability using the <em>assumed</em> 85% reliability in both scenarios. Opening the treasure door gives +10; opening the tiger door gives −100. A fixed random seed makes the demonstration reproducible.</p>
+</details>
+</section>
+
+<section class="card">
+<h2>5 · Think – Pair – Discuss</h2>
+<div class="callout">
+<p class="question">If your model says “97% confident,” what exactly does that number depend on?</p>
+<p style="margin-top:9px">When does listening provide useful evidence? When could additional observations create <em>more confidence without more reliability</em>?</p>
+</div>
+<p style="margin-top:16px"><strong>Engineering connection:</strong> The real state is hidden. Measurements are imperfect. A rational decision therefore depends not only on the data, but also on the model used to interpret those data.</p>
+<p style="font-size:1.13rem;font-weight:800;color:var(--purple);margin-top:13px">Exploration can reveal not only a better option, but also how uncertain our current answer really is.</p>
+<p class="foot">Based on the classic Tiger POMDP, Cassandra, Kaelbling &amp; Littman (1994). <a href="https://rdrr.io/cran/pomdp/man/Tiger.html" target="_blank" rel="noopener">Model reference</a>. The miscalibrated sensor scenario and comparison policies are additional teaching adaptations.</p>
+</section>
+</main>
+
+<script>
+(function(){
+'use strict';
+var actualAccuracy=0.85, assumedAccuracy=0.85;
+var round, stats, statusText;
+var el=function(id){return document.getElementById(id);};
+var pct=function(p){return (100*p).toFixed(1)+'%';};
+var sign=function(v){return (v>=0?'+':'')+v.toFixed(1);};
+function randomTiger(){return Math.random()<0.5?'L':'R';}
+function resetRound(){
+ round={tiger:randomTiger(),p:0.5,finished:false,n:0,observations:[],last:null};
+ statusText='Where is the tiger? You start with no information: 50% left, 50% right.';
+ render();
+}
+function resetSession(){
+ stats={points:0,opened:0,wins:0};
+ el('batchResult').textContent='Run the comparison, then switch scenarios and run it again.';
+ resetRound();
+}
+function setMode(acc){
+ actualAccuracy=acc;
+ el('modeReliable').setAttribute('aria-pressed',String(acc===0.85));
+ el('modeMiscalibrated').setAttribute('aria-pressed',String(acc===0.60));
+ el('modeInfo').textContent=acc===0.85?
+ 'The real observation accuracy is 85%, and your belief-update model correctly assumes 85%.':
+ 'The actual observation accuracy is only 60%, while your belief-update model incorrectly assumes 85%.';
+ resetSession();
+}
+function posterior(p,heard,accuracy){
+ var numerator=heard==='L'?p*accuracy:p*(1-accuracy);
+ var denominator=numerator+(heard==='L'?(1-p)*(1-accuracy):(1-p)*accuracy);
+ return numerator/denominator;
+}
+function listen(){
+ if(round.finished)return;
+ var heard=Math.random()<actualAccuracy?round.tiger:(round.tiger==='L'?'R':'L');
+ var prior=round.p;
+ round.p=posterior(prior,heard,assumedAccuracy);
+ round.n++;stats.points--;
+ round.last={heard:heard,prior:prior,after:round.p};
+ round.observations.push(heard);
+ statusText='You heard a roar from the '+(heard==='L'?'LEFT':'RIGHT')+'. It is a noisy observation, not a view through the door.';
+ render();
+}
+function openDoor(side){
+ if(round.finished)return;
+ round.finished=true;
+ var win=side!==round.tiger;
+ stats.points+=win?10:-100;
+ stats.opened++;
+ if(win)stats.wins++;
+ statusText=win?'Treasure! You earned +10 points. The tiger was behind the '+(round.tiger==='L'?'LEFT':'RIGHT')+' door.':
+ 'Tiger! You lost 100 points. Your belief was not certainty.';
+ render();
+}
+function render(){
+ el('pLeft').textContent='P(tiger left) = '+pct(round.p);
+ el('pRight').textContent='P(tiger right) = '+pct(1-round.p);
+ el('barLeft').style.width=(100*round.p).toFixed(2)+'%';
+ el('meterLabel').setAttribute('aria-label','Belief: tiger left '+pct(round.p)+', tiger right '+pct(1-round.p));
+ el('evLeft').textContent=sign(10-110*round.p);
+ el('evRight').textContent=sign(110*round.p-100);
+ el('points').textContent=String(stats.points);
+ el('completed').textContent=String(stats.opened);
+ el('survived').textContent=String(stats.wins);
+ el('listen').disabled=round.finished;
+ el('openL').disabled=round.finished;
+ el('openR').disabled=round.finished;
+ el('next').disabled=!round.finished;
+ el('doorL').classList.toggle('revealed',round.finished);
+ el('doorR').classList.toggle('revealed',round.finished);
+ el('revealL').textContent=round.finished?(round.tiger==='L'?'🐅':'💰'):'';
+ el('revealR').textContent=round.finished?(round.tiger==='R'?'🐅':'💰'):'';
+ var box=el('status');box.textContent=statusText;box.className='status'+(round.finished?(round.tiger===round.openedSide?' loss':''):'');
+ // The opening outcome is determined by the revealed state and the chosen door.
+ if(round.finished){box.className='status '+(round.win?'win':'loss');}
+ if(round.last){
+  var k=round.last,likL=k.heard==='L'?assumedAccuracy:1-assumedAccuracy;
+  var likR=1-likL;
+  var num=k.prior*likL,other=(1-k.prior)*likR;
+  el('lastObservation').innerHTML='<strong>Latest observation:</strong> Roar from '+(k.heard==='L'?'LEFT':'RIGHT')+' &nbsp;·&nbsp; Listening count: '+round.n+'.';
+  el('bayes').innerHTML='<strong>Update with Bayes’ rule</strong><br>P(Tiger left | heard '+(k.heard==='L'?'left':'right')+')<br>= ('+k.prior.toFixed(3)+' × '+likL.toFixed(2)+') / [('+k.prior.toFixed(3)+' × '+likL.toFixed(2)+') + ('+(1-k.prior).toFixed(3)+' × '+likR.toFixed(2)+')]<br>= <strong>'+k.after.toFixed(3)+'</strong> ('+pct(k.after)+').<br><span class="note">Likelihood uses the assumed 85% sensor accuracy.</span>';
+  el('history').innerHTML=round.observations.map(function(x,i){return '<li>Listen '+(i+1)+': heard '+(x==='L'?'left':'right')+'</li>';}).join('');
+ }else{
+  el('lastObservation').textContent='No observation yet. You may listen repeatedly, but every listen costs 1 point.';
+  el('bayes').innerHTML='Prior: P(tiger left) = 0.500<br>When you hear a roar, the observation changes the relative likelihood of the two states.';
+  el('history').innerHTML='<li>No observations yet.</li>';
+ }
+}
+function seededRandom(seed){
+ return function(){seed=(1664525*seed+1013904223)>>>0;return seed/4294967296;};
+}
+function simulate(policy,count,acc,seed){
+ var rng=seededRandom(seed),points=0,losses=0,listens=0,conf=0;
+ for(var i=0;i<count;i++){
+  var tiger=rng()<0.5?'L':'R',p=0.5,n=0;
+  if(policy==='listen'){
+   while(Math.max(p,1-p)<0.95 && n<12){
+    var heard=rng()<acc?tiger:(tiger==='L'?'R':'L');
+    p=posterior(p,heard,assumedAccuracy);n++;
+   }
+  }
+  var open=p>=0.5?'R':'L';
+  var lost=open===tiger;
+  if(lost)losses++;
+  points+=(lost?-100:10)-n;
+  listens+=n;conf+=Math.max(p,1-p);
+ }
+ return {avg:points/count,risk:losses/count,n:listens/count,confidence:conf/count};
+}
+function compare(){
+ var count=500,baseline=simulate('none',count,actualAccuracy,7341);
+ var exploration=simulate('listen',count,actualAccuracy,7341);
+ function row(name,obj){return '<tr><td>'+name+'</td><td>'+sign(obj.avg)+'</td><td>'+pct(obj.risk)+'</td><td>'+obj.n.toFixed(2)+'</td><td>'+pct(obj.confidence)+'</td></tr>';}
+ el('batchResult').innerHTML='<div style="overflow-x:auto"><table class="simtable"><thead><tr><th>Strategy</th><th>Avg points / round</th><th>Tiger opened</th><th>Avg listens</th><th>Model confidence</th></tr></thead><tbody>'+row('Open immediately',baseline)+row('Listen until 95%',exploration)+'</tbody></table></div><p class="note">500 trials per strategy · Actual hearing accuracy: '+pct(actualAccuracy)+'. Model assumes '+pct(assumedAccuracy)+'. Confidence is the model’s stated probability of its more likely tiger location at the moment of opening. It is not a measured success rate.</p>';
+}
+el('modeReliable').addEventListener('click',function(){setMode(0.85);});
+el('modeMiscalibrated').addEventListener('click',function(){setMode(0.60);});
+el('listen').addEventListener('click',listen);
+el('openL').addEventListener('click',function(){round.openedSide='L';round.win=round.tiger!=='L';openDoor('L');});
+el('openR').addEventListener('click',function(){round.openedSide='R';round.win=round.tiger!=='R';openDoor('R');});
+el('next').addEventListener('click',resetRound);
+el('reset').addEventListener('click',resetSession);
+el('compare').addEventListener('click',compare);
+resetSession();
+})();
+</script>
+</body>
+</html>
