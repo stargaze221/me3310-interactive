@@ -37,7 +37,22 @@ button.primary{background:var(--purple);color:#fff}button.primary:hover{backgrou
 .env-guide-text{flex:1 1 245px}.env-guide-text h3{margin:0 0 3px;color:var(--purple);font-size:18px}
 .env-guide-text p{margin:3px 0}.env-guide-text .guide-question{font-weight:700;margin-top:7px;font-size:14px}
 @media(max-width:600px){.env-guide-visual{flex-basis:150px}}
-.note{font-size:13px;color:var(--muted);padding:9px 0}.prompt{margin:16px 0;border-left:4px solid #c9a225;padding:12px 15px;background:#fffaf0}
+.primer{border:1px solid var(--line);border-radius:9px;padding:14px 16px;margin:14px 0;background:#fff}
+.formula-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:9px;margin-top:10px}
+.formula-item{background:var(--soft);padding:10px;border-radius:6px;min-width:0}
+.formula-item .math{font-size:17px;font-weight:700;line-height:1.4;white-space:normal;overflow-wrap:anywhere;color:#3b205f}
+.formula-item p{font-size:12px;color:var(--muted);margin-top:4px}
+.scenarios{border:1px solid var(--line);border-radius:9px;padding:14px 16px;margin:16px 0}
+.scenarios h2{margin:0 0 5px}.scroll-table{width:100%;overflow-x:auto}
+.scenario-table{min-width:740px}
+.scenario-table td,.scenario-table th{text-align:left;padding:7px 8px}
+.scenario-table button{white-space:nowrap;padding:5px 10px}
+.log-table{min-width:840px}
+.log-table td,.log-table th{text-align:right;padding:7px 8px}
+.log-table td:first-child,.log-table th:first-child{text-align:left}
+.log-table input{width:160px;min-width:130px;font-size:12px;padding:5px}
+.note{font-size:13px;color:var(--muted);padding:9px 0}
+@media(max-width:600px){.formula-grid{grid-template-columns:1fr}}.prompt{margin:16px 0;border-left:4px solid #c9a225;padding:12px 15px;background:#fffaf0}
 table{border-collapse:collapse;width:100%;font-size:13px}th,td{border-bottom:1px solid var(--line);padding:9px 7px;text-align:right;font-variant-numeric:tabular-nums}th:first-child,td:first-child{text-align:left}
 .output{margin:12px 0}details{margin:12px 0;border:1px solid var(--line);border-radius:7px;padding:10px 13px}summary{cursor:pointer;font-weight:700;color:var(--purple)}
 footer{border-top:1px solid var(--line);margin-top:20px;padding-top:12px;color:var(--muted);font-size:12px}
@@ -52,6 +67,17 @@ footer{border-top:1px solid var(--line);margin-top:20px;padding-top:12px;color:v
 <p>Which option should we test next when its true performance is unknown?</p>
 </header>
 <p class="intro"><strong>Engineering question:</strong> Should we select the option that looks best, or collect more evidence? Each button press produces one noisy measurement. Only the tested option is observed.</p>
+
+<section class="primer" aria-label="Short mathematical introduction">
+  <h2>Before you begin · What are we measuring?</h2>
+  <div class="formula-grid">
+    <div class="formula-item"><strong>Observed reward</strong><div class="math">r<sub>t</sub> = μ<sub>a<sub>t</sub></sub>(t) + η<sub>t</sub></div><p>The observed performance of the chosen option includes measurement noise.</p></div>
+    <div class="formula-item"><strong>Sample mean estimate</strong><div class="math">Q<sub>i</sub> = (Σ r<sub>i,k</sub>) / n<sub>i</sub></div><p>Our estimate based on the observations collected for option i.</p></div>
+    <div class="formula-item"><strong>Regret at decision t</strong><div class="math">g<sub>t</sub> = max<sub>i</sub> μ<sub>i</sub>(t) − μ<sub>a<sub>t</sub></sub>(t)</div><p>Expected performance lost relative to the best available option, not the noisy measurement difference.</p></div>
+    <div class="formula-item"><strong>Cumulative regret</strong><div class="math">R<sub>T</sub> = Σ<sub>t=1…T</sub> g<sub>t</sub></div><p>Lower regret means decisions were closer to the best available expected performance over time.</p></div>
+  </div>
+  <p class="small"><strong>Example:</strong> if the true means are A = 7, B = 6, C = 8, selecting A produces expected regret 8 − 7 = <strong>1</strong>. The learner does not see these true means; only the simulator knows them.</p>
+</section>
 
 <div class="controls" aria-label="Experiment settings">
   <div class="control wide"><label for="environment">Environment</label><select id="environment">
@@ -95,6 +121,25 @@ footer{border-top:1px solid var(--line);margin-top:20px;padding-top:12px;color:v
 </section>
 <p class="small"><strong>Important:</strong> Every environment includes measurement noise. Only Changing and Volatile also change the underlying true performance.</p>
 <p class="small">A fixed seed makes results reproducible. Changing settings resets the manual experiment. Rewards are simulated engineering performance scores, not historical stock returns.</p>
+
+<section class="scenarios" aria-label="Suggested experiment scenarios">
+  <h2>Scenario Playbook · Try and Record</h2>
+  <p class="small">Use the same seed (3310) and 300 Monte Carlo runs for comparable conditions. Click <strong>Run</strong> to load the settings, run the simulation, and automatically add a row to the Scenario Log.</p>
+  <div class="scroll-table"><table class="scenario-table">
+    <thead><tr><th>Case</th><th>Environment</th><th>ε</th><th>Trials</th><th>Engineering question</th><th>Action</th></tr></thead>
+    <tbody>
+      <tr><td><strong>S1</strong></td><td>Stable</td><td>0.00</td><td>180</td><td>Can Greedy get stuck after noisy early samples?</td><td><button type="button" data-scenario="S1">Run S1</button></td></tr>
+      <tr><td><strong>S2</strong></td><td>Stable</td><td>0.10</td><td>180</td><td>Does occasional exploration help correct early errors?</td><td><button type="button" data-scenario="S2">Run S2</button></td></tr>
+      <tr><td><strong>S3</strong></td><td>Stable</td><td>0.30</td><td>180</td><td>When does too much exploration reduce reward?</td><td><button type="button" data-scenario="S3">Run S3</button></td></tr>
+      <tr><td><strong>S4</strong></td><td>Changing</td><td>0.00</td><td>180</td><td>What happens after the ranking reverses?</td><td><button type="button" data-scenario="S4">Run S4</button></td></tr>
+      <tr><td><strong>S5</strong></td><td>Changing</td><td>0.10</td><td>180</td><td>Can exploration rediscover the new best option?</td><td><button type="button" data-scenario="S5">Run S5</button></td></tr>
+      <tr><td><strong>S6</strong></td><td>Changing</td><td>0.30</td><td>180</td><td>Can faster discovery outweigh more random choices?</td><td><button type="button" data-scenario="S6">Run S6</button></td></tr>
+      <tr><td><strong>S7</strong></td><td>Volatile</td><td>0.10</td><td>180</td><td>Are recent data more informative than old data?</td><td><button type="button" data-scenario="S7">Run S7</button></td></tr>
+      <tr><td><strong>S8</strong></td><td>Volatile</td><td>0.30</td><td>180</td><td>Can additional exploration track drifting performance?</td><td><button type="button" data-scenario="S8">Run S8</button></td></tr>
+    </tbody>
+  </table></div>
+  <p class="small">Suggested discussion order: S1 → S2 → S3; S4 → S5 → S6; S7 → S8. These are hypotheses to investigate, not guaranteed outcomes.</p>
+</section>
 
 <div class="tabs" role="tablist" aria-label="Experiment mode">
   <button type="button" id="tabManual" role="tab" aria-selected="true" aria-controls="manual">1 · Collect Data</button>
@@ -157,6 +202,13 @@ footer{border-top:1px solid var(--line);margin-top:20px;padding-top:12px;color:v
     <div class="legend"><span><i class="key" style="background:#555"></i>Greedy</span><span><i class="key" style="background:var(--a)"></i>ε-Greedy</span><span><i class="key" style="background:var(--b)"></i>ε-Greedy + recent data</span></div>
   </div>
   <div class="output" id="mcTable"></div>
+  <section class="scenarios" aria-label="Saved Monte Carlo scenario results">
+    <h2>Scenario Log · Your Evidence</h2>
+    <p class="small">Every Monte Carlo run is recorded below. Regret is shown <strong>per decision</strong> to aid comparisons when the experiment length differs. Lower is better. Add a short observation for each run.</p>
+    <div class="button-row"><button type="button" id="exportScenarioLog">Download Scenario Log CSV</button><button type="button" id="clearScenarioLog">Clear Log</button></div>
+    <div id="scenarioLogTable" class="scroll-table" aria-live="polite">No scenarios recorded yet.</div>
+    <p class="small">The log is saved only in this browser using local storage. Export the CSV to retain a copy, especially on shared computers or private browsing sessions.</p>
+  </section>
   <div class="prompt"><strong>Discuss:</strong> Does ε = 0 always win in a stable world? What about after the best option changes? Does more data always mean better decisions?</div>
 </section>
 
@@ -176,6 +228,40 @@ footer{border-top:1px solid var(--line);margin-top:20px;padding-top:12px;color:v
 var $=function(id){return document.getElementById(id);};
 var armColors=["#62469a","#138b8d","#df8b28"],policyColors=["#555","#62469a","#138b8d"];
 var state=null,world=null,manualRng=null,manualLog=[],manualHist=[[],[],[]],revealed=false,mcResult=null;
+var activeScenario="Custom",scenarioHistory=[],scenarioCounter=0,storageKey="me3310-bandit-scenario-log-v1";
+var scenarioPresets={
+  S1:["stable",0.00,180],S2:["stable",0.10,180],S3:["stable",0.30,180],
+  S4:["changing",0.00,180],S5:["changing",0.10,180],S6:["changing",0.30,180],
+  S7:["volatile",0.10,180],S8:["volatile",0.30,180]
+};
+function escapeText(x){return String(x).replace(/[&<>"']/g,function(c){return {"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c];});}
+function saveScenarioHistory(){try{window.localStorage.setItem(storageKey,JSON.stringify(scenarioHistory.slice(0,50)));}catch(e){}}
+function loadScenarioHistory(){try{var v=JSON.parse(window.localStorage.getItem(storageKey)||"[]");scenarioHistory=Array.isArray(v)?v.filter(function(x){return x&&Array.isArray(x.regrets)&&x.regrets.length===3;}).slice(0,50):[];}catch(e){scenarioHistory=[];}}
+function renderScenarioHistory(){
+  var host=$("scenarioLogTable");if(!scenarioHistory.length){host.textContent="No scenarios recorded yet.";return;}
+  var h='<table class="log-table"><thead><tr><th>Case</th><th>Environment</th><th>ε</th><th>T / M</th><th>Greedy regret / step</th><th>ε-Greedy regret / step</th><th>Recent-data regret / step</th><th>Observation</th></tr></thead><tbody>';
+  scenarioHistory.forEach(function(v,i){
+    h+='<tr><td>'+escapeText(v.label)+'</td><td>'+escapeText(v.env)+'</td><td>'+Number(v.epsilon).toFixed(2)+'</td><td>'+Number(v.horizon)+' / '+Number(v.reps)+'</td>';
+    for(var j=0;j<3;j++)h+='<td>'+Number(v.regrets[j]).toFixed(3)+'</td>';
+    h+='<td><input type="text" data-log-note="'+i+'" maxlength="180" aria-label="Observation for '+escapeText(v.label)+'" placeholder="What did you observe?" value="'+escapeText(v.note||"")+'"></td></tr>';
+  });
+  host.innerHTML=h+'</tbody></table>';
+}
+function recordScenarioRun(s,reps,sums){
+  scenarioCounter++;
+  var perDecision=sums.map(function(v){return v.regret[s.horizon-1]/reps/s.horizon;});
+  scenarioHistory.unshift({label:activeScenario,env:s.env,epsilon:s.epsilon,horizon:s.horizon,reps:reps,seed:s.seed,regrets:perDecision,note:""});
+  scenarioHistory=scenarioHistory.slice(0,50);
+  saveScenarioHistory();renderScenarioHistory();
+}
+function useScenario(id){
+  var preset=scenarioPresets[id];if(!preset)return;
+  $("environment").value=preset[0];$("epsilon").value=preset[1].toFixed(2);
+  $("epsLabel").textContent=preset[1].toFixed(2);$("horizon").value=String(preset[2]);
+  $("seed").value="3310";$("repetitions").value="300";
+  reset();activeScenario=id;tab("compare");runMC();
+}
+
 function seedValue(){var x=Math.floor(Number($("seed").value));return Number.isFinite(x)?Math.min(2147483646,Math.max(1,x)):3310;}
 function rng(seed){var a=seed>>>0;return function(){a+=0x6D2B79F5;var t=a;t=Math.imul(t^(t>>>15),t|1);t^=t+Math.imul(t^(t>>>7),t|61);return ((t^(t>>>14))>>>0)/4294967296;};}
 function normal(random){var x=Math.max(1e-12,random()),y=random();return Math.sqrt(-2*Math.log(x))*Math.cos(2*Math.PI*y);}
@@ -221,6 +307,7 @@ function updateEnvironmentGuide(){
   ["Stable","Changing","Volatile"].forEach(function(name){$("guide"+name).style.display=name.toLowerCase()===env?"":"none";});
 }
 function reset(){
+  activeScenario="Custom";
   var s=settings();
   updateEnvironmentGuide();$("seed").value=s.seed;world=buildWorld(s.seed,s.horizon,s.env);
   state=newLearner();manualRng=rng((s.seed+0x00A51417)>>>0);manualLog=[];manualHist=[[],[],[]];revealed=false;mcResult=null;
@@ -336,6 +423,7 @@ function runMC(){
   $("mcTable").innerHTML=lines+'</tbody></table><p class="small">95% normal-approximation confidence interval of the mean total observed reward across independent simulation runs. These are simulation results, not general guarantees about the policies.</p>';
   $("mcCSV").disabled=false;
   $("mcStatus").textContent="Completed "+reps+" paired simulation runs, "+steps+" decisions each; ε = "+s.epsilon.toFixed(2)+". Lower expected regret means better action choices on average.";
+  recordScenarioRun(s,reps,sums);
 }
 function download(name,csv){
   var b=new Blob([csv],{type:"text/csv;charset=utf-8"}),u=URL.createObjectURL(b),a=document.createElement("a");
@@ -370,11 +458,27 @@ $("epsilonTen").addEventListener("click",function(){perform(null,10,"epsilon");}
 $("reset").addEventListener("click",reset);
 $("reveal").addEventListener("click",function(){revealed=!revealed;this.setAttribute("aria-pressed",String(revealed));this.textContent=revealed?"Hide true expected rewards":"Reveal true expected rewards";$("truthLegend").hidden=!revealed;paintManual();});
 $("manualCSV").addEventListener("click",csvManual);$("mcCSV").addEventListener("click",csvMC);$("runMC").addEventListener("click",runMC);
+document.querySelectorAll("[data-scenario]").forEach(function(b){b.addEventListener("click",function(){useScenario(this.getAttribute("data-scenario"));});});
+$("scenarioLogTable").addEventListener("input",function(event){
+  var i=event.target.getAttribute("data-log-note");if(i===null)return;
+  var idx=Number(i);if(scenarioHistory[idx]){scenarioHistory[idx].note=event.target.value;saveScenarioHistory();}
+});
+$("exportScenarioLog").addEventListener("click",function(){
+  if(!scenarioHistory.length){$("scenarioLogTable").textContent="No scenarios recorded yet.";return;}
+  function csvCell(v){return '"'+String(v).replace(/"/g,'""')+'"';}
+  var rows=[["case","environment","epsilon","horizon","monte_carlo_runs","seed","greedy_regret_per_decision","epsilon_greedy_regret_per_decision","recent_data_regret_per_decision","observation"]];
+  scenarioHistory.forEach(function(v){rows.push([v.label,v.env,v.epsilon,v.horizon,v.reps,v.seed,v.regrets[0],v.regrets[1],v.regrets[2],v.note||""]);});
+  download("me3310-bandit-scenario-log.csv",rows.map(function(row){return row.map(csvCell).join(",");}).join("\n"));
+});
+$("clearScenarioLog").addEventListener("click",function(){
+  if(!scenarioHistory.length)return;
+  if(window.confirm("Clear saved scenario results from this browser? Export a CSV first if you want to keep them.")){scenarioHistory=[];saveScenarioHistory();renderScenarioHistory();}
+});
 ["environment","horizon","seed"].forEach(function(id){$(id).addEventListener("change",reset);});
 $("epsilon").addEventListener("input",function(){$("epsLabel").textContent=(+this.value).toFixed(2);});
 $("epsilon").addEventListener("change",reset);
 window.addEventListener("resize",function(){if(!$("manual").hidden)paintManual();else tab("compare");});
-reset();
+loadScenarioHistory();renderScenarioHistory();reset();
 })();
 </script>
 </body>
