@@ -46,7 +46,8 @@ th:first-child,td:first-child{text-align:left}
 .model-card{border:1px solid var(--line);border-radius:7px;background:#fff;padding:12px 14px;min-width:0}
 .model-card h3{font-size:16px;color:var(--purple);margin:0 0 6px}
 .model-card p{font-size:13px;color:var(--muted);margin:6px 0}
-.model-card math{display:block;margin:10px auto;font-size:18px;max-width:100%;overflow-x:auto;overflow-y:hidden}
+.model-card .equation-scroll{overflow-x:auto;overflow-y:hidden;margin:10px 0;padding:5px 0;text-align:center}
+.model-card math{font-size:18px}
 .model-table{min-width:570px}.model-table th,.model-table td{text-align:center;font-size:12px;padding:7px 6px}
 .model-table th:first-child,.model-table td:first-child{text-align:left}
 .model-lead{font-size:14px;color:#444;margin:7px 0}
@@ -131,29 +132,29 @@ footer{font-size:12px;color:var(--muted);border-top:1px solid var(--line);paddin
   <div class="model-card">
     <h3>1 · Actual trade outcome</h3>
     <p>Ordinary profit is Gaussian, with a small probability of a fixed catastrophic loss:</p>
-    <math xmlns="http://www.w3.org/1998/Math/MathML" display="block" aria-label="Trade return X equals Gaussian ordinary profit with probability one minus p, or catastrophic loss L with probability p">
+    <div class="equation-scroll"><math xmlns="http://www.w3.org/1998/Math/MathML" display="block" aria-label="Trade return X equals Gaussian ordinary profit with probability one minus p, or catastrophic loss L with probability p">
       <msub><mi>X</mi><mrow><mi>i</mi><mo>,</mo><mi>t</mi></mrow></msub>
       <mo>∼</mo><mo>{</mo>
       <mtable columnalign="left">
         <mtr><mtd><mi mathvariant="normal">Normal</mi><mo>(</mo><msub><mi>m</mi><mi>i</mi></msub><mo>,</mo><msubsup><mi>s</mi><mi>i</mi><mn>2</mn></msubsup><mo>)</mo></mtd><mtd><mtext>with probability&nbsp;</mtext><mn>1</mn><mo>−</mo><msub><mi>p</mi><mi>i</mi></msub></mtd></mtr>
         <mtr><mtd><msub><mi>L</mi><mi>i</mi></msub></mtd><mtd><mtext>with probability&nbsp;</mtext><msub><mi>p</mi><mi>i</mi></msub></mtd></mtr>
       </mtable>
-    </math>
+    </math></div>
     <p>The mean of the mixture is:</p>
-    <math xmlns="http://www.w3.org/1998/Math/MathML" display="block" aria-label="Expected outcome equals one minus p times m, plus p times L">
+    <div class="equation-scroll"><math xmlns="http://www.w3.org/1998/Math/MathML" display="block" aria-label="Expected outcome equals one minus p times m, plus p times L">
       <msub><mi>μ</mi><mi>i</mi></msub><mo>=</mo><mo>(</mo><mn>1</mn><mo>−</mo><msub><mi>p</mi><mi>i</mi></msub><mo>)</mo><msub><mi>m</mi><mi>i</mi></msub><mo>+</mo><msub><mi>p</mi><mi>i</mi></msub><msub><mi>L</mi><mi>i</mi></msub>
-    </math>
+    </math></div>
     <p><strong>Crucial:</strong> “Normal profit” refers to the usual outcome only. The overall outcome distribution has a rare-loss tail.</p>
   </div>
   <div class="model-card">
     <h3>2 · Reported information</h3>
     <p>Trade reports are corrupted by additive Gaussian noise and possible systematic bias:</p>
-    <math xmlns="http://www.w3.org/1998/Math/MathML" display="block" aria-label="Observed report Y equals true return X plus reporting bias b plus Gaussian noise eta">
+    <div class="equation-scroll"><math xmlns="http://www.w3.org/1998/Math/MathML" display="block" aria-label="Observed report Y equals true return X plus reporting bias b plus Gaussian noise eta">
       <msub><mi>Y</mi><mrow><mi>i</mi><mo>,</mo><mi>t</mi></mrow></msub><mo>=</mo><msub><mi>X</mi><mrow><mi>i</mi><mo>,</mo><mi>t</mi></mrow></msub><mo>+</mo><msub><mi>b</mi><mrow><mi>i</mi><mo>,</mo><mi>t</mi></mrow></msub><mo>+</mo><msub><mi>η</mi><mrow><mi>i</mi><mo>,</mo><mi>t</mi></mrow></msub>
-    </math>
-    <math xmlns="http://www.w3.org/1998/Math/MathML" display="block" aria-label="Reporting noise eta is normal with mean zero and variance four">
+    </math></div>
+    <div class="equation-scroll"><math xmlns="http://www.w3.org/1998/Math/MathML" display="block" aria-label="Reporting noise eta is normal with mean zero and variance four">
       <msub><mi>η</mi><mrow><mi>i</mi><mo>,</mo><mi>t</mi></mrow></msub><mo>∼</mo><mi mathvariant="normal">N</mi><mo>(</mo><mn>0</mn><mo>,</mo><msup><mn>2</mn><mn>2</mn></msup><mo>)</mo>
-    </math>
+    </math></div>
     <p><strong>Noise SD = 2 coins.</strong> In <em>War + Rumors</em>, Road A reports have <strong>bias = +7 coins</strong> after the shift; otherwise bias is zero.</p>
   </div>
 </div>
@@ -172,26 +173,26 @@ footer{font-size:12px;color:var(--muted);border-top:1px solid var(--line);paddin
   <div class="model-card">
     <h3>3 · Estimated return and risk</h3>
     <p>Both strategies learn from their reported observations using a slowly updated estimate:</p>
-    <math xmlns="http://www.w3.org/1998/Math/MathML" display="block" aria-label="Updated Q equals old Q plus alpha times report minus old Q">
+    <div class="equation-scroll"><math xmlns="http://www.w3.org/1998/Math/MathML" display="block" aria-label="Updated Q equals old Q plus alpha times report minus old Q">
       <msubsup><mi>Q</mi><mi>i</mi><mo>+</mo></msubsup><mo>=</mo><msub><mi>Q</mi><mi>i</mi></msub><mo>+</mo><msub><mi>α</mi><mi>t</mi></msub><mo>(</mo><msub><mi>Y</mi><mrow><mi>i</mi><mo>,</mo><mi>t</mi></mrow></msub><mo>−</mo><msub><mi>Q</mi><mi>i</mi></msub><mo>)</mo>
-    </math>
-    <math xmlns="http://www.w3.org/1998/Math/MathML" display="block" aria-label="Updated volatility proxy v equals maximum of one and one minus alpha times old v plus alpha times squared report surprise">
+    </math></div>
+    <div class="equation-scroll"><math xmlns="http://www.w3.org/1998/Math/MathML" display="block" aria-label="Updated volatility proxy v equals maximum of one and one minus alpha times old v plus alpha times squared report surprise">
       <msubsup><mi>v</mi><mi>i</mi><mo>+</mo></msubsup><mo>=</mo><mi>max</mi><mo>⁡</mo><mo>{</mo><mn>1</mn><mo>,</mo><mo>(</mo><mn>1</mn><mo>−</mo><msub><mi>α</mi><mi>t</mi></msub><mo>)</mo><msub><mi>v</mi><mi>i</mi></msub><mo>+</mo><msub><mi>α</mi><mi>t</mi></msub><msup><mrow><mo>(</mo><mi>Y</mi><mo>−</mo><mi>Q</mi><mo>)</mo></mrow><mn>2</mn></msup><mo>}</mo>
-    </math>
+    </math></div>
     <p>Normally α = 0.03. In War + Rumors, if a Road A report is worse than its current estimate, α = 0.006 instead: a simplified <strong>confirmation filter</strong>.</p>
     <p>Here <em>v</em> is a smoothed squared-surprise proxy, not an unbiased estimate of the true return variance.</p>
   </div>
   <div class="model-card">
     <h3>4 · Risk-aware choice</h3>
     <p>Both strategies choose the route with the highest estimated risk-adjusted score:</p>
-    <math xmlns="http://www.w3.org/1998/Math/MathML" display="block" aria-label="Score i equals estimated Q minus zero point six times square root estimated volatility v">
+    <div class="equation-scroll"><math xmlns="http://www.w3.org/1998/Math/MathML" display="block" aria-label="Score i equals estimated Q minus zero point six times square root estimated volatility v">
       <msub><mi>S</mi><mi>i</mi></msub><mo>=</mo><msub><mi>Q</mi><mi>i</mi></msub><mo>−</mo><mn>0.6</mn><msqrt><msub><mi>v</mi><mi>i</mi></msub></msqrt>
-    </math>
+    </math></div>
     <p>The exploitation strategy stops here: it only receives reports from the route it selects.</p>
     <p>The <strong>scouting</strong> strategy also buys an independent signal about B at decisions 1, 5, 9, …:</p>
-    <math xmlns="http://www.w3.org/1998/Math/MathML" display="block" aria-label="Scouting signal Z is true mean B plus independent normal noise with standard deviation one point two">
+    <div class="equation-scroll"><math xmlns="http://www.w3.org/1998/Math/MathML" display="block" aria-label="Scouting signal Z is true mean B plus independent normal noise with standard deviation one point two">
       <msub><mi>Z</mi><mi>t</mi></msub><mo>=</mo><msub><mi>μ</mi><mi>B</mi></msub><mo>(</mo><mi>t</mi><mo>)</mo><mo>+</mo><msub><mi>ξ</mi><mi>t</mi></msub><mo>,</mo><mspace width="0.5em"/><msub><mi>ξ</mi><mi>t</mi></msub><mo>∼</mo><mi mathvariant="normal">N</mi><mo>(</mo><mn>0</mn><mo>,</mo><msup><mn>1.2</mn><mn>2</mn></msup><mo>)</mo>
-    </math>
+    </math></div>
     <p>Scouting costs <strong>1.8 coins</strong> each time, sharply updates the belief about B (weight 0.70), and does <em>not</em> replace that decision's normal trade.</p>
   </div>
 </div>
@@ -199,11 +200,11 @@ footer{font-size:12px;color:var(--muted);border-top:1px solid var(--line);paddin
 <div class="model-grid">
   <div class="model-card">
     <h3>5 · Regret (opportunity loss)</h3>
-    <math xmlns="http://www.w3.org/1998/Math/MathML" display="block" aria-label="Expected regret equals best route true mean minus selected route true mean, plus scouting cost">
+    <div class="equation-scroll"><math xmlns="http://www.w3.org/1998/Math/MathML" display="block" aria-label="Expected regret equals best route true mean minus selected route true mean, plus scouting cost">
       <msub><mi>g</mi><mi>t</mi></msub><mo>=</mo><munder><mo>max</mo><mrow><mi>i</mi><mo>∈</mo><mo>{</mo><mi>A</mi><mo>,</mo><mi>B</mi><mo>}</mo></mrow></munder><msub><mi>μ</mi><mrow><mi>i</mi><mo>,</mo><mi>t</mi></mrow></msub>
       <mo>−</mo><msub><mi>μ</mi><mrow><msub><mi>a</mi><mi>t</mi></msub><mo>,</mo><mi>t</mi></mrow></msub>
       <mo>+</mo><msub><mi>c</mi><mi>scout</mi></msub>
-    </math>
+    </math></div>
     <p>Scouting cost is zero for exploitation and 1.8 on scouting decisions. After bankruptcy, trading stops and the simulation counts foregone positive best-route earnings instead.</p>
   </div>
   <div class="model-card">
