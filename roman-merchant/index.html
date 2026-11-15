@@ -1,0 +1,344 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="color-scheme" content="light">
+<title>ME 3310 | Ancient Roman Merchant: The Cost of Being Certain</title>
+<style>
+:root{--purple:#4f2683;--gold:#ffd100;--ink:#25212b;--muted:#5d6170;--line:#dedce5;--soft:#f7f5fa;--a:#5941a0;--b:#20878d;--c:#cf8634;--blue:#2877aa}
+*{box-sizing:border-box}body{margin:0;font:15px/1.53 Arial,Helvetica,sans-serif;color:var(--ink);background:#fff}
+main{max-width:1050px;margin:auto;padding:16px 18px 40px}
+header{background:var(--soft);border-left:6px solid var(--purple);border-top:4px solid var(--gold);padding:20px 24px;margin-bottom:16px}
+.kicker{font-size:12px;letter-spacing:.08em;font-weight:bold;color:var(--purple)}
+h1{font-size:clamp(23px,3vw,30px);line-height:1.15;margin:4px 0 8px;color:var(--purple)}
+h2{font-size:20px;color:var(--purple);margin:0 0 8px}h3{font-size:16px;margin:0 0 6px}
+p{margin:6px 0}small,.small{font-size:12px;color:var(--muted)}strong{font-weight:700}
+section{margin:18px 0}button,select,input{font:inherit;accent-color:var(--purple)}
+button{cursor:pointer;border:1px solid var(--purple);border-radius:6px;background:white;color:var(--purple);font-weight:bold;padding:8px 11px}
+button:hover{background:var(--soft)}button.primary{background:var(--purple);color:#fff}
+button.primary:hover{background:#381b60}button:focus-visible,select:focus-visible,input:focus-visible{outline:3px solid #d9b7f5;outline-offset:2px}
+.scene{border:1px solid var(--line);border-radius:9px;padding:16px 19px;background:#fff}
+.route-grid{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:10px;margin:14px 0}
+.route{border:1px solid var(--line);border-top:4px solid var(--a);border-radius:8px;padding:12px}
+.route:nth-child(2){border-top-color:var(--b)}.route:nth-child(3){border-top-color:var(--c)}
+.route .symbol{font-size:23px}.route .name{font-size:16px;font-weight:bold}
+.tag{display:inline-block;font-size:11px;border:1px solid #ded6ed;border-radius:12px;padding:2px 7px;color:var(--purple);font-weight:bold}
+.formulas{display:flex;gap:12px;flex-wrap:wrap}
+.math-box{flex:1 1 240px;background:var(--soft);padding:11px 14px;border-radius:6px}
+.math{font-size:17px;font-weight:bold;letter-spacing:.02em;color:#3d2566;margin:4px 0}
+.settings{border:1px solid var(--line);background:#fff;border-radius:9px;padding:14px 16px}
+.controls{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:11px}
+.control label{display:block;font-size:13px;font-weight:bold;margin:0 0 5px}
+.control select,.control input[type=number]{width:100%;padding:7px 9px;border:1px solid #c0bfcb;border-radius:5px;background:#fff}
+.control input[type=range]{width:100%}
+.control .hint{font-size:11px;color:var(--muted)}.check{display:flex;gap:8px;align-items:center;font-size:13px;font-weight:bold;padding:6px 0}
+.prompt{background:#fffaf0;border-left:4px solid #bd981f;padding:12px 15px;margin:14px 0}
+.notice{background:var(--soft);border-left:4px solid var(--purple);padding:11px 14px;margin:12px 0}
+.playbook{border:1px solid var(--line);border-radius:9px;padding:13px 15px}
+.scroll{overflow-x:auto;width:100%}
+table{border-collapse:collapse;width:100%;font-size:13px}
+th,td{padding:8px 8px;border-bottom:1px solid var(--line);text-align:right;font-variant-numeric:tabular-nums}
+th:first-child,td:first-child{text-align:left}thead th{font-weight:bold;vertical-align:bottom}
+.scenario-table{min-width:720px}.scenario-table th,.scenario-table td{text-align:left}
+.scenario-table button{padding:5px 12px;white-space:nowrap}
+.actions{display:flex;gap:10px;align-items:center;flex-wrap:wrap;margin:12px 0}
+.status{font-size:13px;color:var(--muted)}
+.charts{display:grid;grid-template-columns:1fr 1fr;gap:12px}
+.chart{border:1px solid var(--line);border-radius:8px;padding:10px}
+.chart canvas{display:block;width:100%;height:245px}
+.legend{font-size:12px;color:var(--muted);display:flex;gap:10px;flex-wrap:wrap}
+.swatch{display:inline-block;width:12px;height:4px;margin-right:4px;vertical-align:middle}
+.results{margin:12px 0}.results table{min-width:720px}
+.notes input{width:180px;max-width:100%;font-size:12px;padding:5px;border:1px solid #bfbfcb;border-radius:5px}
+#logTable table{min-width:800px}
+details{border:1px solid var(--line);border-radius:7px;padding:10px 13px;margin:16px 0}
+summary{color:var(--purple);font-weight:bold;cursor:pointer}
+footer{font-size:12px;border-top:1px solid var(--line);padding-top:15px;color:var(--muted);margin-top:24px}
+@media(max-width:760px){.controls{grid-template-columns:repeat(2,minmax(0,1fr))}.charts{grid-template-columns:1fr}.route-grid{grid-template-columns:1fr}.route{display:flex;align-items:start;gap:10px}.route .symbol{flex:0 0 30px}.route .name{display:block}}
+@media(max-width:430px){main{padding:12px}.controls{grid-template-columns:1fr}.route-grid{gap:6px}header{padding:15px}}
+</style>
+</head>
+<body>
+<main>
+<header>
+<div class="kicker">ME 3310 · WEEK 13 · EXPERIMENT 04</div>
+<h1>The Cost of Being Certain</h1>
+<p><strong>Ancient Rome → Crisis → Uncertain Information → Engineering Judgment</strong></p>
+</header>
+<section class="scene">
+<h2>Imagine You Are a Merchant in the Roman Empire</h2>
+<p>It is approximately <strong>AD 220</strong>. You have traded along a familiar route for years. It has usually worked well. But what if wars, political instability, and disrupted trade change the world around you?</p>
+<div class="route-grid">
+  <div class="route"><span class="symbol" aria-hidden="true">🏛️</span><div><div class="name">A · Established Road</div><p class="small">Strong past performance; becomes vulnerable if conditions change.</p></div></div>
+  <div class="route"><span class="symbol" aria-hidden="true">⛵</span><div><div class="name">B · Regional Coast</div><p class="small">Moderate returns; a relatively resilient alternative.</p></div></div>
+  <div class="route"><span class="symbol" aria-hidden="true">🗺️</span><div><div class="name">C · Unfamiliar Network</div><p class="small">Costly and risky to learn; may become attractive after disruption.</p></div></div>
+</div>
+<div class="notice">
+<strong>History vs. model:</strong> Roman civil wars and instability intensified after AD 235. The three routes, earnings, risks, and reporting biases below are <strong>fictional model assumptions</strong>, not estimated historical data. This is a thought experiment about decisions during regime change.
+</div>
+<p class="small">Historical context: <a href="https://www.cambridge.org/core/books/abs/cambridge-ancient-history/maximinus-to-diocletian-and-the-crisis/E05D7B1DEAD0E01B17972C0636743DF5" target="_blank" rel="noopener">Cambridge Ancient History, “Maximinus to Diocletian and the Crisis”</a>.</p>
+</section>
+
+<section class="scene">
+<h2>What Are We Testing?</h2>
+<div class="formulas">
+<div class="math-box"><strong>Reported evidence</strong><div class="math">y<sub>i,t</sub> = x<sub>i,t</sub> + b<sub>i</sub> + η<sub>i,t</sub></div><p class="small">Real outcome x, reporting bias b, random observation noise η. The decision-maker only receives y.</p></div>
+<div class="math-box"><strong>Risk-adjusted decision</strong><div class="math">Score<sub>i</sub> = Q<sub>i</sub> − λ s<sub>i</sub></div><p class="small">Estimated return Q minus a penalty for estimated volatility s. λ controls risk aversion.</p></div>
+</div>
+<p class="small">All strategies use the same underlying risk-sensitive score. They differ in <strong>whether and how they explore</strong>. Mean–standard deviation is only one risk model; it does not guarantee protection against rare disasters.</p>
+</section>
+
+<section class="settings">
+<h2>Experimental Controls</h2>
+<div class="controls">
+<div class="control"><label for="world">World</label><select id="world"><option value="peace">Peaceful / Stationary</option><option value="crisis" selected>Sudden disruption halfway</option></select></div>
+<div class="control"><label for="signalBias">Information bias</label><select id="signalBias"><option value="none">No systematic bias</option><option value="mild" selected>Favors established route</option><option value="strong">Strongly favors established route</option></select></div>
+<div class="control"><label for="signalNoise">Observation variance</label><select id="signalNoise"><option value="1">Low (SD 1 percentage point)</option><option value="3" selected>Moderate (SD 3 points)</option><option value="6">High (SD 6 points)</option></select></div>
+<div class="control"><label for="lambda">Risk aversion λ: <output id="lambdaDisplay">0.45</output></label><input id="lambda" type="range" min="0" max="1.8" step="0.05" value="0.45"><div class="hint">Mean − λ × estimated SD</div></div>
+<div class="control"><label for="epsilon">Exploration probability ε: <output id="epsDisplay">0.10</output></label><input id="epsilon" type="range" min="0" max="0.5" step="0.05" value="0.10"><div class="hint">For ε-Greedy and scouting policies</div></div>
+<div class="control"><label for="severity">Loss severity</label><select id="severity"><option value="0.75">Milder catastrophes</option><option value="1" selected>Baseline</option><option value="1.5">Severe catastrophes</option></select></div>
+<div class="control"><label for="confirm">Confirmation filter</label><label class="check" for="confirm"><input id="confirm" type="checkbox" checked> Discount negative reports about Route A</label><div class="hint">Downward updates to established-route belief get 25% of normal weight.</div></div>
+<div class="control"><label for="runs">Monte Carlo runs</label><select id="runs"><option value="100">100</option><option value="400" selected>400</option><option value="1000">1,000</option></select></div>
+<div class="control"><label for="seed">Random seed</label><input id="seed" type="number" value="3310" min="1" max="2147483646"></div>
+</div>
+<div class="actions"><button id="run" type="button" class="primary">Run Experiment</button><button id="resetSettings" type="button">Reset Controls</button><span class="status">120 decisions · shift at decision 61 · initial wealth = 100</span></div>
+</section>
+
+<section class="playbook">
+<h2>Scenario Playbook</h2>
+<p class="small">Click a case to set the controls, run the simulation, and record the outcome. Compare <strong>H1 → H2</strong>, then <strong>H3 → H5</strong>, and finally <strong>H6 → H7</strong>.</p>
+<div class="scroll"><table class="scenario-table">
+<thead><tr><th>Case</th><th>What changes?</th><th>Risk λ</th><th>Explore ε</th><th>Question</th><th>Run</th></tr></thead>
+<tbody>
+<tr><td>H1</td><td>Peace · unbiased, clear information</td><td>0.45</td><td>0.10</td><td>Is exploration worth its cost in a stable world?</td><td><button data-case="H1">Run H1</button></td></tr>
+<tr><td>H2</td><td>Sudden crisis · unbiased information</td><td>0.45</td><td>0.10</td><td>Does pure exploitation adapt?</td><td><button data-case="H2">Run H2</button></td></tr>
+<tr><td>H3</td><td>Crisis · high observation noise</td><td>0.45</td><td>0.10</td><td>Can we learn from very noisy reports?</td><td><button data-case="H3">Run H3</button></td></tr>
+<tr><td>H4</td><td>Crisis · biased reporting</td><td>0.45</td><td>0.10</td><td>Does new information always improve decisions?</td><td><button data-case="H4">Run H4</button></td></tr>
+<tr><td>H5</td><td>Crisis · biased reports + confirmation filter</td><td>0.45</td><td>0.10</td><td>Can selective belief updates preserve an outdated favorite?</td><td><button data-case="H5">Run H5</button></td></tr>
+<tr><td>H6</td><td>Crisis · biased reports, high risk aversion</td><td>1.20</td><td>0.00</td><td>Is risk-aware pure exploitation sufficient?</td><td><button data-case="H6">Run H6</button></td></tr>
+<tr><td>H7</td><td>Same world and risk aversion as H6</td><td>1.20</td><td>0.15</td><td>Does selective exploration help, despite its cost?</td><td><button data-case="H7">Run H7</button></td></tr>
+</tbody></table></div>
+</section>
+
+<section>
+<h2>Three Decision Strategies</h2>
+<div class="route-grid">
+<div class="route"><span class="symbol" aria-hidden="true">🔒</span><div><div class="name">1 · Risk-aware Exploit</div><p class="small">Always use the route with the best estimated risk-adjusted score. No deliberate exploration.</p></div></div>
+<div class="route"><span class="symbol" aria-hidden="true">🎲</span><div><div class="name">2 · ε-Greedy Trips</div><p class="small">Usually exploit, but sometimes commit to a randomly chosen route and bear its full risk.</p></div></div>
+<div class="route"><span class="symbol" aria-hidden="true">🔎</span><div><div class="name">3 · Low-cost Scouting</div><p class="small">Usually exploit, but sometimes collect a proxy report on another route for a small cost, without a full trading trip.</p></div></div>
+</div>
+</section>
+
+<section id="output" aria-label="Simulation results">
+<div class="notice" id="status" role="status" aria-live="polite">Run a case or customize the settings to begin.</div>
+<div class="charts">
+<div class="chart"><h3>Average wealth (initial = 100)</h3><canvas id="wealthChart" aria-label="Average wealth trajectories for three strategies"></canvas></div>
+<div class="chart"><h3>Cumulative risk-adjusted regret</h3><canvas id="regretChart" aria-label="Average cumulative risk-adjusted regret for three strategies"></canvas></div>
+</div>
+<div class="legend"><span><i class="swatch" style="background:#5d6067"></i>Risk-aware Exploit</span><span><i class="swatch" style="background:#5941a0"></i>ε-Greedy Trips</span><span><i class="swatch" style="background:#20878d"></i>Low-cost Scouting</span><span>Dashed vertical line: disruption</span></div>
+<div id="resultTable" class="scroll results"></div>
+<div class="prompt"><strong>Think–Pair–Discuss:</strong> Which strategy had the greatest average wealth? Which had the lowest risk of a 30% drawdown? Which would you choose if losing 30% meant abandoning your business?</div>
+</section>
+
+<section class="scene">
+<h2>Your Scenario Record</h2>
+<p class="small">Experiments are recorded locally in your browser. Add a conclusion to each case and export the CSV if you want to keep it.</p>
+<div class="actions"><button id="exportLog" type="button">Export Scenario Log CSV</button><button id="clearLog" type="button">Clear Log</button></div>
+<div class="scroll notes" id="logTable">No runs yet.</div>
+</section>
+
+<details>
+<summary>Model, regret definition, risk, and limitations</summary>
+<p><strong>Returns:</strong> each trip earns a simulated percentage return with a probability of a severe loss. Return distributions differ by route and, under the crisis condition, change halfway through. Wealth compounds at each decision.</p>
+<p><strong>Information:</strong> an imperfect report is y = realized route outcome + route-specific reporting bias + Gaussian reporting noise. The agent does not see the true mean, the risk probabilities, or the realized full-route outcome separately; only the report. A scouting decision receives a similarly imperfect proxy report but incurs only a fixed 0.6% wealth cost instead of making a full trading trip.</p>
+<p><strong>Beliefs:</strong> the agent updates each route's reported mean and a volatility estimate using recent-data weighting α = 0.18. The volatility estimate subtracts the assumed known reporting noise variance; estimates remain unreliable with few observations or large bias. When the confirmation filter is on, negative reports about Route A receive only 25% of the usual learning weight.</p>
+<p><strong>Risk:</strong> risk-sensitive exploitation chooses the highest estimated mean minus λ times estimated standard deviation. This is a simplified mean–variance penalty, not a constraint on maximum losses, a CVaR objective, or a guarantee of survival.</p>
+<p><strong>Regret:</strong> at decision t, let U<sub>i,t</sub> = E[X<sub>i,t</sub>] − λ SD(X<sub>i,t</sub>) for each route i, using true simulator distributions. A scouting action has utility −0.6. The instantaneous benchmark is max(U<sub>A,t</sub>, U<sub>B,t</sub>, U<sub>C,t</sub>, −0.6). Cumulative regret is the sum of benchmark utility minus chosen-action utility. The agent cannot calculate this quantity; the simulator uses hidden parameters for evaluation. Regret is in percentage-point utility units, not realized wealth.</p>
+<p><strong>Safety:</strong> the drawdown frequency counts the fraction of simulated histories that ever fell 30% below their previous wealth peak. The 10th-percentile terminal wealth measures a lower-tail outcome. These are descriptive simulation metrics, not independent safety guarantees.</p>
+<p><strong>Experimental design:</strong> every strategy receives two initial full trips on each route (same information). For each Monte Carlo run, all strategies face the same pre-generated route outcomes and reporting noise. Strategy-specific exploration choices remain random. Fixed seeds reproduce the demonstration.</p>
+<p><strong>Interpretation:</strong> “confirmation bias” is represented by a deliberately simplified asymmetric evidence update, not a validated cognitive model. This is a causal simulation of stated assumptions, not evidence that one investment, military, or business strategy always performs best.</p>
+</details>
+<footer>ME 3310 · Experimental Methods I · Engineering Question → Measurement → Evidence → Inference → Judgment. No external data or services used by the simulation; computation runs in your browser.</footer>
+</main>
+<script>
+(function(){
+"use strict";
+var $=id=>document.getElementById(id),N=120,alpha=.18,colors=["#5d6067","#5941a0","#20878d"],name=["Risk-aware Exploit","ε-Greedy Trips","Low-cost Scouting"],last=null,log=[],activeCase="Custom";
+var storageKey="me3310-roman-merchant-scenarios-v1",baseline={world:"crisis",signalBias:"mild",signalNoise:"3",lambda:"0.45",epsilon:"0.10",severity:"1",confirm:true,runs:"400",seed:"3310"};
+var cases={
+ H1:{world:"peace",signalBias:"none",signalNoise:"1",confirm:false,lambda:"0.45",epsilon:"0.10"},
+ H2:{world:"crisis",signalBias:"none",signalNoise:"1",confirm:false,lambda:"0.45",epsilon:"0.10"},
+ H3:{world:"crisis",signalBias:"none",signalNoise:"6",confirm:false,lambda:"0.45",epsilon:"0.10"},
+ H4:{world:"crisis",signalBias:"strong",signalNoise:"3",confirm:false,lambda:"0.45",epsilon:"0.10"},
+ H5:{world:"crisis",signalBias:"strong",signalNoise:"3",confirm:true,lambda:"0.45",epsilon:"0.10"},
+ H6:{world:"crisis",signalBias:"strong",signalNoise:"3",confirm:true,lambda:"1.20",epsilon:"0.00"},
+ H7:{world:"crisis",signalBias:"strong",signalNoise:"3",confirm:true,lambda:"1.20",epsilon:"0.15"}
+};
+function setControls(v){
+ Object.keys(v).forEach(k=>{if($(k)){if(k==="confirm")$(k).checked=!!v[k];else $(k).value=v[k];}});
+ labels();
+}
+function labels(){$("lambdaDisplay").textContent=(+ $("lambda").value).toFixed(2);$("epsDisplay").textContent=(+ $("epsilon").value).toFixed(2);}
+function settings(){
+ return {world:$("world").value,signalBias:$("signalBias").value,signalNoise:+$("signalNoise").value,lambda:+$("lambda").value,epsilon:+$("epsilon").value,severity:+$("severity").value,confirm:$("confirm").checked,runs:+$("runs").value,seed:Math.max(1,Math.min(2147483646,Math.floor(+$("seed").value)||3310))};
+}
+function randomGen(seed){var a=seed>>>0;return function(){a+=0x6D2B79F5;var t=a;t=Math.imul(t^t>>>15,t|1);t^=t+Math.imul(t^t>>>7,t|61);return ((t^t>>>14)>>>0)/4294967296;};}
+function randNormal(r){var u=Math.max(1e-12,r()),v=r();return Math.sqrt(-2*Math.log(u))*Math.cos(2*Math.PI*v);}
+function model(t,s){
+ var before=(s.world==="peace"||t<N/2);
+ var a=before?[[3,1.1,.005,-18],[1.6,1.2,.012,-13],[2.1,2,.07,-19]]
+             :[[.6,1.4,.15,-30],[1.8,1.2,.035,-16],[3.3,1.7,.045,-17]];
+ return a.map(v=>[v[0],v[1],v[2],v[3]*s.severity]);
+}
+function parameters(v){
+ var mean=(1-v[2])*v[0]+v[2]*v[3];
+ var variance=(1-v[2])*(v[1]*v[1]+Math.pow(v[0]-mean,2))+v[2]*Math.pow(v[3]-mean,2);
+ return {mean:mean,sd:Math.sqrt(variance)};
+}
+function biases(s){return s.signalBias==="none"?[0,0,0]:s.signalBias==="mild"?[1.7,0,-.8]:[3.7,0,-2.2];}
+function makeWorld(seed,s){
+ var rand=randomGen(seed),b=biases(s),returns=[],signals=[],utilities=[],shock=s.world==="crisis";
+ for(var t=0;t<N;t++){
+  var m=model(t,s),row=[],report=[],u=[];
+  for(var i=0;i<3;i++){
+   var p=parameters(m[i]),x=rand()<m[i][2]?m[i][3]:m[i][0]+m[i][1]*randNormal(rand);
+   var y=x+b[i]+s.signalNoise*randNormal(rand);
+   row.push(x);report.push(y);u.push(p.mean-s.lambda*p.sd);
+  }
+  returns.push(row);signals.push(report);utilities.push(u);
+ }
+ return {returns:returns,signals:signals,utilities:utilities,shock:shock};
+}
+function learner(){return {q:[0,0,0],second:[0,0,0],n:[0,0,0],wealth:100,peak:100,draw:0,regret:0,scouts:0,tradeLosses:0,chosen:[0,0,0]};}
+function update(l,route,y,s){
+ var n=l.n[route],w= n?alpha:1;
+ if(s.confirm&&route===0&&n&&y<l.q[route])w*=.25;
+ l.n[route]++;l.q[route]+=w*(y-l.q[route]);
+ l.second[route]+=w*(y*y-l.second[route]);
+}
+function score(l,i,s){
+ var rawVar=Math.max(0,l.second[i]-l.q[i]*l.q[i]-s.signalNoise*s.signalNoise);
+ var sd=l.n[i]>1?Math.sqrt(Math.max(.2,rawVar)):[2.5,2.6,5][i];
+ return l.q[i]-s.lambda*sd;
+}
+function best(l,s,rand){
+ var values=[0,1,2].map(i=>score(l,i,s)),top=Math.max.apply(null,values);
+ var idx=values.map((v,i)=>({v:v,i:i})).filter(x=>Math.abs(x.v-top)<1e-8);
+ return idx[Math.floor(rand()*idx.length)].i;
+}
+function choose(l,policy,t,s,rand){
+ if(t<6)return {kind:"trip",i:t%3};
+ var bestArm=best(l,s,rand);
+ if(policy===0||rand()>=s.epsilon)return {kind:"trip",i:bestArm};
+ if(policy===1)return {kind:"trip",i:Math.floor(rand()*3)};
+ var others=[0,1,2].filter(i=>i!==bestArm);
+ return {kind:"scout",i:others[Math.floor(rand()*others.length)]};
+}
+function trajectory(w,policy,s,seed){
+ var l=learner(),rand=randomGen(seed),wealth=[],regrets=[];
+ for(var t=0;t<N;t++){
+  var action=choose(l,policy,t,s,rand),i=action.i,realized=action.kind==="trip"?w.returns[t][i]:-.6;
+  var u=action.kind==="trip"?w.utilities[t][i]:-.6;
+  var oracle=Math.max.apply(null,w.utilities[t].concat([-.6]));
+  l.regret+=Math.max(0,oracle-u);
+  update(l,i,w.signals[t][i],s);
+  if(action.kind==="scout")l.scouts++;else{l.chosen[i]++;if(w.returns[t][i]<=-10)l.tradeLosses++;}
+  l.wealth*=Math.max(.01,1+realized/100);
+  l.peak=Math.max(l.peak,l.wealth);
+  l.draw=Math.max(l.draw,1-l.wealth/l.peak);
+  wealth.push(l.wealth);regrets.push(l.regret);
+ }
+ return {wealth:wealth,regret:regrets,terminal:l.wealth,draw:l.draw,scouts:l.scouts,losses:l.tradeLosses,chosen:l.chosen};
+}
+function qtile(sorted,p){var q=(sorted.length-1)*p,lo=Math.floor(q),hi=Math.ceil(q);return sorted[lo]+(sorted[hi]-sorted[lo])*(q-lo);}
+function monteCarlo(s){
+ var summary=[0,1,2].map(()=>({wealth:Array(N).fill(0),regret:Array(N).fill(0),end:[],drawdown:0,loss:0,scouts:0,chosenC:0}));
+ for(var k=0;k<s.runs;k++){
+  var seed=(s.seed+Math.imul(k+1,0x9E3779B1))>>>0;
+  var w=makeWorld(seed,s);
+  for(var p=0;p<3;p++){
+   var res=trajectory(w,p,s,(seed+Math.imul(p+1,0x85EBCA6B))>>>0),dest=summary[p];
+   for(var t=0;t<N;t++){dest.wealth[t]+=res.wealth[t];dest.regret[t]+=res.regret[t];}
+   dest.end.push(res.terminal);dest.drawdown+=res.draw>=.3?1:0;dest.loss+=res.losses;dest.scouts+=res.scouts;dest.chosenC+=res.chosen[2];
+  }
+ }
+ return summary.map(d=>{
+  d.wealth=d.wealth.map(v=>v/s.runs);d.regret=d.regret.map(v=>v/s.runs);
+  d.end.sort((a,b)=>a-b);
+  return {wealth:d.wealth,regret:d.regret,meanWealth:d.end.reduce((a,b)=>a+b,0)/s.runs,worstDecile:qtile(d.end,.1),drawdown:d.drawdown/s.runs,losses:d.loss/s.runs,scouts:d.scouts/s.runs,tradeC:d.chosenC/s.runs};
+ });
+}
+function canvas(id){
+ var el=$(id),rect=el.getBoundingClientRect(),d=Math.min(2,window.devicePixelRatio||1);
+ var w=Math.max(300,rect.width),h=Math.max(190,rect.height);el.width=w*d;el.height=h*d;
+ var g=el.getContext("2d");g.setTransform(d,0,0,d,0,0);return {g:g,w:w,h:h};
+}
+function plot(id,result,key,s){
+ var c=canvas(id),g=c.g,w=c.w,h=c.h,L=51,R=12,T=18,B=36,pw=w-L-R,ph=h-T-B;
+ var arr=result.flatMap(x=>x[key]);var max=Math.max.apply(null,arr),min=key==="regret"?0:Math.min.apply(null,arr);
+ if(key==="wealth"){min=Math.min(min,85);max=Math.max(max,115);} if(max<=min)max=min+1;
+ max+=(max-min)*.07; if(key==="wealth")min-=(max-min)*.05;
+ function xx(t){return L+(t/(N-1))*pw;} function yy(v){return T+(max-v)/(max-min)*ph;}
+ g.clearRect(0,0,w,h);g.fillStyle="white";g.fillRect(0,0,w,h);g.font="11px Arial";g.textAlign="right";
+ for(var i=0;i<=4;i++){var v=min+(max-min)*i/4,y=yy(v);
+  g.beginPath();g.strokeStyle="#e8e5ed";g.lineWidth=1;g.moveTo(L,y);g.lineTo(w-R,y);g.stroke();
+  g.fillStyle="#555";g.fillText(v.toFixed(max-min>120?0:1),L-5,y+4);
+ }
+ g.textAlign="center";g.fillStyle="#555";
+ for(var j=0;j<=4;j++){var index=Math.round((N-1)*j/4);g.fillText(index+1,xx(index),h-17);}
+ g.fillText("Decision number",L+pw/2,h-3);
+ if(s.world==="crisis"){var point=xx(N/2);g.save();g.setLineDash([4,4]);g.strokeStyle="#a0989d";g.beginPath();g.moveTo(point,T);g.lineTo(point,h-B);g.stroke();g.restore();g.fillStyle="#888";g.fillText("Change",point,T+11);}
+ result.forEach((r,p)=>{g.beginPath();g.lineWidth=2.5;g.strokeStyle=colors[p];r[key].forEach((y,i)=>{if(i===0)g.moveTo(xx(i),yy(y));else g.lineTo(xx(i),yy(y));});g.stroke();});
+}
+function fmt(v,n){return Number(v).toFixed(n);}
+function display(result,s,label){
+ var h='<table><thead><tr><th>Strategy</th><th>Mean terminal wealth</th><th>10th percentile wealth</th><th>Risk of ≥30% drawdown</th><th>Risk-adjusted regret</th><th>Catastrophic trips / run</th><th>Scouts / run</th></tr></thead><tbody>';
+ result.forEach((r,i)=>{
+ h+='<tr><td>'+name[i]+'</td><td>'+fmt(r.meanWealth,1)+'</td><td>'+fmt(r.worstDecile,1)+'</td><td>'+fmt(r.drawdown*100,1)+'%</td><td>'+fmt(r.regret[N-1],1)+'</td><td>'+fmt(r.losses,1)+'</td><td>'+fmt(r.scouts,1)+'</td></tr>';
+ });
+ $("resultTable").innerHTML=h+'</tbody></table><p class="small">10th percentile means 10% of runs finished below that wealth. A 30% drawdown is measured from the previous peak at any time. Regret uses the hidden model’s true risk-adjusted single-step utility, not realized wealth.</p>';
+ $("status").textContent=label+' · '+s.runs+' paired simulations completed. '+(s.world==="crisis"?"The trading environment changed at decision 61.":"The trading environment stayed constant.")+' Compare returns, downside risk, and regret before deciding which strategy is better.';
+}
+function esc(x){return String(x).replace(/[&<>"']/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]));}
+function saveLog(){try{window.localStorage.setItem(storageKey,JSON.stringify(log.slice(0,30)));}catch(e){}}
+function readLog(){try{var x=JSON.parse(window.localStorage.getItem(storageKey)||"[]");log=Array.isArray(x)?x.filter(z=>z&&z.metrics&&z.metrics.length===3).slice(0,30):[];}catch(e){log=[];}}
+function renderLog(){
+ if(!log.length){$("logTable").textContent="No runs yet.";return;}
+ var h='<table><thead><tr><th>Case</th><th>World · bias · noise</th><th>λ / ε</th><th>Mean wealth: exploit / ε / scout</th><th>30% drawdown risk: exploit / ε / scout</th><th>Conclusion</th></tr></thead><tbody>';
+ log.forEach((r,i)=>{
+ h+='<tr><td>'+esc(r.label)+'</td><td>'+esc(r.s.world)+' · '+esc(r.s.signalBias)+' · '+esc(r.s.signalNoise)+'</td><td>'+fmt(r.s.lambda,2)+' / '+fmt(r.s.epsilon,2)+'</td>';
+ h+='<td>'+r.metrics.map(v=>fmt(v.meanWealth,1)).join(' / ')+'</td><td>'+r.metrics.map(v=>fmt(100*v.drawdown,1)+'%').join(' / ')+'</td><td><input data-note="'+i+'" maxlength="180" placeholder="Your observation" value="'+esc(r.note||"")+'"></td></tr>';
+ });
+ $("logTable").innerHTML=h+'</tbody></table>';
+}
+function record(result,s){
+ log.unshift({label:activeCase,s:s,metrics:result.map(r=>({meanWealth:r.meanWealth,drawdown:r.drawdown,regret:r.regret[N-1],worstDecile:r.worstDecile})),note:""});
+ log=log.slice(0,30);saveLog();renderLog();
+}
+function run(){
+ try{var s=settings();$("seed").value=s.seed;labels();var results=monteCarlo(s);
+ last={s:s,r:results};plot("wealthChart",results,"wealth",s);plot("regretChart",results,"regret",s);
+ display(results,s,activeCase);record(results,s);
+ }catch(err){$("status").textContent="Simulation error: "+String(err.message||err);}
+}
+function useCase(id){var v=cases[id];if(!v)return;setControls({...baseline,...v});activeCase=id;run();}
+$("run").addEventListener("click",()=>{activeCase="Custom";run();});
+$("resetSettings").addEventListener("click",()=>{setControls(baseline);activeCase="Custom";});
+document.querySelectorAll("[data-case]").forEach(b=>b.addEventListener("click",()=>useCase(b.getAttribute("data-case"))));
+$("lambda").addEventListener("input",labels);$("epsilon").addEventListener("input",labels);
+$("logTable").addEventListener("input",ev=>{var i=ev.target.getAttribute("data-note");if(i===null)return; if(log[+i]){log[+i].note=ev.target.value;saveLog();}});
+$("exportLog").addEventListener("click",()=>{
+ if(!log.length)return;
+ function cv(x){return '"'+String(x).replace(/"/g,'""')+'"';}
+ var rows=[["case","world","report_bias","observation_sd","confirmation_filter","risk_lambda","exploration_epsilon","loss_severity","mc_runs","seed","exploit_mean_wealth","epsilon_mean_wealth","scout_mean_wealth","exploit_drawdown_prob","epsilon_drawdown_prob","scout_drawdown_prob","exploit_risk_regret","epsilon_risk_regret","scout_risk_regret","observation"]];
+ log.forEach(r=>{var s=r.s,m=r.metrics;rows.push([r.label,s.world,s.signalBias,s.signalNoise,s.confirm,s.lambda,s.epsilon,s.severity,s.runs,s.seed,...m.map(v=>v.meanWealth),...m.map(v=>v.drawdown),...m.map(v=>v.regret),r.note||""]);});
+ var csv=rows.map(row=>row.map(cv).join(",")).join("\n"),blob=new Blob([csv],{type:"text/csv;charset=utf-8"}),url=URL.createObjectURL(blob),a=document.createElement("a");
+ a.href=url;a.download="me3310-roman-merchant-scenarios.csv";document.body.appendChild(a);a.click();a.remove();setTimeout(()=>URL.revokeObjectURL(url),1000);
+});
+$("clearLog").addEventListener("click",()=>{if(!log.length)return;if(window.confirm("Clear all saved scenario records? Export first if you want to keep them.")){log=[];saveLog();renderLog();}});
+window.addEventListener("resize",()=>{if(last){plot("wealthChart",last.r,"wealth",last.s);plot("regretChart",last.r,"regret",last.s);}});
+readLog();renderLog();setControls(baseline);
+})();
+</script>
+</body>
+</html>
