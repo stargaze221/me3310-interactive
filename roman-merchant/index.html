@@ -42,6 +42,16 @@ th,td{padding:9px 7px;border-bottom:1px solid var(--line);text-align:right;font-
 th:first-child,td:first-child{text-align:left}
 .scroll{width:100%;overflow-x:auto}.scroll table{min-width:650px}
 .note{font-size:12px;color:var(--muted);margin:10px 0}
+.model-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:12px;margin:13px 0}
+.model-card{border:1px solid var(--line);border-radius:7px;background:#fff;padding:12px 14px;min-width:0}
+.model-card h3{font-size:16px;color:var(--purple);margin:0 0 6px}
+.model-card p{font-size:13px;color:var(--muted);margin:6px 0}
+.model-card math{display:block;margin:10px auto;font-size:18px;max-width:100%;overflow-x:auto;overflow-y:hidden}
+.model-table{min-width:570px}.model-table th,.model-table td{text-align:center;font-size:12px;padding:7px 6px}
+.model-table th:first-child,.model-table td:first-child{text-align:left}
+.model-lead{font-size:14px;color:#444;margin:7px 0}
+.model-note{background:var(--soft);border-left:4px solid var(--purple);border-radius:5px;padding:10px 13px;margin:12px 0;font-size:13px}
+@media(max-width:760px){.model-grid{grid-template-columns:1fr}}
 details{border:1px solid var(--line);border-radius:8px;padding:11px 15px;margin:15px 0}
 summary{font-weight:700;color:var(--purple);cursor:pointer}
 .equations{display:flex;gap:10px;flex-wrap:wrap;margin:12px 0}
@@ -114,17 +124,99 @@ footer{font-size:12px;color:var(--muted);border-top:1px solid var(--line);paddin
 <div class="question"><strong>Think–Pair–Discuss:</strong> If a strategy is risk-aware but never investigates an unfamiliar alternative, can it still fail catastrophically when conditions change? What if the evidence itself is biased?</div>
 
 <details>
-<summary>View model assumptions and bias–variance explanation</summary>
-<p><strong>Historical setting:</strong> a fictional merchant around AD 220–260. Rome experienced a third-century political and military crisis beginning in AD 235; neither these exact trade routes nor their numerical returns are historical data. Routes A/B are pedagogical abstractions.</p>
-<p><strong>Fixed setup:</strong> 52 trading decisions, starting wealth 100, bankruptcy below 20 coins (trading stops), 500 paired Monte Carlo simulations, risk penalty λ = 0.6. Both agents begin with the same favorable belief about A and pessimistic belief about B. Their estimates update gradually with observed reports.</p>
-<p><strong>Peace:</strong> A usually gains ~5 coins but can have rare losses. B usually gains ~1.6 coins with some downside. Both have uncertainty. <strong>War:</strong> after decision 20, A faces frequent severe losses while B becomes more profitable.</p>
-<p><strong>Observation variance:</strong> trip reports have Gaussian noise with standard deviation 2 coins. <strong>Observation bias:</strong> in “War + Rumors,” reports from Route A are shifted upward by 7 coins after the crisis, and negative updates concerning the familiar route receive only 20% of their ordinary weight. This is a stylized model of misleading information and confirmation bias.</p>
-<p><strong>Scouting:</strong> at decisions 1, 5, 9, …, the scouting strategy pays 1.8 coins for an independent, noisy report of Route B’s current expected profit (noise SD 1.2). It also makes one full trading decision that season. Its information source is less biased, but not perfect.</p>
-<p><strong>Real outcome vs. information:</strong> a realized trade profit changes wealth, while a separate imperfect report updates beliefs. This distinguishes a hidden economic regime from evidence used to forecast future trips. The merchant’s inference model is intentionally simplified; delayed or filtered reports are an abstraction rather than an accurate ancient accounting system.</p>
-<p><strong>Regret:</strong> the oracle always selects the route with the highest current expected profit. Each actual trip incurs max(μ<sub>A</sub>, μ<sub>B</sub>) − μ<sub>chosen</sub>; scouting adds its direct cost. Once bankrupt, regret also accumulates foregone positive oracle earnings in remaining periods. This is an illustrative <em>opportunity-loss</em> measure, not the same as realized wealth or risk-adjusted utility.</p>
-<p><strong>Fair comparison:</strong> the same simulated route outcomes and baseline report noise are made available for both strategies in each run; only their choices and additional scouting observations differ. The bias mechanism is a model assumption, not empirical validation of psychological behavior.</p>
-<p><strong>Important:</strong> parameters were selected to make contrasting mechanisms visible. The simulation does not prove that scouting always wins, or that historical merchants behaved this way.</p>
-<p><a href="https://www.britannica.com/event/Crisis-of-the-Third-Century" target="_blank" rel="noopener">Historical context: Crisis of the Third Century</a>.</p>
+<summary>Model assumptions · Equations, noise distributions, and bias–variance</summary>
+<p class="model-lead"><strong>A simplified stochastic decision model.</strong> Merchant rewards, reporting noise, and belief updates are independent pieces of the model. Everything below reflects the actual JavaScript simulation—not historical measurements.</p>
+
+<div class="model-grid">
+  <div class="model-card">
+    <h3>1 · Actual trade outcome</h3>
+    <p>Ordinary profit is Gaussian, with a small probability of a fixed catastrophic loss:</p>
+    <math xmlns="http://www.w3.org/1998/Math/MathML" display="block" aria-label="Trade return X equals Gaussian ordinary profit with probability one minus p, or catastrophic loss L with probability p">
+      <msub><mi>X</mi><mrow><mi>i</mi><mo>,</mo><mi>t</mi></mrow></msub>
+      <mo>∼</mo><mo>{</mo>
+      <mtable columnalign="left">
+        <mtr><mtd><mi mathvariant="normal">Normal</mi><mo>(</mo><msub><mi>m</mi><mi>i</mi></msub><mo>,</mo><msubsup><mi>s</mi><mi>i</mi><mn>2</mn></msubsup><mo>)</mo></mtd><mtd><mtext>with probability&nbsp;</mtext><mn>1</mn><mo>−</mo><msub><mi>p</mi><mi>i</mi></msub></mtd></mtr>
+        <mtr><mtd><msub><mi>L</mi><mi>i</mi></msub></mtd><mtd><mtext>with probability&nbsp;</mtext><msub><mi>p</mi><mi>i</mi></msub></mtd></mtr>
+      </mtable>
+    </math>
+    <p>The mean of the mixture is:</p>
+    <math xmlns="http://www.w3.org/1998/Math/MathML" display="block" aria-label="Expected outcome equals one minus p times m, plus p times L">
+      <msub><mi>μ</mi><mi>i</mi></msub><mo>=</mo><mo>(</mo><mn>1</mn><mo>−</mo><msub><mi>p</mi><mi>i</mi></msub><mo>)</mo><msub><mi>m</mi><mi>i</mi></msub><mo>+</mo><msub><mi>p</mi><mi>i</mi></msub><msub><mi>L</mi><mi>i</mi></msub>
+    </math>
+    <p><strong>Crucial:</strong> “Normal profit” refers to the usual outcome only. The overall outcome distribution has a rare-loss tail.</p>
+  </div>
+  <div class="model-card">
+    <h3>2 · Reported information</h3>
+    <p>Trade reports are corrupted by additive Gaussian noise and possible systematic bias:</p>
+    <math xmlns="http://www.w3.org/1998/Math/MathML" display="block" aria-label="Observed report Y equals true return X plus reporting bias b plus Gaussian noise eta">
+      <msub><mi>Y</mi><mrow><mi>i</mi><mo>,</mo><mi>t</mi></mrow></msub><mo>=</mo><msub><mi>X</mi><mrow><mi>i</mi><mo>,</mo><mi>t</mi></mrow></msub><mo>+</mo><msub><mi>b</mi><mrow><mi>i</mi><mo>,</mo><mi>t</mi></mrow></msub><mo>+</mo><msub><mi>η</mi><mrow><mi>i</mi><mo>,</mo><mi>t</mi></mrow></msub>
+    </math>
+    <math xmlns="http://www.w3.org/1998/Math/MathML" display="block" aria-label="Reporting noise eta is normal with mean zero and variance four">
+      <msub><mi>η</mi><mrow><mi>i</mi><mo>,</mo><mi>t</mi></mrow></msub><mo>∼</mo><mi mathvariant="normal">N</mi><mo>(</mo><mn>0</mn><mo>,</mo><msup><mn>2</mn><mn>2</mn></msup><mo>)</mo>
+    </math>
+    <p><strong>Noise SD = 2 coins.</strong> In <em>War + Rumors</em>, Road A reports have <strong>bias = +7 coins</strong> after the shift; otherwise bias is zero.</p>
+  </div>
+</div>
+
+<h3 style="margin:15px 0 5px;color:var(--purple)">Underlying parameters</h3>
+<p class="small">All values are fictional, in coins per trip. War begins after decision 20.</p>
+<div class="scroll"><table class="model-table"><thead><tr><th>Regime / Route</th><th>Usual mean m</th><th>Usual SD s</th><th>Loss probability p</th><th>Large loss L</th><th>True mean μ</th></tr></thead>
+<tbody>
+<tr><td>Peace · A</td><td>+5.0</td><td>1.6</td><td>1.5%</td><td>−14</td><td>+4.715</td></tr>
+<tr><td>Peace · B</td><td>+1.6</td><td>1.5</td><td>4.0%</td><td>−11</td><td>+1.096</td></tr>
+<tr><td>War · A</td><td>+0.5</td><td>1.5</td><td>32.0%</td><td>−36</td><td>−11.180</td></tr>
+<tr><td>War · B</td><td>+5.2</td><td>1.4</td><td>2.5%</td><td>−12</td><td>+4.770</td></tr>
+</tbody></table></div>
+
+<div class="model-grid">
+  <div class="model-card">
+    <h3>3 · Estimated return and risk</h3>
+    <p>Both strategies learn from their reported observations using a slowly updated estimate:</p>
+    <math xmlns="http://www.w3.org/1998/Math/MathML" display="block" aria-label="Updated Q equals old Q plus alpha times report minus old Q">
+      <msubsup><mi>Q</mi><mi>i</mi><mo>+</mo></msubsup><mo>=</mo><msub><mi>Q</mi><mi>i</mi></msub><mo>+</mo><msub><mi>α</mi><mi>t</mi></msub><mo>(</mo><msub><mi>Y</mi><mrow><mi>i</mi><mo>,</mo><mi>t</mi></mrow></msub><mo>−</mo><msub><mi>Q</mi><mi>i</mi></msub><mo>)</mo>
+    </math>
+    <math xmlns="http://www.w3.org/1998/Math/MathML" display="block" aria-label="Updated volatility proxy v equals maximum of one and one minus alpha times old v plus alpha times squared report surprise">
+      <msubsup><mi>v</mi><mi>i</mi><mo>+</mo></msubsup><mo>=</mo><mi>max</mi><mo>⁡</mo><mo>{</mo><mn>1</mn><mo>,</mo><mo>(</mo><mn>1</mn><mo>−</mo><msub><mi>α</mi><mi>t</mi></msub><mo>)</mo><msub><mi>v</mi><mi>i</mi></msub><mo>+</mo><msub><mi>α</mi><mi>t</mi></msub><msup><mrow><mo>(</mo><mi>Y</mi><mo>−</mo><mi>Q</mi><mo>)</mo></mrow><mn>2</mn></msup><mo>}</mo>
+    </math>
+    <p>Normally α = 0.03. In War + Rumors, if a Road A report is worse than its current estimate, α = 0.006 instead: a simplified <strong>confirmation filter</strong>.</p>
+    <p>Here <em>v</em> is a smoothed squared-surprise proxy, not an unbiased estimate of the true return variance.</p>
+  </div>
+  <div class="model-card">
+    <h3>4 · Risk-aware choice</h3>
+    <p>Both strategies choose the route with the highest estimated risk-adjusted score:</p>
+    <math xmlns="http://www.w3.org/1998/Math/MathML" display="block" aria-label="Score i equals estimated Q minus zero point six times square root estimated volatility v">
+      <msub><mi>S</mi><mi>i</mi></msub><mo>=</mo><msub><mi>Q</mi><mi>i</mi></msub><mo>−</mo><mn>0.6</mn><msqrt><msub><mi>v</mi><mi>i</mi></msub></msqrt>
+    </math>
+    <p>The exploitation strategy stops here: it only receives reports from the route it selects.</p>
+    <p>The <strong>scouting</strong> strategy also buys an independent signal about B at decisions 1, 5, 9, …:</p>
+    <math xmlns="http://www.w3.org/1998/Math/MathML" display="block" aria-label="Scouting signal Z is true mean B plus independent normal noise with standard deviation one point two">
+      <msub><mi>Z</mi><mi>t</mi></msub><mo>=</mo><msub><mi>μ</mi><mi>B</mi></msub><mo>(</mo><mi>t</mi><mo>)</mo><mo>+</mo><msub><mi>ξ</mi><mi>t</mi></msub><mo>,</mo><mspace width="0.5em"/><msub><mi>ξ</mi><mi>t</mi></msub><mo>∼</mo><mi mathvariant="normal">N</mi><mo>(</mo><mn>0</mn><mo>,</mo><msup><mn>1.2</mn><mn>2</mn></msup><mo>)</mo>
+    </math>
+    <p>Scouting costs <strong>1.8 coins</strong> each time, sharply updates the belief about B (weight 0.70), and does <em>not</em> replace that decision's normal trade.</p>
+  </div>
+</div>
+
+<div class="model-grid">
+  <div class="model-card">
+    <h3>5 · Regret (opportunity loss)</h3>
+    <math xmlns="http://www.w3.org/1998/Math/MathML" display="block" aria-label="Expected regret equals best route true mean minus selected route true mean, plus scouting cost">
+      <msub><mi>g</mi><mi>t</mi></msub><mo>=</mo><munder><mo>max</mo><mrow><mi>i</mi><mo>∈</mo><mo>{</mo><mi>A</mi><mo>,</mo><mi>B</mi><mo>}</mo></mrow></munder><msub><mi>μ</mi><mrow><mi>i</mi><mo>,</mo><mi>t</mi></mrow></msub>
+      <mo>−</mo><msub><mi>μ</mi><mrow><msub><mi>a</mi><mi>t</mi></msub><mo>,</mo><mi>t</mi></mrow></msub>
+      <mo>+</mo><msub><mi>c</mi><mi>scout</mi></msub>
+    </math>
+    <p>Scouting cost is zero for exploitation and 1.8 on scouting decisions. After bankruptcy, trading stops and the simulation counts foregone positive best-route earnings instead.</p>
+  </div>
+  <div class="model-card">
+    <h3>6 · Experimental controls held fixed</h3>
+    <p><strong>52 decisions</strong> per merchant; crisis after decision 20. <strong>500 paired simulations</strong>, same underlying route-outcome sequences across strategies; initial wealth <strong>100</strong>; bankruptcy if wealth falls below <strong>20</strong>.</p>
+    <p>Both merchants start with estimated returns Q<sub>A</sub> = 5 and Q<sub>B</sub> = −1.5, and volatility proxies v<sub>A</sub> = 9 and v<sub>B</sub> = 36.</p>
+    <p>Regret uses hidden true means for evaluation; the merchants see only their reports and estimates. Regret and realized wealth measure <strong>different things</strong>.</p>
+  </div>
+</div>
+
+<div class="model-note"><strong>Bias vs. variance:</strong> Gaussian observation noise (variance 4) makes reports fluctuate around their expected values. A +7 reporting bias shifts the average report itself, while the asymmetric confirmation filter makes favorable beliefs slower to change. More observations alone do not eliminate systematic bias.</div>
+<p class="small"><strong>Historical boundary:</strong> a fictional merchant around AD 220–260. Rome experienced a third-century political and military crisis beginning in AD 235. The routes and numerical parameters are illustrative, not historical reconstructions.</p>
+<p class="small"><strong>Interpretation:</strong> parameters were selected to make contrasts visible. Risk-aware exploitation is not guaranteed to be safe, and scouting is not guaranteed to succeed across other parameter choices or information sources. No cognitive model of confirmation bias is being empirically validated. <a href="https://www.britannica.com/event/Crisis-of-the-Third-Century" target="_blank" rel="noopener">Historical context</a>.</p>
 </details>
 <footer>ME 3310 — Experimental Methods I · Engineering Question → Measurement → Evidence → Inference → Engineering Judgment. Runs locally in the browser. No external APIs or data collection.</footer>
 </main>
