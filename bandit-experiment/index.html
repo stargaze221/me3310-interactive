@@ -1,0 +1,333 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<meta name="color-scheme" content="light">
+<title>ME 3310 | Exploration vs. Exploitation Lab</title>
+<style>
+:root{--purple:#4f2683;--ink:#202124;--muted:#59606b;--line:#dfe2e7;--soft:#f7f5fa;--gold:#ffd100;--a:#62469a;--b:#138b8d;--c:#df8b28}
+*{box-sizing:border-box}body{margin:0;background:white;color:var(--ink);font-family:Arial,Helvetica,sans-serif;font-size:15px;line-height:1.5}
+main{max-width:1020px;margin:auto;padding:18px 18px 42px}header{border-left:5px solid var(--purple);border-top:4px solid var(--gold);background:var(--soft);padding:18px 20px;margin-bottom:18px}
+.kicker{font-size:12px;font-weight:700;letter-spacing:.07em;color:var(--purple)}h1{font-size:clamp(23px,3vw,31px);color:var(--purple);line-height:1.2;margin:5px 0 6px}h2{font-size:20px;margin:0 0 6px;color:var(--purple)}h3{font-size:16px;margin:0 0 8px}
+p{margin:7px 0}small,.small{font-size:12px;color:var(--muted)}.intro{font-size:16px;margin:12px 0 18px}
+.controls{display:flex;gap:15px;flex-wrap:wrap;align-items:end;padding:15px 16px;border:1px solid var(--line);border-radius:9px;background:#fff}
+.control{display:flex;flex-direction:column;gap:5px;min-width:150px;flex:1 1 155px}.control.wide{flex:1.6 1 190px}
+label{font-size:13px;font-weight:700}input,select{font:inherit;accent-color:var(--purple)}select,input[type=number]{width:100%;border:1px solid #bfc4cc;border-radius:5px;padding:8px;background:#fff;color:#222}
+input[type=range]{width:100%;margin:6px 0}button{font:inherit;border:1px solid var(--purple);background:#fff;color:var(--purple);border-radius:6px;padding:8px 12px;cursor:pointer;font-weight:700}
+button:hover{background:#f3edf8}button:focus-visible,select:focus-visible,input:focus-visible{outline:3px solid #d7b4f1;outline-offset:2px}
+button.primary{background:var(--purple);color:#fff}button.primary:hover{background:#392058}button:disabled{cursor:not-allowed;opacity:.45}
+.tabs{display:flex;gap:9px;border-bottom:1px solid var(--line);padding-top:16px;margin-bottom:16px}
+.tabs button{border:0;border-bottom:3px solid transparent;border-radius:0;padding:10px 16px;color:#555;background:none}
+.tabs button[aria-selected=true]{color:var(--purple);border-bottom-color:var(--purple);background:var(--soft)}
+[hidden]{display:none!important}.panel{padding:2px 0 18px}
+.arm-grid{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:10px;margin:13px 0}
+.arm{border:1px solid var(--line);border-top:4px solid var(--a);border-radius:8px;padding:12px;background:#fff;min-width:0}
+.arm:nth-child(2){border-top-color:var(--b)}.arm:nth-child(3){border-top-color:var(--c)}
+.arm-name{font-size:18px;font-weight:700}.arm .value{font-size:26px;font-weight:700;white-space:nowrap}.arm button{width:100%;margin-top:8px}
+.arm b{font-weight:700}.muted{color:var(--muted)}.button-row{display:flex;gap:8px;flex-wrap:wrap;margin:12px 0}
+.status{border-left:4px solid var(--purple);padding:9px 12px;background:var(--soft);margin:14px 0;min-height:56px}
+.metric-row{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;margin:13px 0}.metric{padding:11px;border:1px solid var(--line);border-radius:7px}.metric .number{font-size:24px;font-weight:700}
+.chartbox{margin:12px 0 16px;padding:10px;border:1px solid var(--line);border-radius:8px}
+.chartbox h3{margin:3px 0 2px}.chartbox canvas{width:100%;height:250px;display:block}
+.legend{display:flex;flex-wrap:wrap;gap:12px;margin:7px 0 0;font-size:12px;color:#424751}
+.legend .key{display:inline-block;width:12px;height:4px;vertical-align:middle;margin-right:4px;border-radius:3px}
+.note{font-size:13px;color:var(--muted);padding:9px 0}.prompt{margin:16px 0;border-left:4px solid #c9a225;padding:12px 15px;background:#fffaf0}
+table{border-collapse:collapse;width:100%;font-size:13px}th,td{border-bottom:1px solid var(--line);padding:9px 7px;text-align:right;font-variant-numeric:tabular-nums}th:first-child,td:first-child{text-align:left}
+.output{margin:12px 0}details{margin:12px 0;border:1px solid var(--line);border-radius:7px;padding:10px 13px}summary{cursor:pointer;font-weight:700;color:var(--purple)}
+footer{border-top:1px solid var(--line);margin-top:20px;padding-top:12px;color:var(--muted);font-size:12px}
+@media(max-width:600px){main{padding:12px 10px}.arm-grid{gap:6px}.arm{padding:9px 6px}.arm-name{font-size:15px}.arm .value{font-size:20px}.arm button{padding:7px 3px}.chartbox canvas{height:210px}.metric .number{font-size:20px}.controls{gap:9px}.tabs button{padding:9px;font-size:14px}}
+</style>
+</head>
+<body>
+<main>
+<header>
+<div class="kicker">ME 3310 · WEEK 13 · INTERACTIVE EXPERIMENT</div>
+<h1>Exploration vs. Exploitation</h1>
+<p>Which option should we test next when its true performance is unknown?</p>
+</header>
+<p class="intro"><strong>Engineering question:</strong> Should we select the option that looks best, or collect more evidence? Each button press produces one noisy measurement. Only the tested option is observed.</p>
+
+<div class="controls" aria-label="Experiment settings">
+  <div class="control wide"><label for="environment">Environment</label><select id="environment">
+    <option value="stable">Stable — performance stays constant</option>
+    <option value="changing">Changing — ranking switches halfway</option>
+    <option value="volatile">Volatile — performance drifts over time</option>
+  </select></div>
+  <div class="control"><label for="epsilon">Exploration rate ε: <output id="epsLabel">0.10</output></label><input id="epsilon" type="range" min="0" max="1" step="0.05" value="0.10"></div>
+  <div class="control"><label for="horizon">Number of decisions</label><select id="horizon"><option value="90">90</option><option value="180" selected>180</option><option value="300">300</option></select></div>
+  <div class="control"><label for="seed">Random seed</label><input id="seed" type="number" min="1" max="2147483646" step="1" value="3310"></div>
+</div>
+<p class="small">A fixed seed makes results reproducible. Changing settings resets the manual experiment. Rewards are simulated engineering performance scores, not historical stock returns.</p>
+
+<div class="tabs" role="tablist" aria-label="Experiment mode">
+  <button type="button" id="tabManual" role="tab" aria-selected="true" aria-controls="manual">1 · Collect Data</button>
+  <button type="button" id="tabCompare" role="tab" aria-selected="false" aria-controls="compare">2 · Monte Carlo Comparison</button>
+</div>
+
+<section id="manual" class="panel" role="tabpanel" aria-labelledby="tabManual">
+  <h2>Collect Your Own Evidence</h2>
+  <p>Choose which option to test. Can you identify the best one from a few samples?</p>
+  <div class="arm-grid">
+    <div class="arm"><div class="arm-name">A · <span class="muted">Option A</span></div><div class="value" id="q0">—</div><div class="small">Estimated mean</div><div class="small">Samples: <b id="n0">0</b></div><button id="arm0" type="button">Test A</button></div>
+    <div class="arm"><div class="arm-name">B · <span class="muted">Option B</span></div><div class="value" id="q1">—</div><div class="small">Estimated mean</div><div class="small">Samples: <b id="n1">0</b></div><button id="arm1" type="button">Test B</button></div>
+    <div class="arm"><div class="arm-name">C · <span class="muted">Option C</span></div><div class="value" id="q2">—</div><div class="small">Estimated mean</div><div class="small">Samples: <b id="n2">0</b></div><button id="arm2" type="button">Test C</button></div>
+  </div>
+  <div class="button-row">
+    <button id="greedyOne" type="button">Next · Greedy</button>
+    <button id="epsilonOne" class="primary" type="button">Next · ε-Greedy</button>
+    <button id="epsilonTen" type="button">Run 10 ε-Greedy decisions</button>
+    <button id="reset" type="button">Reset</button>
+  </div>
+  <div class="status" id="status" role="status" aria-live="polite">No measurements yet. Pick A, B, or C to start.</div>
+  <div class="metric-row">
+    <div class="metric"><div class="small">Decisions</div><div class="number" id="trials">0 / 180</div></div>
+    <div class="metric"><div class="small">Observed total reward</div><div class="number" id="totalReward">0.0</div></div>
+    <div class="metric"><div class="small">Expected regret</div><div class="number" id="regret">0.0</div></div>
+  </div>
+  <div class="chartbox">
+    <h3>What do your samples suggest?</h3>
+    <p class="small">Solid: estimated mean for each option. Dashed (optional): actual expected reward.</p>
+    <canvas id="manualChart" role="img" aria-label="Estimated mean reward versus trial for three options"></canvas>
+    <div class="legend"><span><i class="key" style="background:var(--a)"></i>A</span><span><i class="key" style="background:var(--b)"></i>B</span><span><i class="key" style="background:var(--c)"></i>C</span><span id="truthLegend" hidden>Dashed lines: hidden true means</span></div>
+  </div>
+  <div class="button-row">
+    <button id="reveal" type="button" aria-pressed="false">Reveal true expected rewards</button>
+    <button id="manualCSV" type="button">Download measurement CSV</button>
+  </div>
+  <p class="note" id="truthText">True means are hidden. A high sample mean does not prove an option is best.</p>
+  <div class="prompt"><strong>Think–Pair–Discuss:</strong> Did your highest measured reward identify the best option? What changed after more measurements?</div>
+</section>
+
+<section id="compare" class="panel" role="tabpanel" aria-labelledby="tabCompare" hidden>
+  <h2>Monte Carlo: Which Strategy Works Better?</h2>
+  <p>Run many independent experiments. All strategies face <strong>the same environment and noise in each run</strong>, so comparisons are paired and reproducible.</p>
+  <div class="controls">
+    <div class="control"><label for="repetitions">Independent runs</label><select id="repetitions"><option value="100">100</option><option value="300" selected>300</option><option value="1000">1,000</option></select></div>
+    <div class="control wide"><label>Strategies</label><div class="small">Greedy · ε-Greedy · ε-Greedy + recent-data weighting</div></div>
+    <div class="control"><button id="runMC" class="primary" type="button">Run Monte Carlo</button></div>
+    <div class="control"><button id="mcCSV" type="button" disabled>Download comparison CSV</button></div>
+  </div>
+  <p class="small">Each strategy tests A, B, and C once before using its rule. ε-Greedy explores uniformly across all three options with probability ε. Recent-data weighting updates Q ← Q + 0.15(reward − Q).</p>
+  <div id="mcStatus" class="status" role="status" aria-live="polite">Select an environment and click Run Monte Carlo.</div>
+  <div class="chartbox">
+    <h3>Average cumulative observed reward</h3>
+    <canvas id="rewardChart" role="img" aria-label="Average cumulative observed reward versus number of decisions for three strategies"></canvas>
+  </div>
+  <div class="chartbox">
+    <h3>Average cumulative expected regret</h3>
+    <p class="small">Regret at trial t = best available true mean − mean of the selected option. Lower is better.</p>
+    <canvas id="regretChart" role="img" aria-label="Average cumulative expected regret versus decisions for three strategies"></canvas>
+    <div class="legend"><span><i class="key" style="background:#555"></i>Greedy</span><span><i class="key" style="background:var(--a)"></i>ε-Greedy</span><span><i class="key" style="background:var(--b)"></i>ε-Greedy + recent data</span></div>
+  </div>
+  <div class="output" id="mcTable"></div>
+  <div class="prompt"><strong>Discuss:</strong> Does ε = 0 always win in a stable world? What about after the best option changes? Does more data always mean better decisions?</div>
+</section>
+
+<details>
+  <summary>How the simulation works (model and interpretation)</summary>
+  <p>Each option i has an expected performance μ<sub>i,t</sub>. On decision t, the selected option produces one observed score r<sub>i,t</sub> = μ<sub>i,t</sub> + measurement noise. Noise is Gaussian with standard deviation 1.5.</p>
+  <p><strong>Stable:</strong> the true means stay fixed. <strong>Changing:</strong> the expected rewards switch abruptly at half the experiment. <strong>Volatile:</strong> the true means follow a mean-reverting random walk, independent of the learner's actions.</p>
+  <p><strong>Sample-average estimate:</strong> Q<sub>i</sub> is the mean of observed scores for option i. <strong>Recent-data estimate:</strong> Q<sub>i</sub> ← Q<sub>i</sub> + 0.15(r − Q<sub>i</sub>), after the first observation. For ε-Greedy, with probability 1 − ε choose the option with the largest current Q; otherwise select uniformly at random.</p>
+  <p><strong>Expected regret:</strong> sum over decisions of max<sub>j</sub> μ<sub>j,t</sub> − μ<sub>a<sub>t</sub>,t</sub>. This uses the simulated hidden means for evaluation, not information available to the learner. Reported confidence intervals describe variability in the simulated <em>total observed rewards</em> across independent runs.</p>
+  <p><strong>Limitation:</strong> This is a simplified multi-armed bandit. The underlying option performance changes even when an option is not selected, and there is no switching cost. Financial diversification and corporate R&amp;D investment are analogies, not identical mathematical models.</p>
+</details>
+<footer>ME 3310 Experimental Methods I · Week 13 · Engineering Question → Measurement → Evidence → Inference → Judgment · Runs entirely in your browser; no data are collected or uploaded.</footer>
+</main>
+<script>
+(function(){
+"use strict";
+var $=function(id){return document.getElementById(id);};
+var armColors=["#62469a","#138b8d","#df8b28"],policyColors=["#555","#62469a","#138b8d"];
+var state=null,world=null,manualRng=null,manualLog=[],manualHist=[[],[],[]],revealed=false,mcResult=null;
+function seedValue(){var x=Math.floor(Number($("seed").value));return Number.isFinite(x)?Math.min(2147483646,Math.max(1,x)):3310;}
+function rng(seed){var a=seed>>>0;return function(){a+=0x6D2B79F5;var t=a;t=Math.imul(t^(t>>>15),t|1);t^=t+Math.imul(t^(t>>>7),t|61);return ((t^(t>>>14))>>>0)/4294967296;};}
+function normal(random){var x=Math.max(1e-12,random()),y=random();return Math.sqrt(-2*Math.log(x))*Math.cos(2*Math.PI*y);}
+function clamp(x,a,b){return Math.max(a,Math.min(b,x));}
+function buildWorld(seed,horizon,env){
+  var random=rng(seed>>>0),means=[],rewards=[],cur=[7.6,6.2,5.3],target=[7.0,6.3,6.7];
+  for(var t=0;t<horizon;t++){
+    var m;
+    if(env==="stable") m=[7.0,6.0,8.0];
+    else if(env==="changing")m=t<Math.floor(horizon/2)?[8.2,7.0,5.7]:[5.6,6.9,8.6];
+    else{if(t>0)for(var i=0;i<3;i++)cur[i]=clamp(cur[i]+0.04*(target[i]-cur[i])+0.68*normal(random),2,11);m=cur.slice();}
+    means.push(m.slice());
+    rewards.push(m.map(function(v){return v+1.5*normal(random);}));
+  }
+  return {means:means,rewards:rewards};
+}
+function newLearner(){return {q:[0,0,0],n:[0,0,0],reward:0,regret:0,bestCount:0};}
+function choose(l,method,epsilon,random){
+  for(var i=0;i<3;i++)if(l.n[i]===0)return i;
+  if(method!=="greedy"&&random()<epsilon)return Math.floor(random()*3);
+  var mx=Math.max.apply(null,l.q),ties=[0,1,2].filter(function(j){return Math.abs(l.q[j]-mx)<1e-10;});
+  return ties[Math.floor(random()*ties.length)];
+}
+function observe(l,arm,actual,means,method){
+  var old=l.n[arm],next=old+1;l.n[arm]=next;
+  if(method==="recent"&&old>0)l.q[arm]+=0.15*(actual-l.q[arm]);
+  else l.q[arm]+=(actual-l.q[arm])/next;
+  l.reward+=actual;
+  var best=Math.max.apply(null,means);
+  l.regret+=Math.max(0,best-means[arm]);
+  if(Math.abs(means[arm]-best)<1e-9)l.bestCount++;
+}
+function settings(){return {env:$("environment").value,horizon:+$("horizon").value,epsilon:+$("epsilon").value,seed:seedValue()};}
+function reset(){
+  var s=settings();$("seed").value=s.seed;world=buildWorld(s.seed,s.horizon,s.env);
+  state=newLearner();manualRng=rng((s.seed+0x00A51417)>>>0);manualLog=[];manualHist=[[],[],[]];revealed=false;mcResult=null;
+  $("reveal").setAttribute("aria-pressed","false");$("reveal").textContent="Reveal true expected rewards";$("truthLegend").hidden=true;
+  $("mcStatus").textContent="Settings changed. Run Monte Carlo to compare the strategies.";
+  $("mcTable").innerHTML="";$("mcCSV").disabled=true;paintManual();blankChart("rewardChart","Run Monte Carlo to see the results.");blankChart("regretChart","Run Monte Carlo to see the results.");
+}
+function step(arm,method){
+  if(manualLog.length>=world.means.length)return;
+  var t=manualLog.length,reward=world.rewards[t][arm];
+  observe(state,arm,reward,world.means[t],"sample");
+  manualLog.push({trial:t+1,arm:arm,reward:reward,q:state.q.slice(),trueMeans:world.means[t].slice(),regret:state.regret});
+  for(var i=0;i<3;i++)manualHist[i].push({t:t+1,y:state.n[i]?state.q[i]:null});
+  $("status").textContent="Trial "+(t+1)+": tested "+("ABC"[arm])+" → observed reward "+reward.toFixed(2)+". "+(method?"Selected by "+method+".":"You chose the test.")+" Updated its estimated mean.";
+}
+function perform(choice,count,method){
+  var s=settings(),remaining=world.means.length-manualLog.length;
+  for(var i=0;i<Math.min(count,remaining);i++){
+    var arm=choice===null?choose(state,method,s.epsilon,manualRng):choice;
+    step(arm,method==="greedy"?"Greedy":method==="epsilon"?"ε-Greedy":"");
+  }
+  paintManual();
+}
+function paintManual(){
+  for(var i=0;i<3;i++){
+    $("q"+i).textContent=state.n[i]?state.q[i].toFixed(2):"—";
+    $("n"+i).textContent=state.n[i];
+    $("arm"+i).disabled=manualLog.length>=world.means.length;
+  }
+  ["greedyOne","epsilonOne","epsilonTen"].forEach(function(id){$(id).disabled=manualLog.length>=world.means.length;});
+  $("trials").textContent=manualLog.length+" / "+world.means.length;
+  $("totalReward").textContent=state.reward.toFixed(1);
+  $("regret").textContent=state.regret.toFixed(1);
+  if(!manualLog.length)$("status").textContent="No measurements yet. Pick A, B, or C to start.";
+  if(manualLog.length>=world.means.length)$("status").textContent+=" Experiment complete.";
+  if(revealed){
+    var at=Math.min(world.means.length-1,Math.max(0,manualLog.length-1)),values=world.means[at];
+    $("truthText").textContent="At trial "+(at+1)+", the true means are A = "+values[0].toFixed(2)+", B = "+values[1].toFixed(2)+", C = "+values[2].toFixed(2)+". These were hidden from the learner.";
+  }else $("truthText").textContent="True means are hidden. A high sample mean does not prove an option is best.";
+  var series=manualHist.map(function(v,i){return {points:v,color:armColors[i],width:2.5};});
+  if(revealed)for(var j=0;j<3;j++){
+    var points=world.means.slice(0,Math.max(1,manualLog.length)).map(function(v,t){return {t:t+1,y:v[j]};});
+    series.push({points:points,color:armColors[j],width:1.7,dashed:true});
+  }
+  drawChart("manualChart",series,world.means.length,"Estimated mean",0,12,$("environment").value==="changing"?Math.floor(world.means.length/2):null);
+}
+function setupCanvas(id){
+  var c=$(id),ctx=c.getContext("2d"),rect=c.getBoundingClientRect(),w=Math.max(300,rect.width),h=Math.max(180,rect.height),d=Math.min(2,window.devicePixelRatio||1);
+  c.width=Math.round(w*d);c.height=Math.round(h*d);ctx.setTransform(d,0,0,d,0,0);
+  return {ctx:ctx,w:w,h:h};
+}
+function blankChart(id,msg){
+  var o=setupCanvas(id),g=o.ctx;
+  g.clearRect(0,0,o.w,o.h);g.fillStyle="#f8f8fa";g.fillRect(0,0,o.w,o.h);
+  g.font="14px Arial";g.fillStyle="#61656d";g.textAlign="center";g.fillText(msg,o.w/2,o.h/2);
+}
+function drawChart(id,series,horizon,yLabel,forcedMin,forcedMax,change){
+  var o=setupCanvas(id),g=o.ctx,w=o.w,h=o.h,margin={l:56,r:14,t:17,b:37};
+  var pw=w-margin.l-margin.r,ph=h-margin.t-margin.b,all=[];
+  series.forEach(function(s){s.points.forEach(function(p){if(Number.isFinite(p.y))all.push(p.y);});});
+  if(!all.length){blankChart(id,"Collect data to begin.");return;}
+  var min=Number.isFinite(forcedMin)?forcedMin:Math.min(0,Math.min.apply(null,all));
+  var max=Number.isFinite(forcedMax)?forcedMax:Math.max.apply(null,all);
+  if(Math.abs(max-min)<1e-9)max=min+1;
+  if(!Number.isFinite(forcedMax)){max+=Math.max(0.8,(max-min)*.07);}
+  var xp=function(t){return margin.l+(t-1)/Math.max(1,horizon-1)*pw;};
+  var yp=function(v){return margin.t+(max-v)/(max-min)*ph;};
+  g.clearRect(0,0,w,h);g.fillStyle="white";g.fillRect(0,0,w,h);
+  g.font="12px Arial";g.lineWidth=1;g.textAlign="right";
+  for(var k=0;k<=4;k++){var v=min+(max-min)*k/4,y=yp(v);
+    g.strokeStyle="#e6e7eb";g.beginPath();g.moveTo(margin.l,y);g.lineTo(w-margin.r,y);g.stroke();
+    g.fillStyle="#545b64";g.fillText(v.toFixed(Math.abs(max-min)>40?0:1),margin.l-7,y+4);
+  }
+  g.fillStyle="#555";g.textAlign="center";
+  for(var ix=0;ix<=4;ix++){var tick=1+Math.round((horizon-1)*ix/4);g.fillText(tick,xp(tick),h-18);}
+  g.fillText("Decision / trial",margin.l+pw/2,h-3);
+  g.save();g.translate(13,h/2);g.rotate(-Math.PI/2);g.fillText(yLabel,0,0);g.restore();
+  if(change!==null&&change!==undefined){
+    g.save();g.strokeStyle="#9f9fa7";g.setLineDash([4,5]);g.beginPath();g.moveTo(xp(change+1),margin.t);g.lineTo(xp(change+1),h-margin.b);g.stroke();g.setLineDash([]);g.textAlign="right";g.font="11px Arial";g.fillStyle="#777";g.fillText("Change",xp(change+1)-4,margin.t+12);g.restore();
+  }
+  series.forEach(function(s){
+    g.beginPath();g.strokeStyle=s.color;g.lineWidth=s.width||2;g.setLineDash(s.dashed?[5,5]:[]);var started=false;
+    s.points.forEach(function(p){if(!Number.isFinite(p.y)){started=false;return;}var x=xp(p.t),y=yp(p.y);if(!started){g.moveTo(x,y);started=true;}else g.lineTo(x,y);});g.stroke();g.setLineDash([]);
+  });
+}
+function runMC(){
+  var s=settings(),reps=+$("repetitions").value,steps=s.horizon;
+  $("mcStatus").textContent="Computing "+reps+" paired simulations…";
+  var methods=["greedy","epsilon","recent"],sums=methods.map(function(){return {reward:Array(steps).fill(0),regret:Array(steps).fill(0),tot:0,sq:0,best:0};});
+  for(var run=0;run<reps;run++){
+    var seed=((s.seed+Math.imul(run+1,0x9E3779B1))>>>0),w=buildWorld(seed,steps,s.env);
+    for(var p=0;p<3;p++){
+      var l=newLearner(),policyRng=rng((seed+Math.imul(p+1,0x85EBCA6B))>>>0);
+      for(var t=0;t<steps;t++){
+        var arm=choose(l,methods[p],s.epsilon,policyRng);
+        observe(l,arm,w.rewards[t][arm],w.means[t],methods[p]==="recent"?"recent":"sample");
+        sums[p].reward[t]+=l.reward;sums[p].regret[t]+=l.regret;
+      }
+      sums[p].tot+=l.reward;sums[p].sq+=l.reward*l.reward;sums[p].best+=l.bestCount/steps;
+    }
+  }
+  mcResult={reps:reps,steps:steps,methods:methods,sums:sums,settings:s};
+  var sr=sums.map(function(x,p){return {points:x.reward.map(function(v,t){return {t:t+1,y:v/reps};}),color:policyColors[p],width:2.5};});
+  var sg=sums.map(function(x,p){return {points:x.regret.map(function(v,t){return {t:t+1,y:v/reps};}),color:policyColors[p],width:2.5};});
+  drawChart("rewardChart",sr,steps,"Cumulative reward",0,null,s.env==="changing"?steps/2:null);
+  drawChart("regretChart",sg,steps,"Cumulative regret",0,null,s.env==="changing"?steps/2:null);
+  var names=["Greedy","ε-Greedy","ε-Greedy + recent data"];
+  var lines='<table><thead><tr><th>Strategy</th><th>Mean total reward</th><th>95% CI</th><th>Mean expected regret</th><th>Optimal choices</th></tr></thead><tbody>';
+  for(var z=0;z<3;z++){
+    var b=sums[z],mean=b.tot/reps,varian=Math.max(0,(b.sq-b.tot*b.tot/reps)/(reps-1)),ci=1.96*Math.sqrt(varian/reps);
+    lines+='<tr><td>'+names[z]+'</td><td>'+mean.toFixed(1)+'</td><td>± '+ci.toFixed(1)+'</td><td>'+(b.regret[steps-1]/reps).toFixed(1)+'</td><td>'+(100*b.best/reps).toFixed(1)+'%</td></tr>';
+  }
+  $("mcTable").innerHTML=lines+'</tbody></table><p class="small">95% normal-approximation confidence interval of the mean total observed reward across independent simulation runs. These are simulation results, not general guarantees about the policies.</p>';
+  $("mcCSV").disabled=false;
+  $("mcStatus").textContent="Completed "+reps+" paired simulation runs, "+steps+" decisions each; ε = "+s.epsilon.toFixed(2)+". Lower expected regret means better action choices on average.";
+}
+function download(name,csv){
+  var b=new Blob([csv],{type:"text/csv;charset=utf-8"}),u=URL.createObjectURL(b),a=document.createElement("a");
+  a.href=u;a.download=name;document.body.appendChild(a);a.click();a.remove();setTimeout(function(){URL.revokeObjectURL(u);},1000);
+}
+function csvManual(){
+  if(!manualLog.length){$("status").textContent="No data yet. Test an option before exporting.";return;}
+  var lines=["trial,selected_option,observed_reward,estimated_mean_A,estimated_mean_B,estimated_mean_C,expected_regret_cumulative"];
+  manualLog.forEach(function(r){lines.push([r.trial,"ABC"[r.arm],r.reward.toFixed(6),r.q[0].toFixed(6),r.q[1].toFixed(6),r.q[2].toFixed(6),r.regret.toFixed(6)].join(","));});
+  download("me3310-bandit-measurements.csv",lines.join("\n"));
+}
+function csvMC(){
+  if(!mcResult)return;
+  var m=mcResult,lines=["trial,greedy_avg_cumulative_reward,epsilon_greedy_avg_cumulative_reward,epsilon_recent_avg_cumulative_reward,greedy_avg_regret,epsilon_greedy_avg_regret,epsilon_recent_avg_regret"];
+  for(var t=0;t<m.steps;t++){var row=[t+1];m.sums.forEach(function(x){row.push((x.reward[t]/m.reps).toFixed(6));});m.sums.forEach(function(x){row.push((x.regret[t]/m.reps).toFixed(6));});lines.push(row.join(","));}
+  download("me3310-bandit-monte-carlo.csv",lines.join("\n"));
+}
+function tab(which){
+  var manual=which==="manual";$("manual").hidden=!manual;$("compare").hidden=manual;
+  $("tabManual").setAttribute("aria-selected",String(manual));$("tabCompare").setAttribute("aria-selected",String(!manual));
+  if(manual)paintManual();else if(mcResult){var x=mcResult,st=x.settings;
+    drawChart("rewardChart",x.sums.map(function(v,i){return {points:v.reward.map(function(z,t){return {t:t+1,y:z/x.reps};}),color:policyColors[i]};}),x.steps,"Cumulative reward",0,null,st.env==="changing"?x.steps/2:null);
+    drawChart("regretChart",x.sums.map(function(v,i){return {points:v.regret.map(function(z,t){return {t:t+1,y:z/x.reps};}),color:policyColors[i]};}),x.steps,"Cumulative regret",0,null,st.env==="changing"?x.steps/2:null);
+  }else{blankChart("rewardChart","Run Monte Carlo to see the results.");blankChart("regretChart","Run Monte Carlo to see the results.");}
+}
+$("tabManual").addEventListener("click",function(){tab("manual");});
+$("tabCompare").addEventListener("click",function(){tab("compare");});
+for(var i=0;i<3;i++)(function(k){$("arm"+k).addEventListener("click",function(){perform(k,1,"manual");});})(i);
+$("greedyOne").addEventListener("click",function(){perform(null,1,"greedy");});
+$("epsilonOne").addEventListener("click",function(){perform(null,1,"epsilon");});
+$("epsilonTen").addEventListener("click",function(){perform(null,10,"epsilon");});
+$("reset").addEventListener("click",reset);
+$("reveal").addEventListener("click",function(){revealed=!revealed;this.setAttribute("aria-pressed",String(revealed));this.textContent=revealed?"Hide true expected rewards":"Reveal true expected rewards";$("truthLegend").hidden=!revealed;paintManual();});
+$("manualCSV").addEventListener("click",csvManual);$("mcCSV").addEventListener("click",csvMC);$("runMC").addEventListener("click",runMC);
+["environment","horizon","seed"].forEach(function(id){$(id).addEventListener("change",reset);});
+$("epsilon").addEventListener("input",function(){$("epsLabel").textContent=(+this.value).toFixed(2);});
+$("epsilon").addEventListener("change",reset);
+window.addEventListener("resize",function(){if(!$("manual").hidden)paintManual();else tab("compare");});
+reset();
+})();
+</script>
+</body>
+</html>
