@@ -71,6 +71,7 @@ button.action:disabled{opacity:.45;cursor:not-allowed}
 .simtable th,.simtable td{padding:9px 8px;border-bottom:1px solid var(--line);text-align:right}
 .simtable th:first-child,.simtable td:first-child{text-align:left}
 .simtable thead{background:var(--soft)}
+.simtable tr.optimal td{background:#f1ecf8;font-weight:700;color:#3d2369}
 .details{font-size:.92rem}
 details{border-top:1px solid var(--line);margin-top:15px;padding-top:13px}
 summary{cursor:pointer;font-weight:700;color:var(--purple)}
@@ -155,17 +156,22 @@ Prior: P(tiger left) = 0.500<br>When you hear a roar, the observation changes th
 
 <section class="card">
 <h2>4 · How much confidence is enough?</h2>
-<p>Compare <strong>six stopping rules</strong> over <strong>5,000 simulated rounds each</strong>. Listening costs points but may reduce the risk of opening the tiger door. These are teaching examples, <strong>not optimal POMDP policies</strong>.</p>
+<p>Compare <strong>six simple stopping rules</strong> plus an <strong>Optimal POMDP policy</strong>, with <strong>5,000 simulated rounds per policy</strong>. Listening costs points but may reduce the risk of opening the tiger door. Every policy has the same 12-listen limit.</p>
 <div class="batch">
 <div style="background:var(--soft);border-radius:9px;padding:15px"><h3>Baseline · Open immediately</h3><p>Open the left door without listening. No evidence is collected.</p></div>
 <div style="background:var(--soft);border-radius:9px;padding:15px"><h3>Exploration · Confidence threshold</h3><p>Listen until the model assigns at least <strong>60%, 70%, 80%, 90%, or 95%</strong> probability to one tiger location (maximum 12 listens); then open the safer door.</p></div>
 </div>
-<div class="button-row" style="justify-content:flex-start;margin-top:17px"><button class="action" type="button" id="compare">Compare all thresholds · 5,000 trials</button></div>
+<div style="background:#f1ecf8;border-left:4px solid var(--purple);padding:13px 15px;margin-top:15px;border-radius:4px">
+<h3 style="margin:0 0 5px">Optimal POMDP benchmark · Finite-horizon planning</h3>
+<p style="margin:0">Instead of using one fixed confidence threshold, the policy compares the <strong>expected value of opening now</strong> against the <strong>expected value of listening once more</strong>. It accounts for the current belief, the listening cost, and the remaining opportunities. “Optimal” means optimal <em>for the assumed sensor model</em>.</p>
+</div>
+<div class="button-row" style="justify-content:flex-start;margin-top:17px"><button class="action" type="button" id="compare">Compare thresholds + POMDP · 5,000 trials</button></div>
 <div id="batchResult" class="note" aria-live="polite" style="margin-top:12px">Run the comparison, then switch sensor scenarios and compare again.</div>
 <div class="callout" style="margin-top:14px"><strong>Look for repeated results:</strong> With an assumed hearing accuracy of 85%, one observation moves the belief from 50% to 85%; two agreeing observations move it to about 97%. Different thresholds can therefore lead to <em>exactly the same stopping behavior</em>. A correctly calibrated 60% sensor produces more gradual belief updates.</div>
 <details class="details"><summary>What is being simulated?</summary>
 <p>Each round starts with a randomly placed tiger and a 50/50 prior. Each listen costs −1 and independently reports the tiger side with the scenario's <em>actual</em> reliability. Beliefs are updated using the scenario's <em>assumed</em> reliability. Opening treasure earns +10; opening the tiger door costs −100.</p>
 <p>Each policy faces the <strong>same 5,000 hidden tiger placements and potential observation sequences</strong>. A fixed random seed makes the demonstration reproducible. Listening stops at a maximum of 12 observations even if the target confidence has not been reached.</p>
+<p><strong>Finite-horizon POMDP:</strong> A Bellman recursion compares opening either door to listening once more: <code>V = max(open left, open right, −1 + expected next V)</code>. The policy is optimized for the <em>assumed</em> observation accuracy and at most 12 listens, with a mandatory door choice at the end. This differs from the classic infinite-horizon discounted Tiger POMDP. In the miscalibrated scenario, the policy can be optimal for its incorrect model but <em>not</em> optimal for the real sensor.</p>
 </details>
 </section>
 
@@ -272,49 +278,94 @@ function render(){
   el('history').innerHTML='<li>No observations yet.</li>';
  }
 }
+// Finite-horizon optimal policy for the assumed observation model.
+// k = (# of LEFT reports) - (# of RIGHT reports).
+function buildOptimalPolicy(a,maxListens){
+ var memo={},logOdds=Math.log(a/(1-a));
+ function solve(remaining,k){
+  var key=remaining+','+k;
+  if(memo[key])return memo[key];
+  var p=1/(1+Math.exp(-k*logOdds));
+  var qL=10-110*p,qR=110*p-100,best=Math.max(qL,qR);
+  var action=qL>=qR?'L':'R';
+  if(remaining>0){
+   var hearL=p*a+(1-p)*(1-a);
+   var qListen=-1+hearL*solve(remaining-1,k+1).value+
+    (1-hearL)*solve(remaining-1,k-1).value;
+   if(qListen>best+1e-10){best=qListen;action='listen';}
+  }
+  return (memo[key]={value:best,action:action,belief:p});
+ }
+ solve(maxListens,0);
+ return solve;
+}
 function seededRandom(seed){
  return function(){seed=(1664525*seed+1013904223)>>>0;return seed/4294967296;};
 }
-function simulate(threshold,count,acc,seed){
+function simulate(threshold,count,acc,seed,policy){
  var points=0,losses=0,listens=0,confidence=0,hitThreshold=0;
  for(var i=0;i<count;i++){
-  // All stopping policies face the same hidden state and potential observations per trial.
+  // Same hidden state and possible observations for every policy on trial i.
   var rng=seededRandom((seed^Math.imul(i+1,0x9e3779b9))>>>0);
-  var tiger=rng()<0.5?'L':'R',p=0.5,n=0;
-  if(threshold>0){
-   while(Math.max(p,1-p)+1e-12<threshold && n<12){
+  var tiger=rng()<0.5?'L':'R',p=0.5,n=0,k=0;
+  if(threshold>0 || policy){
+   while(n<12){
+    var keepListening=policy?
+     policy(12-n,k).action==='listen':
+     Math.max(p,1-p)+1e-12<threshold;
+    if(!keepListening)break;
     var heard=rng()<acc?tiger:(tiger==='L'?'R':'L');
-    p=posterior(p,heard,assumedAccuracy);n++;
+    p=posterior(p,heard,assumedAccuracy);
+    k+=heard==='L'?1:-1;
+    n++;
    }
-   if(Math.max(p,1-p)+1e-12>=threshold)hitThreshold++;
+   if(!policy && Math.max(p,1-p)+1e-12>=threshold)hitThreshold++;
   }
-  var open=threshold===0?'L':(p>=0.5?'R':'L');
+  var decision=policy?policy(12-n,k).action:null;
+  var open=policy?(decision==='L'?'L':'R'):(threshold===0?'L':(p>=0.5?'R':'L'));
   var lost=open===tiger;
   if(lost)losses++;
   points+=(lost?-100:10)-n;
   listens+=n;confidence+=Math.max(p,1-p);
  }
- return {avg:points/count,risk:losses/count,n:listens/count,confidence:confidence/count,reach:threshold===0?null:hitThreshold/count};
+ return {avg:points/count,risk:losses/count,n:listens/count,
+  confidence:confidence/count,reach:policy?null:(threshold===0?null:hitThreshold/count)};
 }
 function compare(){
  var count=5000,thresholds=[0,0.60,0.70,0.80,0.90,0.95];
- var simulations=thresholds.map(function(t){return {threshold:t,data:simulate(t,count,actualAccuracy,7341)};});
+ var policy=buildOptimalPolicy(assumedAccuracy,12);
+ var simulations=thresholds.map(function(t){
+  return {threshold:t,data:simulate(t,count,actualAccuracy,7341,null)};
+ });
+ simulations.push({threshold:null,data:simulate(0,count,actualAccuracy,7341,policy)});
  function row(item){
-  var t=item.threshold,obj=item.data;
-  var label=t===0?'Open immediately':Math.round(t*100)+'% confidence';
-  var reach=t===0?'—':pct(obj.reach);
-  return '<tr><td>'+label+'</td><td>'+sign(obj.avg)+'</td><td>'+pct(obj.risk)+'</td><td>'+obj.n.toFixed(2)+'</td><td>'+pct(obj.confidence)+'</td><td>'+reach+'</td></tr>';
+  var t=item.threshold,obj=item.data,isOptimal=t===null;
+  var label=isOptimal?'Optimal POMDP (12 listens)':t===0?
+   'Open immediately':Math.round(t*100)+'% confidence';
+  var reach=t===0||isOptimal?'—':pct(obj.reach);
+  return '<tr'+(isOptimal?' class="optimal"':'')+'><td>'+label+'</td><td>'+
+   sign(obj.avg)+'</td><td>'+pct(obj.risk)+'</td><td>'+
+   obj.n.toFixed(2)+'</td><td>'+pct(obj.confidence)+
+   '</td><td>'+reach+'</td></tr>';
  }
  var note=assumedAccuracy===0.85?
- 'One observation raises the model’s confidence to 85%, so 60% / 70% / 80% give identical decisions; 90% / 95% also give identical decisions (two agreeing net observations raise confidence to about 97%).':
- 'With a correctly calibrated 60% sensor, evidence accumulates more gradually, and different thresholds lead to different listening decisions.';
+ 'One observation raises the model’s confidence to 85%, so 60% / 70% / 80% share a stopping rule; 90% / 95% also share a stopping rule (two agreeing net observations yield about 97%).':
+ 'With a calibrated 60% sensor, belief updates are more gradual, and confidence thresholds lead to different listening decisions.';
+ var modelNote=actualAccuracy===assumedAccuracy?
+ 'Here, the POMDP uses the correct observation model.':
+ 'Here, the POMDP is optimized for the INCORRECT 85% sensor model, so “optimal” does not guarantee the best result for the real 60% sensor.';
  el('batchResult').innerHTML=
- '<div style="overflow-x:auto"><table class="simtable"><thead><tr><th>Stop when…</th><th>Avg points / round</th><th>Tiger opened</th><th>Avg listens</th><th>Model confidence</th><th>Target reached</th></tr></thead><tbody>'+
+ '<div style="overflow-x:auto"><table class="simtable"><thead><tr><th>Stop when…</th>'+
+ '<th>Avg points / round</th><th>Tiger opened</th><th>Avg listens</th>'+
+ '<th>Model confidence</th><th>Target reached</th></tr></thead><tbody>'+
  simulations.map(row).join('')+'</tbody></table></div>'+
- '<p class="note">5,000 trials per policy · Actual hearing accuracy: '+pct(actualAccuracy)+
+ '<p class="note">5,000 paired simulated trials per policy · Actual hearing accuracy: '+pct(actualAccuracy)+
  '. Model assumes '+pct(assumedAccuracy)+
- '. “Model confidence” is the model’s average reported confidence at the time of opening, not its observed success rate. “Target reached” excludes rounds stopped by the 12-listen cap.</p>'+
- '<div class="callout"><strong>Interpretation:</strong> '+note+' A higher threshold costs more observations and does not necessarily maximize average points.</div>';
+ '. “Model confidence” means average reported confidence when the door is opened; it is not the observed success rate. “Target reached” does not apply to the optimal POMDP policy, and excludes stopping by the 12-listen cap.</p>'+
+ '<div class="callout"><strong>Interpretation:</strong> '+note+
+ ' A higher threshold can cost more without producing a better expected outcome.'+
+ '<p style="margin-top:8px"><strong>Optimal is conditional on the model.</strong> '+modelNote+
+ ' This finite-horizon POMDP maximizes expected points (not success probability), and its decision may change as the remaining listening opportunities run out.</p></div>';
 }
 el('modeReliable').addEventListener('click',function(){setMode('reliable');});
 el('modeMiscalibrated').addEventListener('click',function(){setMode('miscalibrated');});
