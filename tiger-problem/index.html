@@ -95,10 +95,11 @@ a{color:var(--purple)}
 <h2>1 · Choose your observation environment</h2>
 <div class="mode-row" role="group" aria-label="Sensor reliability scenario">
 <button class="mode" id="modeReliable" aria-pressed="true" type="button">Reliable hearing · 85%</button>
-<button class="mode" id="modeMiscalibrated" aria-pressed="false" type="button">Miscalibrated hearing · 60%</button>
+<button class="mode" id="modeMiscalibrated" aria-pressed="false" type="button">Miscalibrated · real 60%, model 85%</button>
+<button class="mode" id="modeCalibrated" aria-pressed="false" type="button">Weak but calibrated · 60%</button>
 </div>
 <p class="note" id="modeInfo">The real observation accuracy is 85%, and your belief-update model correctly assumes 85%.</p>
-<p class="note">Changing the scenario starts a fresh session. In the miscalibrated case, actual observations are only 60% accurate, but your belief calculation <strong>still assumes 85%</strong>.</p>
+<p class="note">Changing the scenario starts a fresh session. Compare reliable observations, an <strong>overconfident sensor model</strong>, and a weaker but <strong>correctly calibrated sensor model</strong>. Each listen is modeled as conditionally independent given the hidden tiger location.</p>
 </section>
 
 <div class="grid">
@@ -153,16 +154,18 @@ Prior: P(tiger left) = 0.500<br>When you hear a roar, the observation changes th
 </div>
 
 <section class="card">
-<h2>4 · Repeat the experiment: Does more listening help?</h2>
-<p>Compare two simple policies over <strong>500 simulated rounds</strong> under the selected hearing scenario. These are illustrations, <strong>not claimed to be optimal POMDP policies</strong>.</p>
+<h2>4 · How much confidence is enough?</h2>
+<p>Compare <strong>six stopping rules</strong> over <strong>5,000 simulated rounds each</strong>. Listening costs points but may reduce the risk of opening the tiger door. These are teaching examples, <strong>not optimal POMDP policies</strong>.</p>
 <div class="batch">
-<div style="background:var(--soft);border-radius:9px;padding:15px"><h3>Policy A · No exploration</h3><p>Open the left door immediately without listening.</p></div>
-<div style="background:var(--soft);border-radius:9px;padding:15px"><h3>Policy B · Listen before commitment</h3><p>Listen until the model assigns at least 95% probability to one state (maximum 12 listens); then open the safer door.</p></div>
+<div style="background:var(--soft);border-radius:9px;padding:15px"><h3>Baseline · Open immediately</h3><p>Open the left door without listening. No evidence is collected.</p></div>
+<div style="background:var(--soft);border-radius:9px;padding:15px"><h3>Exploration · Confidence threshold</h3><p>Listen until the model assigns at least <strong>60%, 70%, 80%, 90%, or 95%</strong> probability to one tiger location (maximum 12 listens); then open the safer door.</p></div>
 </div>
-<div class="button-row" style="justify-content:flex-start;margin-top:17px"><button class="action" type="button" id="compare">Run 500 trials</button></div>
-<div id="batchResult" class="note" aria-live="polite" style="margin-top:12px">Run the comparison, then switch scenarios and run it again.</div>
+<div class="button-row" style="justify-content:flex-start;margin-top:17px"><button class="action" type="button" id="compare">Compare all thresholds · 5,000 trials</button></div>
+<div id="batchResult" class="note" aria-live="polite" style="margin-top:12px">Run the comparison, then switch sensor scenarios and compare again.</div>
+<div class="callout" style="margin-top:14px"><strong>Look for repeated results:</strong> With an assumed hearing accuracy of 85%, one observation moves the belief from 50% to 85%; two agreeing observations move it to about 97%. Different thresholds can therefore lead to <em>exactly the same stopping behavior</em>. A correctly calibrated 60% sensor produces more gradual belief updates.</div>
 <details class="details"><summary>What is being simulated?</summary>
-<p>Each trial starts with a new randomly placed tiger and a 50/50 prior. A listen costs −1 and reports the true tiger side with the scenario's <em>actual</em> reliability. Policy B updates its probability using the <em>assumed</em> 85% reliability in both scenarios. Opening the treasure door gives +10; opening the tiger door gives −100. A fixed random seed makes the demonstration reproducible.</p>
+<p>Each round starts with a randomly placed tiger and a 50/50 prior. Each listen costs −1 and independently reports the tiger side with the scenario's <em>actual</em> reliability. Beliefs are updated using the scenario's <em>assumed</em> reliability. Opening treasure earns +10; opening the tiger door costs −100.</p>
+<p>Each policy faces the <strong>same 5,000 hidden tiger placements and potential observation sequences</strong>. A fixed random seed makes the demonstration reproducible. Listening stops at a maximum of 12 observations even if the target confidence has not been reached.</p>
 </details>
 </section>
 
@@ -170,7 +173,7 @@ Prior: P(tiger left) = 0.500<br>When you hear a roar, the observation changes th
 <h2>5 · Think – Pair – Discuss</h2>
 <div class="callout">
 <p class="question">If your model says “97% confident,” what exactly does that number depend on?</p>
-<p style="margin-top:9px">When does listening provide useful evidence? When could additional observations create <em>more confidence without more reliability</em>?</p>
+<p style="margin-top:9px">Which stopping threshold offers the best tradeoff between the cost of listening and the risk of opening the tiger door? When can more observations create <em>more confidence without more reliability</em>?</p>
 </div>
 <p style="margin-top:16px"><strong>Engineering connection:</strong> The real state is hidden. Measurements are imperfect. A rational decision therefore depends not only on the data, but also on the model used to interpret those data.</p>
 <p style="font-size:1.13rem;font-weight:800;color:var(--purple);margin-top:13px">Exploration can reveal not only a better option, but also how uncertain our current answer really is.</p>
@@ -197,13 +200,17 @@ function resetSession(){
  el('batchResult').textContent='Run the comparison, then switch scenarios and run it again.';
  resetRound();
 }
-function setMode(acc){
- actualAccuracy=acc;
- el('modeReliable').setAttribute('aria-pressed',String(acc===0.85));
- el('modeMiscalibrated').setAttribute('aria-pressed',String(acc===0.60));
- el('modeInfo').textContent=acc===0.85?
- 'The real observation accuracy is 85%, and your belief-update model correctly assumes 85%.':
- 'The actual observation accuracy is only 60%, while your belief-update model incorrectly assumes 85%.';
+function setMode(mode){
+ actualAccuracy=mode==='reliable'?0.85:0.60;
+ assumedAccuracy=mode==='calibrated'?0.60:0.85;
+ el('modeReliable').setAttribute('aria-pressed',String(mode==='reliable'));
+ el('modeMiscalibrated').setAttribute('aria-pressed',String(mode==='miscalibrated'));
+ el('modeCalibrated').setAttribute('aria-pressed',String(mode==='calibrated'));
+ el('modeInfo').textContent=mode==='reliable'?
+ 'The real observation accuracy is 85%, and the belief-update model correctly assumes 85%.':
+ mode==='miscalibrated'?
+ 'The real observation accuracy is 60%, but the belief-update model incorrectly assumes 85%: high reported confidence may be misleading.':
+ 'The real observation accuracy is 60%, and the belief-update model correctly assumes 60%: less informative measurements require more listening.';
  resetSession();
 }
 function posterior(p,heard,accuracy){
@@ -251,15 +258,13 @@ function render(){
  el('doorR').classList.toggle('revealed',round.finished);
  el('revealL').textContent=round.finished?(round.tiger==='L'?'🐅':'💰'):'';
  el('revealR').textContent=round.finished?(round.tiger==='R'?'🐅':'💰'):'';
- var box=el('status');box.textContent=statusText;box.className='status'+(round.finished?(round.tiger===round.openedSide?' loss':''):'');
- // The opening outcome is determined by the revealed state and the chosen door.
- if(round.finished){box.className='status '+(round.win?'win':'loss');}
+ var box=el('status');box.textContent=statusText;box.className=round.finished?('status '+(round.win?'win':'loss')):'status';
  if(round.last){
   var k=round.last,likL=k.heard==='L'?assumedAccuracy:1-assumedAccuracy;
   var likR=1-likL;
   var num=k.prior*likL,other=(1-k.prior)*likR;
   el('lastObservation').innerHTML='<strong>Latest observation:</strong> Roar from '+(k.heard==='L'?'LEFT':'RIGHT')+' &nbsp;·&nbsp; Listening count: '+round.n+'.';
-  el('bayes').innerHTML='<strong>Update with Bayes’ rule</strong><br>P(Tiger left | heard '+(k.heard==='L'?'left':'right')+')<br>= ('+k.prior.toFixed(3)+' × '+likL.toFixed(2)+') / [('+k.prior.toFixed(3)+' × '+likL.toFixed(2)+') + ('+(1-k.prior).toFixed(3)+' × '+likR.toFixed(2)+')]<br>= <strong>'+k.after.toFixed(3)+'</strong> ('+pct(k.after)+').<br><span class="note">Likelihood uses the assumed 85% sensor accuracy.</span>';
+  el('bayes').innerHTML='<strong>Update with Bayes’ rule</strong><br>P(Tiger left | heard '+(k.heard==='L'?'left':'right')+')<br>= ('+k.prior.toFixed(3)+' × '+likL.toFixed(2)+') / [('+k.prior.toFixed(3)+' × '+likL.toFixed(2)+') + ('+(1-k.prior).toFixed(3)+' × '+likR.toFixed(2)+')]<br>= <strong>'+k.after.toFixed(3)+'</strong> ('+pct(k.after)+').<br><span class="note">Likelihood uses the assumed '+pct(assumedAccuracy)+' sensor accuracy.</span>';
   el('history').innerHTML=round.observations.map(function(x,i){return '<li>Listen '+(i+1)+': heard '+(x==='L'?'left':'right')+'</li>';}).join('');
  }else{
   el('lastObservation').textContent='No observation yet. You may listen repeatedly, but every listen costs 1 point.';
@@ -270,32 +275,50 @@ function render(){
 function seededRandom(seed){
  return function(){seed=(1664525*seed+1013904223)>>>0;return seed/4294967296;};
 }
-function simulate(policy,count,acc,seed){
- var rng=seededRandom(seed),points=0,losses=0,listens=0,conf=0;
+function simulate(threshold,count,acc,seed){
+ var points=0,losses=0,listens=0,confidence=0,hitThreshold=0;
  for(var i=0;i<count;i++){
+  // All stopping policies face the same hidden state and potential observations per trial.
+  var rng=seededRandom((seed^Math.imul(i+1,0x9e3779b9))>>>0);
   var tiger=rng()<0.5?'L':'R',p=0.5,n=0;
-  if(policy==='listen'){
-   while(Math.max(p,1-p)<0.95 && n<12){
+  if(threshold>0){
+   while(Math.max(p,1-p)+1e-12<threshold && n<12){
     var heard=rng()<acc?tiger:(tiger==='L'?'R':'L');
     p=posterior(p,heard,assumedAccuracy);n++;
    }
+   if(Math.max(p,1-p)+1e-12>=threshold)hitThreshold++;
   }
-  var open=p>=0.5?'R':'L';
+  var open=threshold===0?'L':(p>=0.5?'R':'L');
   var lost=open===tiger;
   if(lost)losses++;
   points+=(lost?-100:10)-n;
-  listens+=n;conf+=Math.max(p,1-p);
+  listens+=n;confidence+=Math.max(p,1-p);
  }
- return {avg:points/count,risk:losses/count,n:listens/count,confidence:conf/count};
+ return {avg:points/count,risk:losses/count,n:listens/count,confidence:confidence/count,reach:threshold===0?null:hitThreshold/count};
 }
 function compare(){
- var count=500,baseline=simulate('none',count,actualAccuracy,7341);
- var exploration=simulate('listen',count,actualAccuracy,7341);
- function row(name,obj){return '<tr><td>'+name+'</td><td>'+sign(obj.avg)+'</td><td>'+pct(obj.risk)+'</td><td>'+obj.n.toFixed(2)+'</td><td>'+pct(obj.confidence)+'</td></tr>';}
- el('batchResult').innerHTML='<div style="overflow-x:auto"><table class="simtable"><thead><tr><th>Strategy</th><th>Avg points / round</th><th>Tiger opened</th><th>Avg listens</th><th>Model confidence</th></tr></thead><tbody>'+row('Open immediately',baseline)+row('Listen until 95%',exploration)+'</tbody></table></div><p class="note">500 trials per strategy · Actual hearing accuracy: '+pct(actualAccuracy)+'. Model assumes '+pct(assumedAccuracy)+'. Confidence is the model’s stated probability of its more likely tiger location at the moment of opening. It is not a measured success rate.</p>';
+ var count=5000,thresholds=[0,0.60,0.70,0.80,0.90,0.95];
+ var simulations=thresholds.map(function(t){return {threshold:t,data:simulate(t,count,actualAccuracy,7341)};});
+ function row(item){
+  var t=item.threshold,obj=item.data;
+  var label=t===0?'Open immediately':Math.round(t*100)+'% confidence';
+  var reach=t===0?'—':pct(obj.reach);
+  return '<tr><td>'+label+'</td><td>'+sign(obj.avg)+'</td><td>'+pct(obj.risk)+'</td><td>'+obj.n.toFixed(2)+'</td><td>'+pct(obj.confidence)+'</td><td>'+reach+'</td></tr>';
+ }
+ var note=assumedAccuracy===0.85?
+ 'One observation raises the model’s confidence to 85%, so 60% / 70% / 80% give identical decisions; 90% / 95% also give identical decisions (two agreeing net observations raise confidence to about 97%).':
+ 'With a correctly calibrated 60% sensor, evidence accumulates more gradually, and different thresholds lead to different listening decisions.';
+ el('batchResult').innerHTML=
+ '<div style="overflow-x:auto"><table class="simtable"><thead><tr><th>Stop when…</th><th>Avg points / round</th><th>Tiger opened</th><th>Avg listens</th><th>Model confidence</th><th>Target reached</th></tr></thead><tbody>'+
+ simulations.map(row).join('')+'</tbody></table></div>'+
+ '<p class="note">5,000 trials per policy · Actual hearing accuracy: '+pct(actualAccuracy)+
+ '. Model assumes '+pct(assumedAccuracy)+
+ '. “Model confidence” is the model’s average reported confidence at the time of opening, not its observed success rate. “Target reached” excludes rounds stopped by the 12-listen cap.</p>'+
+ '<div class="callout"><strong>Interpretation:</strong> '+note+' A higher threshold costs more observations and does not necessarily maximize average points.</div>';
 }
-el('modeReliable').addEventListener('click',function(){setMode(0.85);});
-el('modeMiscalibrated').addEventListener('click',function(){setMode(0.60);});
+el('modeReliable').addEventListener('click',function(){setMode('reliable');});
+el('modeMiscalibrated').addEventListener('click',function(){setMode('miscalibrated');});
+el('modeCalibrated').addEventListener('click',function(){setMode('calibrated');});
 el('listen').addEventListener('click',listen);
 el('openL').addEventListener('click',function(){round.openedSide='L';round.win=round.tiger!=='L';openDoor('L');});
 el('openR').addEventListener('click',function(){round.openedSide='R';round.win=round.tiger!=='R';openDoor('R');});
