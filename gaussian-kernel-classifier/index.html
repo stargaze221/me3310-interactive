@@ -310,7 +310,7 @@ details p{font-size:13px}
  el("points").addEventListener("click",e=>{
   const o=coords(e,"points");let best=-1,d=20;
   data.forEach((p,i)=>{let q=o.f.xy(p.x,p.y),dd=Math.hypot(q[0]-o.px,q[1]-o.py);if(dd<d){best=i;d=dd}});
-  if(best>=0){selected=best;render();}
+  if(best>=0){selected=best;} render();
  });
  el("decision").addEventListener("click",e=>{const o=coords(e,"decision"),p=o.f.inv(o.px,o.py),box=cfgs[mode].box;probe=[Math.min(box[1],Math.max(box[0],p[0])),Math.min(box[3],Math.max(box[2],p[1]))];render();});
  window.addEventListener("resize",render);
