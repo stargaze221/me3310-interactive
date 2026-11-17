@@ -1,0 +1,382 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<meta name="description" content="ME 3310 interactive: see how a nonlinear feature mapping makes linear separation possible in a higher-dimensional space.">
+<title>Nonlinear Mapping → Linear Separation | ME 3310</title>
+<style>
+:root{--navy:#17364d;--ink:#243247;--muted:#5d7184;--teal:#256b7c;--blue:#377fab;--orange:#da853f;--gold:#c69544;--surface:#f6f9fb;--border:#d5e4ec;--soft:#eef6f8}
+*{box-sizing:border-box}
+html{scroll-behavior:smooth}
+body{margin:0;background:var(--surface);color:var(--ink);font:15px/1.55 Arial,Helvetica,sans-serif}
+main{max-width:1300px;padding:26px 22px 55px;margin:auto}
+header{background:var(--soft);border-left:6px solid var(--teal);padding:20px 26px;border-radius:7px;margin-bottom:20px}
+.eyebrow{color:var(--teal);font-size:12px;font-weight:700;letter-spacing:.06em;text-transform:uppercase}
+h1{font-size:clamp(23px,3vw,32px);line-height:1.18;color:var(--navy);margin:6px 0}
+header p{margin:7px 0 0;max-width:920px}
+h2{font-size:19px;color:var(--navy);margin:0 0 7px}
+h3{font-size:16px;color:var(--navy);margin:0}
+p{margin:8px 0}
+.card,.panel{background:white;border:1px solid var(--border);border-radius:9px}
+.intro{padding:13px 18px;margin-bottom:17px}
+.intro strong{color:var(--navy)}
+.picker{padding:14px 17px;margin-bottom:14px}
+.preset-bar{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:9px;margin-top:11px}
+.preset{border:1px solid #bfcfda;color:var(--navy);background:white;border-radius:8px;cursor:pointer;text-align:left;padding:10px 12px;font:inherit}
+.preset strong{display:block;font-size:14px}
+.preset small{display:block;color:var(--muted);font-size:12px;margin-top:2px}
+.preset[aria-pressed=true]{background:#eaf5f8;border-color:#256b7c;box-shadow:inset 0 0 0 1px #256b7c}
+.preset:focus-visible,button:focus-visible,input:focus-visible{outline:3px solid #e4b65e;outline-offset:2px}
+.controls{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:13px;padding:13px 17px;margin-bottom:17px}
+.control label{display:flex;justify-content:space-between;gap:4px;color:var(--navy);font-size:13px;font-weight:700}
+.control output{font-variant-numeric:tabular-nums;color:var(--teal);font-weight:700}
+.control input{display:block;width:100%;accent-color:var(--teal);margin:11px 0 4px}
+.control .hint{font-size:11px;color:var(--muted)}
+.control.is-disabled{opacity:.44}
+.panels{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:13px;align-items:stretch}
+.panel{min-width:0;overflow:hidden}
+.panel header{margin:0;padding:13px 15px;background:#f3f8fb;border-radius:0;border-left:0;border-bottom:1px solid var(--border)}
+.panel header .number{font-size:12px;color:var(--teal);font-weight:700}
+.panel header h2{font-size:17px;margin:2px 0 3px}
+.panel header p{font-size:12px;color:var(--muted);margin:0;line-height:1.42;min-height:34px}
+.canvaswrap{padding:5px}
+.canvaswrap canvas{width:100%;height:320px;display:block;touch-action:manipulation}
+.metric{border-top:1px solid #e5edf3;background:#fafcfd;padding:9px 12px;min-height:59px;color:var(--muted);font-size:12px}
+.metric strong{color:var(--navy);font-size:16px}
+.legend{display:flex;flex-wrap:wrap;gap:12px;margin:13px 0 15px;font-size:12px;color:var(--muted);align-items:center}
+.dot{width:11px;height:11px;border-radius:50%;display:inline-block;vertical-align:middle;margin-right:4px}
+.dot.a{background:var(--blue)}.dot.b{background:var(--orange)}.dot.plane{background:var(--gold)}
+.formula{background:#f3f8fb;border:1px solid #d3e3ed;border-radius:7px;margin:15px 0;padding:14px 18px}
+.formula .math{font-family:Cambria,Georgia,serif;font-size:clamp(16px,2.1vw,21px);color:var(--navy);overflow-wrap:anywhere;margin:8px 0}
+.formula .equation{padding:4px 8px;background:white;border-radius:5px;border:1px solid #e4ebf0}
+.formula .note{font-size:13px;color:var(--muted)}
+.readout{background:#fff8e9;border-left:4px solid var(--gold);padding:12px 17px;border-radius:4px;margin:15px 0}
+.readout strong{color:var(--navy)}
+.takeaway{background:var(--soft);border-left:5px solid var(--teal);padding:16px 18px;border-radius:5px;margin-top:15px}
+.takeaway h2{font-size:17px}
+.sidenote{font-size:12px;color:var(--muted);padding-top:10px;border-top:1px solid var(--border);margin-top:17px}
+.steps{display:flex;gap:7px;align-items:center;flex-wrap:wrap;margin-top:10px;font-size:13px;color:var(--navy);font-weight:700}
+.steps span{background:white;padding:5px 9px;border-radius:5px;border:1px solid #d3e3ed}
+.steps b{color:var(--teal)}
+@media(max-width:1080px){.panels{grid-template-columns:1fr 1fr}.panel:last-child{grid-column:span 2}.canvaswrap canvas{height:330px}}
+@media(max-width:650px){main{padding:13px 10px 30px}.panels,.controls,.preset-bar{grid-template-columns:1fr}.panel:last-child{grid-column:auto}.controls{grid-template-columns:1fr 1fr}.canvaswrap canvas{height:300px}.preset-bar{gap:5px}header{padding:15px}header h1{font-size:25px}}
+@media(prefers-reduced-motion:reduce){html{scroll-behavior:auto}}
+</style>
+</head>
+<body>
+<main>
+<header>
+ <div class="eyebrow">ME 3310 · Experimental Methods I · Interactive Example</div>
+ <h1>Nonlinear Mapping → Linear Separation</h1>
+ <p><strong>How can one flat separating plane become a curved boundary in the original measurement space?</strong> Start with the circles. Then try three separate islands and two moons.</p>
+</header>
+<section class="card intro">
+ <strong>The idea:</strong> Original measurements (x₁, x₂) can be difficult to separate with one straight line. Create an additional nonlinear feature z = g(x₁, x₂). In the new 3D space, a <em>flat plane</em> z = t can separate the classes. Looking back in the original 2D space, that same rule g(x₁, x₂) = t is a <em>curved boundary</em>.
+ <div class="steps"><span>Original 2D</span><b>→</b><span>Nonlinear feature map</span><b>→</b><span>Linear plane in 3D</span><b>→</b><span>Curved 2D boundary</span></div>
+</section>
+<section class="card picker">
+ <h2>Choose an example</h2>
+ <div class="preset-bar" role="group" aria-label="Dataset">
+  <button class="preset" type="button" data-preset="circles" aria-pressed="true"><strong>① Concentric circles</strong><small>Start here: one quadratic feature</small></button>
+  <button class="preset" type="button" data-preset="islands" aria-pressed="false"><strong>② Three circular islands</strong><small>Gaussian bumps produce three separate regions</small></button>
+  <button class="preset" type="button" data-preset="moons" aria-pressed="false"><strong>③ Two moons</strong><small>Combine several Gaussian features</small></button>
+ </div>
+</section>
+<section class="card controls" aria-label="Interactive controls">
+ <div class="control" id="sigmaWrap"><label for="sigma">Gaussian width σ <output id="sigmaVal">0.45</output></label><input type="range" id="sigma" min=".20" max="1.15" step=".05" value=".45"><div class="hint">Changes the width of Gaussian bumps</div></div>
+ <div class="control"><label for="threshold">Plane height t <output id="thresholdVal">1.55</output></label><input type="range" id="threshold" min=".65" max="3.5" step=".05" value="1.55"><div class="hint">Move the flat plane and watch 2D boundary</div></div>
+ <div class="control"><label for="lift">Lift into 3D <output id="liftVal">100%</output></label><input type="range" id="lift" min="0" max="100" step="1" value="100"><div class="hint">0% = original flat points; 100% = mapped features</div></div>
+ <div class="control"><label for="angle">Rotate 3D view <output id="angleVal">45°</output></label><input type="range" id="angle" min="10" max="145" step="1" value="45"><div class="hint">Change the camera angle to inspect the plane</div></div>
+</section>
+<section class="panels">
+ <article class="panel">
+  <header><div class="number">A · ORIGINAL SPACE</div><h2>Measurements in 2D</h2><p>Blue and orange are different classes. The dashed gray line is the <em>best straight-line separator</em> found for these examples.</p></header>
+  <div class="canvaswrap"><canvas id="original" role="img" aria-label="Original two-dimensional measurements and best straight-line separator"></canvas></div>
+  <div class="metric" id="linearMetric">Linear separator: calculating…</div>
+ </article>
+ <article class="panel">
+  <header><div class="number">B · MAPPED SPACE</div><h2>Lift the points into 3D</h2><p>Height z is a nonlinear feature. The gold <em>flat plane</em> z = t is a linear decision surface in this new space.</p></header>
+  <div class="canvaswrap"><canvas id="mapped" role="img" aria-label="Rotatable projected 3D mapped points, curved feature surface, and a flat separating plane"></canvas></div>
+  <div class="metric" id="mappedMetric">Change the Lift or Rotate slider to inspect the mapping.</div>
+ </article>
+ <article class="panel">
+  <header><div class="number">C · BACK TO ORIGINAL SPACE</div><h2>A curved boundary in 2D</h2><p>The same flat 3D plane becomes g(x₁, x₂) = t when viewed in the original measurement coordinates.</p></header>
+  <div class="canvaswrap"><canvas id="result" role="img" aria-label="Nonlinear decision regions and curved boundary in original two-dimensional space"></canvas></div>
+  <div class="metric" id="nonlinearMetric">Mapped separator: calculating…</div>
+ </article>
+</section>
+<div class="legend"><span><i class="dot a"></i>Class 0</span><span><i class="dot b"></i>Class 1</span><span><i class="dot plane"></i>Separating plane / boundary</span><span>Click a data point in panel A or C to follow it across the mapping.</span></div>
+<section class="formula" aria-live="polite">
+ <h2 id="formulaTitle">① One quadratic feature is enough</h2>
+ <div class="math equation" id="featureFormula">φ(x₁, x₂) = (x₁, x₂, x₁² + x₂²)</div>
+ <p class="math" id="planeFormula">Linear plane in mapped space: z = t</p>
+ <p class="math" id="backFormula">Original 2D boundary: x₁² + x₂² = t</p>
+ <p class="note" id="formulaNote">A horizontal plane cuts the lifted paraboloid into a circle. In the original 2D measurements, no single straight line can enclose the inner class.</p>
+</section>
+<section class="readout" aria-live="polite">
+ <strong>Trace one measurement:</strong> <span id="selectedReadout">Click a data point in panel A or C to see its original (x₁, x₂) coordinates, lifted height z, and predicted class.</span>
+</section>
+<section class="takeaway">
+ <h2>Key idea for Experimental Methods I</h2>
+ <p><strong>Nonlinear in the original space does not mean nonlinear in every space.</strong> If the right nonlinear features are available, the separating rule can be linear in the mapped space. The complex-looking 2D boundary is simply the original-space view of that linear rule.</p>
+ <p><strong>Next lesson — Gaussian Kernel SVM:</strong> Instead of manually choosing a few features, the Gaussian kernel provides inner products for a much richer, infinite-dimensional feature space. An SVM then <em>learns</em> a linear separator there; its boundary in the original measurement space can be nonlinear.</p>
+</section>
+<p class="sidenote"><strong>Interpretation notes:</strong> These are synthetic classroom data, and the mapped planes are specified for illustration—not learned by SVM optimization. The Gaussian examples use a finite number of explicit radial-basis features, not the full infinite-dimensional Gaussian feature map. The displayed percentages are on these example points, not independent-test accuracy. A classifier must still be validated on independent experimental trials.</p>
+</main>
+<script>
+(function(){
+"use strict";
+const $=id=>document.getElementById(id);
+const buttons=[...document.querySelectorAll("[data-preset]")];
+const sigma=$("sigma"),threshold=$("threshold"),lift=$("lift"),angle=$("angle");
+const configs={
+ circles:{name:"Concentric circles",box:[-2.35,2.35,-2.35,2.35],sigma:.45,t:1.55,tmin:.65,tmax:3.5,tstep:.05,zmin:0,zmax:4.8},
+ islands:{name:"Three circular islands",box:[-2.5,2.5,-2.5,2.5],sigma:.45,t:.5,tmin:.10,tmax:1.2,tstep:.025,zmin:0,zmax:1.3},
+ moons:{name:"Two moons",box:[-1.95,2.3,-1.35,1.65],sigma:.5,t:0,tmin:-1.0,tmax:1.0,tstep:.05,zmin:-1.25,zmax:1.25}
+};
+const centers=[[-1.4,.88],[1.38,.86],[0,-1.42]];
+const prototypes={positive:[],negative:[]};
+for(let i=0;i<13;i++){
+ const a=.05+(Math.PI-.1)*i/12;
+ prototypes.positive.push([1.15*Math.cos(a)-.45,1.15*Math.sin(a)]);
+ prototypes.negative.push([1.15*(1-Math.cos(a))-.45,.58-1.15*Math.sin(a)]);
+}
+let state={preset:"circles",points:[],linear:null,selected:null};
+function rng(seed){let s=seed>>>0;return function(){s+=0x6D2B79F5;let t=s;t=Math.imul(t^(t>>>15),t|1);t^=t+Math.imul(t^(t>>>7),t|61);return ((t^(t>>>14))>>>0)/4294967296}}
+function normal(R){return Math.sqrt(-2*Math.log(Math.max(1e-9,R())))*Math.cos(2*Math.PI*R())}
+function makeData(key){
+ const R=rng(3310), pts=[];
+ if(key==="circles"){
+  for(let k=0;k<2;k++)for(let i=0;i<100;i++){
+   const a=(i+(R()-.5)*.6)*2*Math.PI/100;
+   const r=(k===0?.78:1.70)+.075*normal(R);
+   pts.push({x:r*Math.cos(a),y:r*Math.sin(a),cls:k});
+  }
+ }
+ if(key==="islands"){
+  for(const c of centers)for(let i=0;i<36;i++)pts.push({x:c[0]+.22*normal(R),y:c[1]+.22*normal(R),cls:1});
+  let tries=0;
+  while(pts.length<260&&tries++<12000){
+   const x=(R()*2-1)*2.25,y=(R()*2-1)*2.25;
+   if(centers.every(c=>Math.hypot(x-c[0],y-c[1])>.70))pts.push({x,y,cls:0});
+  }
+ }
+ if(key==="moons"){
+  for(let k=0;k<2;k++)for(let i=0;i<110;i++){
+   const a=Math.max(0,Math.min(Math.PI,(i+(R()-.5)*.7)*Math.PI/109));
+   let x,y;
+   if(k===1){x=1.15*Math.cos(a)-.45;y=1.15*Math.sin(a)}
+   else{x=1.15*(1-Math.cos(a))-.45;y=.58-1.15*Math.sin(a)}
+   pts.push({x:x+.075*normal(R),y:y+.075*normal(R),cls:k});
+  }
+ }
+ return pts;
+}
+function K(x,y,c,s){const dx=x-c[0],dy=y-c[1];return Math.exp(-(dx*dx+dy*dy)/(2*s*s))}
+function height(x,y){
+ if(state.preset==="circles")return x*x+y*y;
+ const s=+sigma.value;
+ if(state.preset==="islands")return centers.reduce((z,c)=>z+K(x,y,c,s),0);
+ let z=0;
+ for(const p of prototypes.positive)z+=K(x,y,p,s)/4;
+ for(const p of prototypes.negative)z-=K(x,y,p,s)/4;
+ return z;
+}
+function fittingLinear(data){
+ let best={acc:-1,nx:1,ny:0,offset:0,polarity:1};
+ const n=data.length;
+ for(let a=0;a<90;a++){
+  const th=a*Math.PI/90,nx=Math.cos(th),ny=Math.sin(th);
+  const v=data.map(p=>nx*p.x+ny*p.y),low=Math.min(...v)-.02,high=Math.max(...v)+.02;
+  for(let j=0;j<=60;j++){
+   const offset=low+(high-low)*j/60;
+   let correct=0;
+   for(let i=0;i<n;i++)if((v[i]>=offset?1:0)===data[i].cls)correct++;
+   const acc=Math.max(correct,n-correct);
+   if(acc>best.acc)best={acc,nx,ny,offset,polarity:correct>=n-correct?1:-1};
+  }
+ }
+ return best;
+}
+function fitCanvas(id){
+ const el=$(id),r=el.getBoundingClientRect(),w=Math.max(260,Math.round(r.width)),h=Math.max(220,Math.round(r.height)),dpr=Math.min(2,window.devicePixelRatio||1);
+ if(el.width!==Math.round(w*dpr)||el.height!==Math.round(h*dpr)){el.width=Math.round(w*dpr);el.height=Math.round(h*dpr)}
+ const ctx=el.getContext("2d");
+ ctx.setTransform(dpr,0,0,dpr,0,0);
+ ctx.clearRect(0,0,w,h);
+ return {el,ctx,w,h};
+}
+function viewport(frame){
+ const [xmin,xmax,ymin,ymax]=configs[state.preset].box;
+ const pad=34,W=frame.w-2*pad,H=frame.h-2*pad;
+ return {xmin,xmax,ymin,ymax,pad,W,H,
+ xy(x,y){return [pad+(x-xmin)/(xmax-xmin)*W,pad+(ymax-y)/(ymax-ymin)*H]},
+ inv(px,py){return [xmin+(px-pad)/W*(xmax-xmin),ymax-(py-pad)/H*(ymax-ymin)]}};
+}
+function axes(frame,v){
+ const c=frame.ctx;
+ c.fillStyle="#fff";c.fillRect(0,0,frame.w,frame.h);
+ c.strokeStyle="#e8eff4";c.lineWidth=1;
+ for(let i=0;i<=8;i++){
+  const x=v.pad+v.W*i/8,y=v.pad+v.H*i/8;
+  c.beginPath();c.moveTo(x,v.pad);c.lineTo(x,v.pad+v.H);c.stroke();
+  c.beginPath();c.moveTo(v.pad,y);c.lineTo(v.pad+v.W,y);c.stroke();
+ }
+ c.strokeStyle="#8ba0b0";c.strokeRect(v.pad,v.pad,v.W,v.H);
+ c.fillStyle="#506478";c.font="12px Arial";c.textAlign="center";c.fillText("x₁",frame.w-18,frame.h-9);
+ c.fillText("x₂",16,24);
+ c.font="10px Arial";c.fillStyle="#8595a2";
+ c.textAlign="left";c.fillText(v.xmin.toFixed(1),v.pad,frame.h-12);
+ c.textAlign="right";c.fillText(v.xmax.toFixed(1),v.pad+v.W,frame.h-12);
+}
+function dots(frame,v){
+ const c=frame.ctx;
+ state.points.forEach((p,i)=>{
+  const [x,y]=v.xy(p.x,p.y);
+  c.beginPath();c.arc(x,y,i===state.selected?6.5:3.3,0,Math.PI*2);
+  c.fillStyle=p.cls===1?"#dc8640":"#397fa8";c.fill();
+  if(i===state.selected){c.lineWidth=2.4;c.strokeStyle="#172e41";c.stroke();c.beginPath();c.arc(x,y,10,0,Math.PI*2);c.strokeStyle="#f0bd45";c.lineWidth=2.5;c.stroke()}
+ });
+}
+function drawOriginal(){
+ const f=fitCanvas("original"),v=viewport(f),c=f.ctx;axes(f,v);
+ c.save();c.beginPath();c.rect(v.pad,v.pad,v.W,v.H);c.clip();
+ const m=state.linear,len=16;
+ const p1=v.xy(m.nx*m.offset-m.ny*len,m.ny*m.offset+m.nx*len);
+ const p2=v.xy(m.nx*m.offset+m.ny*len,m.ny*m.offset-m.nx*len);
+ c.setLineDash([8,5]);c.beginPath();c.moveTo(...p1);c.lineTo(...p2);c.strokeStyle="#788691";c.lineWidth=2.4;c.stroke();c.setLineDash([]);
+ c.restore();dots(f,v);
+ $("linearMetric").innerHTML="<strong>"+(100*m.acc/state.points.length).toFixed(1)+"%</strong> correctly separated by the best fitted straight line on these example points.";
+ return f;
+}
+function score(x,y){return height(x,y)-(+threshold.value)}
+function drawResult(){
+ const f=fitCanvas("result"),v=viewport(f),c=f.ctx;axes(f,v);
+ const cols=85,rows=85,ww=v.W/cols,hh=v.H/rows;
+ for(let j=0;j<rows;j++)for(let i=0;i<cols;i++){
+  const xx=v.xmin+(i+.5)/cols*(v.xmax-v.xmin),yy=v.ymax-(j+.5)/rows*(v.ymax-v.ymin);
+  c.fillStyle=score(xx,yy)>=0?"#f8eadf":"#e5f1f8";
+  c.fillRect(v.pad+i*ww,v.pad+j*hh,ww+1,hh+1);
+ }
+ c.strokeStyle="#b87833";c.lineWidth=2.2;c.lineJoin="round";
+ // Marching squares: trace level-set segments from the actual mapped-plane rule.
+ for(let j=0;j<rows;j++)for(let i=0;i<cols;i++){
+  const X=v.pad+i*ww,Y=v.pad+j*hh;
+  const p=[[X,Y],[X+ww,Y],[X+ww,Y+hh],[X,Y+hh]];
+  const q=p.map(a=>{const xy=v.inv(a[0],a[1]);return score(xy[0],xy[1])});
+  const hits=[];
+  for(let k=0;k<4;k++){
+   const l=(k+1)%4;
+   if((q[k]>=0)!==(q[l]>=0)){
+    const u=q[k]/(q[k]-q[l]);
+    hits.push([p[k][0]+u*(p[l][0]-p[k][0]),p[k][1]+u*(p[l][1]-p[k][1])]);
+   }
+  }
+  for(let k=0;k+1<hits.length;k+=2){c.beginPath();c.moveTo(...hits[k]);c.lineTo(...hits[k+1]);c.stroke()}
+ }
+ dots(f,v);
+ let correct=0;for(const p of state.points)if((score(p.x,p.y)>=0?1:0)===p.cls)correct++;
+ $("nonlinearMetric").innerHTML="<strong>"+(100*correct/state.points.length).toFixed(1)+"%</strong> correctly separated by this illustrative nonlinear rule on the example points.";
+ return f;
+}
+function projection(f){
+ const box=configs[state.preset].box,cfg=configs[state.preset],a=(+angle.value)*Math.PI/180;
+ const ct=Math.cos(a),st=Math.sin(a),xr=box[1]-box[0],yr=box[3]-box[2];
+ const xmid=(box[0]+box[1])/2,ymid=(box[2]+box[3])/2;
+ const h=f.h,w=f.w,amt=(+lift.value)/100;
+ return function(x,y,z){
+  const xx=(x-xmid)/xr*3.3,yy=(y-ymid)/yr*3.3;
+  const u=ct*xx-st*yy,v=st*xx+ct*yy;
+  const H=(amt*z-cfg.zmin)/(cfg.zmax-cfg.zmin);
+  return [w*.5+u*w*.195,h*.74+v*h*.105-H*h*.52,v];
+ };
+}
+function drawMapped(){
+ const f=fitCanvas("mapped"),c=f.ctx,cfg=configs[state.preset],P=projection(f),box=cfg.box,t=+threshold.value,amt=(+lift.value)/100;
+ c.fillStyle="#fff";c.fillRect(0,0,f.w,f.h);
+ // Curved feature surface: a wireframe made from z = g(x1,x2).
+ c.save();c.beginPath();c.rect(5,4,f.w-10,f.h-10);c.clip();
+ c.strokeStyle="rgba(85,152,185,.27)";c.lineWidth=.8;
+ const N=18;
+ for(let direction=0;direction<2;direction++)for(let j=0;j<=N;j++){
+  c.beginPath();
+  for(let i=0;i<=N;i++){
+   const u=i/N,v=j/N;
+   const x=box[0]+(box[1]-box[0])*(direction===0?u:v);
+   const y=box[2]+(box[3]-box[2])*(direction===0?v:u);
+   const pt=P(x,y,height(x,y));
+   if(i===0)c.moveTo(pt[0],pt[1]);else c.lineTo(pt[0],pt[1]);
+  }
+  c.stroke();
+ }
+ // Flat cutting plane: z=t, shown in gold.
+ const corners=[[box[0],box[2]],[box[1],box[2]],[box[1],box[3]],[box[0],box[3]]].map(p=>P(p[0],p[1],t));
+ c.beginPath();c.moveTo(corners[0][0],corners[0][1]);
+ for(let i=1;i<4;i++)c.lineTo(corners[i][0],corners[i][1]);
+ c.closePath();c.fillStyle="rgba(219,171,75,.21)";c.fill();c.strokeStyle="rgba(170,114,36,.8)";c.lineWidth=1.5;c.stroke();
+ // Draw points back-to-front for a useful perspective effect.
+ state.points.map((p,i)=>({p,i,pr:P(p.x,p.y,height(p.x,p.y))})).sort((a,b)=>a.pr[2]-b.pr[2]).forEach(({p,i,pr})=>{
+  c.beginPath();c.arc(pr[0],pr[1],i===state.selected?6:3.3,0,Math.PI*2);
+  c.fillStyle=p.cls===1?"#dc8640":"#397fa8";c.fill();
+  if(i===state.selected){c.strokeStyle="#203449";c.lineWidth=2;c.stroke();c.beginPath();c.arc(pr[0],pr[1],9,0,Math.PI*2);c.strokeStyle="#ecbd45";c.stroke()}
+ });
+ c.restore();
+ c.font="12px Arial";c.fillStyle="#506478";c.textAlign="left";c.fillText("z = g(x₁, x₂)",12,19);
+ c.fillStyle="#a46e27";c.fillText("gold = flat plane",12,35);
+ c.fillStyle="#607589";c.textAlign="right";c.fillText("x₁, x₂ = original measurements",f.w-12,f.h-11);
+ $("mappedMetric").innerHTML=amt===0?"All points are flat at 0% lift; raise them to reveal separation.":"The gold surface is a <strong>flat plane</strong>. The blue grid is the curved mapped surface.";
+}
+function formula(){
+ const key=state.preset;
+ const F={
+ circles:{title:"① One quadratic feature is enough",feature:"φ(x₁, x₂) = (x₁, x₂, x₁² + x₂²)",plane:"Linear plane in 3D: z = t",back:"Original 2D boundary: x₁² + x₂² = t",note:"The nonlinear feature z = x₁² + x₂² creates a paraboloid. A horizontal separating plane becomes a circle when expressed in the original measurements."},
+ islands:{title:"② Three Gaussian bumps produce three islands",feature:"φ(x) = (x₁, x₂, g(x)), where g(x) = Σⱼ₌₁³ exp(−‖x − cⱼ‖² / (2σ²))",plane:"Linear plane in 3D: z = t",back:"Original 2D boundary: Σⱼ₌₁³ exp(−‖x − cⱼ‖² / (2σ²)) = t",note:"Each center cⱼ creates one Gaussian-shaped bump. One horizontal plane can select three disjoint regions: the same simple linear rule becomes a multi-part nonlinear boundary in the 2D measurements."},
+ moons:{title:"③ Several Gaussian features separate two moons",feature:"φ(x) = (x₁, x₂, g(x)), where g(x) = ¼ Σⱼ K(x, pⱼ) − ¼ Σⱼ K(x, qⱼ)",plane:"Linear plane in 3D: z = t",back:"Original 2D boundary: ¼ Σⱼ K(x,pⱼ) − ¼ Σⱼ K(x,qⱼ) = t",note:"The pⱼ landmarks follow the upper moon, and qⱼ follow the lower moon. Their Gaussian similarity difference becomes a new height coordinate. This is an illustrative hand-constructed rule, not a fitted SVM."}
+ }[key];
+ $("formulaTitle").textContent=F.title;
+ $("featureFormula").textContent=F.feature;
+ $("planeFormula").textContent=F.plane;
+ $("backFormula").textContent=F.back;
+ $("formulaNote").textContent=F.note;
+}
+function readout(){
+ if(state.selected===null){$("selectedReadout").textContent="Click a data point in panel A or C to see its original (x₁, x₂) coordinates, lifted height z, and predicted class.";return}
+ const p=state.points[state.selected],z=height(p.x,p.y),pred=z>=+threshold.value?1:0;
+ $("selectedReadout").textContent="Class "+p.cls+" | (x₁,x₂) = ("+p.x.toFixed(2)+", "+p.y.toFixed(2)+") | mapped height z = "+z.toFixed(3)+" | plane t = "+(+threshold.value).toFixed(2)+" | predicted Class "+pred+(p.cls===pred?" (matches label)":" (does not match label)");
+}
+let request=0;
+function render(){
+ cancelAnimationFrame(request);
+ request=requestAnimationFrame(()=>{
+  $("sigmaVal").textContent=(+sigma.value).toFixed(2);
+  $("thresholdVal").textContent=(+threshold.value).toFixed(2);
+  $("liftVal").textContent=lift.value+"%";
+  $("angleVal").textContent=angle.value+"°";
+  drawOriginal();drawMapped();drawResult();readout();
+ });
+}
+function changePreset(name){
+ if(!configs[name])return;
+ state.preset=name;state.points=makeData(name);state.linear=fittingLinear(state.points);state.selected=null;
+ const cfg=configs[name];
+ sigma.value=cfg.sigma;sigma.disabled=name==="circles";$("sigmaWrap").classList.toggle("is-disabled",name==="circles");
+ threshold.min=cfg.tmin;threshold.max=cfg.tmax;threshold.step=cfg.tstep;threshold.value=cfg.t;
+ buttons.forEach(b=>b.setAttribute("aria-pressed",String(b.dataset.preset===name)));
+ formula();render();
+}
+buttons.forEach(b=>b.addEventListener("click",()=>changePreset(b.dataset.preset)));
+[sigma,threshold,lift,angle].forEach(e=>e.addEventListener("input",render));
+function selectPoint(evt,id){
+ const f=fitCanvas(id),v=viewport(f),r=f.el.getBoundingClientRect(),px=evt.clientX-r.left,py=evt.clientY-r.top;
+ let best=-1,dmin=1000;
+ state.points.forEach((p,i)=>{const q=v.xy(p.x,p.y),d=Math.hypot(px-q[0],py-q[1]);if(d<dmin){dmin=d;best=i}});
+ if(dmin<17){state.selected=best;render()}
+}
+for(const id of ["original","result"]){$(id).addEventListener("click",e=>selectPoint(e,id))}
+window.addEventListener("resize",render);
+changePreset("circles");
+})();
+</script>
+</body>
+</html>
