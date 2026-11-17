@@ -1,0 +1,319 @@
+<!doctype html>
+<html lang="en"><head>
+<meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Gaussian Kernel Classifier — Infinite Features, Finite Samples | ME 3310</title>
+<meta name="description" content="Interactive Gaussian kernel linear classifier: finite training samples, infinite-dimensional feature space, and nonlinear decision boundaries.">
+<style>
+:root{--ink:#243247;--navy:#17364d;--teal:#256b7c;--muted:#526980;--blue:#357fa9;--orange:#d78140;--gold:#b78731;--bd:#d6e4eb;--soft:#eef6f8}
+*{box-sizing:border-box} body{margin:0;background:#f5f8fa;color:var(--ink);font:15px/1.55 Arial,Helvetica,sans-serif}
+main{max-width:1270px;margin:auto;padding:22px 19px 50px}
+header.hero{padding:21px 24px;background:var(--soft);border-left:6px solid var(--teal);border-radius:8px}
+.eyebrow{color:var(--teal);font-size:12px;font-weight:bold;letter-spacing:.045em}
+h1{font-size:clamp(22px,3.4vw,32px);line-height:1.24;margin:6px 0;color:var(--navy)}
+h2{color:var(--navy);margin:0 0 9px;font-size:19px}
+h3{color:var(--navy);font-size:16px;margin:0 0 6px}
+p{margin:7px 0}
+.card{background:#fff;border:1px solid var(--bd);border-radius:9px}
+.message{padding:15px 18px;margin:15px 0}
+.message strong{color:var(--navy)}
+.link{color:#13627f}
+.steps{display:flex;align-items:center;flex-wrap:wrap;gap:7px;margin-top:13px;font-size:13px;font-weight:bold}
+.steps span{padding:6px 11px;border:1px solid var(--bd);background:#f3f8fb;border-radius:5px;color:var(--navy)}.steps b{color:var(--teal)}
+.preset{margin:15px 0 12px;padding:13px 17px}
+.buttons{display:flex;gap:9px;flex-wrap:wrap}
+button{padding:9px 13px;border:1px solid #9eafbd;background:white;color:var(--navy);border-radius:7px;font:inherit;cursor:pointer}
+button[aria-pressed=true]{background:#e7f3f6;border-color:var(--teal);box-shadow:inset 0 0 0 1px var(--teal);font-weight:bold}
+button:focus-visible,input:focus-visible,select:focus-visible{outline:3px solid #dca542;outline-offset:2px}
+.controls{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:13px;padding:13px 17px;margin-bottom:14px}
+.control label{display:block;font-size:13px;font-weight:bold;color:var(--navy)}
+.control output{float:right;color:var(--teal);font-variant-numeric:tabular-nums}
+.control input[type=range],.control select{width:100%;margin-top:12px;accent-color:var(--teal)}
+.control small{display:block;color:var(--muted);font-size:11px;margin-top:3px}
+.panels{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:13px}
+.panel{min-width:0;overflow:hidden}
+.panelhead{background:#f2f8fb;border-bottom:1px solid var(--bd);padding:12px 14px;min-height:106px}
+.panelhead .tag{color:var(--teal);font-weight:bold;font-size:12px}
+.panelhead h3{margin:4px 0}
+.panelhead p{font-size:12px;color:var(--muted);margin:0;line-height:1.4}
+.canvaswrap{padding:5px}
+canvas{display:block;width:100%;height:326px;touch-action:manipulation}
+.panelbottom{border-top:1px solid var(--bd);background:#fcfdfd;padding:9px 13px;min-height:60px;font-size:12px;color:var(--muted)}
+.panelbottom strong{font-size:15px;color:var(--navy)}
+.legend{display:flex;flex-wrap:wrap;gap:13px;align-items:center;margin:11px 0 17px;color:var(--muted);font-size:12px}
+.dot{display:inline-block;border-radius:50%;width:10px;height:10px;margin-right:4px}
+.math{font-family:Cambria,Georgia,serif;font-size:18px}
+.formulas{padding:17px 19px;margin-top:16px}
+.equation{padding:10px 14px;background:#f3f8fb;border:1px solid var(--bd);border-radius:7px;margin:11px 0;overflow-wrap:anywhere}
+.equation .math{color:var(--navy)}
+.bridge{display:grid;grid-template-columns:1fr 38px 1fr;gap:12px;margin-top:11px;align-items:stretch}
+.bridge .side{border:1px solid #cbdde6;background:#f5f9fb;border-radius:7px;padding:12px}
+.bridge .arrow{display:grid;place-items:center;color:var(--teal);font-size:24px}
+.inf{font-family:Cambria,Georgia,serif;line-height:1.6;font-size:17px}
+.example{background:#fff8eb;border-left:4px solid #c69544;border-radius:3px;padding:12px 15px;margin-top:14px}
+.example strong{color:var(--navy)}
+.number{font-variant-numeric:tabular-nums}
+.takeaway{background:var(--soft);border-left:5px solid var(--teal);border-radius:5px;padding:15px 19px;margin-top:16px}
+.notes{font-size:12px;color:var(--muted);border-top:1px solid var(--bd);padding-top:11px;margin-top:15px}
+details{border:1px solid var(--bd);border-radius:7px;padding:10px 14px;margin-top:13px;background:#fff}
+details summary{font-weight:bold;color:var(--navy);cursor:pointer}
+details p{font-size:13px}
+@media(max-width:1020px){.panels{grid-template-columns:1fr 1fr}.panels .panel:last-child{grid-column:1/-1}.controls{grid-template-columns:1fr 1fr}}
+@media(max-width:640px){main{padding:12px 9px 30px}.panels,.controls,.bridge{grid-template-columns:1fr}.panels .panel:last-child{grid-column:auto}.bridge .arrow{font-size:22px;transform:rotate(90deg)}canvas{height:300px}}
+</style></head><body><main>
+<header class="hero">
+ <div class="eyebrow">ME 3310 · EXPERIMENTAL METHODS I · GAUSSIAN KERNEL · PART 2</div>
+ <h1>Infinite Features, Finite Training Samples</h1>
+ <p>How can a classifier be <strong>linear in an infinite-dimensional feature space</strong> while using only a finite number of similarity calculations? Explore this <strong>without learning an optimization algorithm yet</strong>.</p>
+</header>
+<section class="card message">
+ <strong>Connection to the previous demonstration:</strong> We already saw that nonlinear feature mapping can turn curved boundaries in 2D into a linear separating plane in a higher-dimensional space. Now, instead of inventing one feature such as <span class="math">x₁² + x₂²</span>, we will compare a new measurement against <strong>each training sample</strong> using a Gaussian kernel.
+ <p><a class="link" href="../nonlinear-feature-mapping/">Review: Nonlinear Mapping → Linear Separation</a></p>
+ <div class="steps"><span>Training samples in 2D</span><b>→</b><span>Gaussian similarity</span><b>→</b><span>Signed weighted sum</span><b>→</b><span>Nonlinear decision boundary</span></div>
+</section>
+<section class="card preset">
+<h2>1. Choose a measurement experiment</h2>
+<div class="buttons" role="group" aria-label="Choose example dataset">
+ <button type="button" data-preset="islands" aria-pressed="true">Three circular islands</button>
+ <button type="button" data-preset="moons" aria-pressed="false">Two moons</button>
+ <button type="button" data-preset="circles" aria-pressed="false">Concentric circles</button>
+</div>
+</section>
+<section class="card controls" aria-label="Experiment controls">
+ <div class="control"><label for="count">Training samples N <output id="countVal">24</output></label><select id="count"><option value="6">6</option><option value="12">12</option><option value="24" selected>24</option><option value="48">48</option><option value="96">96</option></select><small>N Gaussian comparisons; each sample is a center</small></div>
+ <div class="control"><label for="sigma">Gaussian width σ <output id="sigmaVal">0.55</output></label><input id="sigma" type="range" min=".20" max="1.45" step=".05" value=".55"><small>How locally each sample contributes</small></div>
+ <div class="control"><label for="positiveScale">Class + weight <output id="positiveVal">1.00</output></label><input id="positiveScale" type="range" min=".25" max="2.5" step=".05" value="1"><small>Manual coefficient scaling (not fitted)</small></div>
+ <div class="control"><label for="bias">Bias b <output id="biasVal">0.00</output></label><input id="bias" type="range" min="-.40" max=".40" step=".02" value="0"><small>Moves the decision boundary</small></div>
+</section>
+<div class="panels">
+ <section class="card panel"><div class="panelhead"><div class="tag">A — MEASURED DATA</div><h3>Finite training samples</h3><p>Each dot is an observed sample (x₁, x₂). Select a dot to see the Gaussian centered on it.</p></div><div class="canvaswrap"><canvas id="points" role="img" aria-label="Two classes of 2D training samples; select a point to inspect the corresponding kernel"></canvas></div><div class="panelbottom" id="infoA">Training samples define the centers of N Gaussian kernels.</div></section>
+ <section class="card panel"><div class="panelhead"><div class="tag">B — ONE KERNEL</div><h3>Similarity to one sample</h3><p>For the selected training point xᵢ, the heat map is K(x, xᵢ). Warm colors indicate greater similarity.</p></div><div class="canvaswrap"><canvas id="kernel" role="img" aria-label="Gaussian similarity field around a selected training sample"></canvas></div><div class="panelbottom" id="infoB">A single sample makes one smooth Gaussian similarity function.</div></section>
+ <section class="card panel"><div class="panelhead"><div class="tag">C — LINEAR SUM IN FEATURE SPACE</div><h3>Nonlinear boundary in 2D</h3><p>Sum all selected training samples' Gaussian similarities with signed weights; the black contour is f(x)=0.</p></div><div class="canvaswrap"><canvas id="decision" role="img" aria-label="Decision regions generated by a signed weighted sum of Gaussian kernels with a zero contour"></canvas></div><div class="panelbottom" id="infoC">Positive score → Class +; negative score → Class −.</div></section>
+</div>
+<div class="legend">
+ <span><i class="dot" style="background:#d78140"></i>Class +1</span>
+ <span><i class="dot" style="background:#357fa9"></i>Class −1</span>
+ <span>◉ Yellow outline: selected training point</span>
+ <span>✚ Black cross: new measurement (click Panel C to move it)</span>
+</div>
+<section class="card formulas">
+ <h2>2. One Gaussian Kernel, many training samples</h2>
+ <p>In all three panels, x is a new 2D measurement and xᵢ is a training sample:</p>
+ <div class="equation"><span class="math">K(x, xᵢ) = exp(−‖x − xᵢ‖² / (2σ²))</span></div>
+ <p>For this classroom demonstration, we choose the coefficients by hand: <span class="math">aᵢ = +c₊ / N₊</span> for Class +, and <span class="math">aᵢ = −1 / N₋</span> for Class −, where c₊ is the adjustable Class + weight. These coefficients are <strong>not learned</strong>.</p>
+ <div class="equation"><span class="math">f(x) = Σᵢ₌₁ᴺ aᵢ K(x, xᵢ) + b</span> &nbsp;&nbsp; and &nbsp;&nbsp; <span class="math">predicted class = sign(f(x))</span></div>
+ <div class="example" aria-live="polite">
+  <strong>Try one new measurement:</strong> Click anywhere in Panel C to choose x.
+  <p id="probeReadout" class="number">Calculating…</p>
+  <p id="selectedReadout" class="number">Calculating selected-sample contribution…</p>
+ </div>
+</section>
+<section class="card formulas">
+ <h2>3. Where is the infinite-dimensional feature space?</h2>
+ <p>This is the key mathematical connection. A Gaussian Kernel is the <strong>inner product</strong> of two feature vectors in a countably infinite-dimensional space:</p>
+ <div class="equation"><span class="math">K(x, x′) = ⟨φ(x), φ(x′)⟩</span></div>
+ <div class="bridge">
+  <div class="side">
+   <h3>Infinite-dimensional representation</h3>
+   <div class="inf">φ(x) = (φ₀₀, φ₁₀, φ₀₁, φ₂₀, φ₁₁, φ₀₂, …)</div>
+   <p>Each 2D measurement is mapped to infinitely many coordinates. We do <strong>not</strong> construct this vector numerically.</p>
+  </div>
+  <div class="arrow" aria-hidden="true">⇔</div>
+  <div class="side">
+   <h3>Finite kernel evaluation</h3>
+   <div class="inf">K(x, xᵢ) = exp(−‖x − xᵢ‖² / (2σ²))</div>
+   <p>One kernel evaluation computes the exact inner product of the two infinite-dimensional feature vectors.</p>
+  </div>
+ </div>
+ <p>Now choose a weight vector in feature space as a finite combination of mapped training samples:</p>
+ <div class="equation"><span class="math">w = Σᵢ₌₁ᴺ aᵢ φ(xᵢ)</span></div>
+ <p>Substitute into a <strong>linear classifier in feature space</strong>:</p>
+ <div class="equation"><span class="math">f(x) = ⟨w, φ(x)⟩ + b = Σᵢ₌₁ᴺ aᵢ ⟨φ(xᵢ), φ(x)⟩ + b = Σᵢ₌₁ᴺ aᵢ K(xᵢ, x) + b</span></div>
+ <p><strong>Infinite features, but only N kernel evaluations.</strong> The classifier is linear in φ(x), even though its decision boundary f(x)=0 can be curved and disconnected in the original 2D space.</p>
+ <details>
+  <summary>Optional mathematics: what are the infinite Gaussian features for a 2D input?</summary>
+  <p>For x=(x₁,x₂), one valid Gaussian feature mapping has one coordinate for each pair of nonnegative integers (p,q):</p>
+  <div class="equation"><span class="math">φₚq(x) = exp(−‖x‖²/(2σ²)) · (x₁/σ)ᵖ (x₂/σ)ᑫ / √(p! q!)</span></div>
+  <p>The index pairs (p,q) are countably infinite. Multiplying and summing corresponding coordinates gives</p>
+  <div class="equation"><span class="math">Σₚ₌₀∞ Σᑫ₌₀∞ φₚq(x) φₚq(x′) = exp(−‖x−x′‖²/(2σ²))</span></div>
+  <p>The infinitely many coordinates are not drawn as a literal 3D surface here. The graphs show the original 2D measurements, one exact kernel evaluation, and their finite signed sum.</p>
+ </details>
+ <div class="example"><strong>Important distinction:</strong> The finite list <span class="math">(K(x,x₁), …, K(x,xᴺ))</span> is a list of similarities to N training samples. It is <strong>not</strong> the full infinite-dimensional Gaussian feature vector φ(x). The equivalence above comes from the inner-product identity and the particular choice <span class="math">w = Σ aᵢ φ(xᵢ)</span>.</div>
+</section>
+<section class="takeaway">
+ <h2>4. Experimental interpretation</h2>
+ <p>We can build a flexible classifier using <em>similarities to measured training examples</em>. Increasing the number of samples changes how many terms contribute to the decision boundary; changing σ changes the region of influence of each sample.</p>
+ <p><strong>Think about it:</strong> Does a smooth boundary prove that the measured classes are genuinely different? What new trials would we need to test whether this classifier generalizes?</p>
+ <p><strong>Next:</strong> So far we manually chose aᵢ and b. A separate learning method would be needed to choose these values from data. We will consider that only after understanding the Gaussian Kernel and the finite-sum decision function.</p>
+</section>
+<p class="notes">All datasets are synthetic for classroom visualization. Training-set percentages are descriptive only, not estimates of generalization reliability. For a tie f(x)=0, the illustration assigns the point to Class +. The Gaussian width is expressed in the normalized two-feature coordinates used here.</p>
+</main>
+<script>
+"use strict";
+(function(){
+ const el=id=>document.getElementById(id);
+ const cfgs={islands:{box:[-2.5,2.5,-2.5,2.5],sigma:.55,probe:[-1.35,.9]},
+ moons:{box:[-2.05,2.1,-1.35,1.55],sigma:.55,probe:[.3,.1]},
+ circles:{box:[-2.3,2.3,-2.3,2.3],sigma:.55,probe:[.4,.5]}};
+ const islandsCenters=[[-1.38,.90],[1.38,.9],[0,-1.42]];
+ const count=el("count"),sigma=el("sigma"),positive=el("positiveScale"),bias=el("bias");
+ let mode="islands", all={plus:[],minus:[]},data=[],selected=0,probe=[-.8,.7];
+ function rng(seed){let v=seed>>>0;return function(){v+=0x6d2b79f5;let t=v;t=Math.imul(t^(t>>>15),t|1);t^=t+Math.imul(t^(t>>>7),t|61);return ((t^(t>>>14))>>>0)/4294967296;};}
+ function normal(R){return Math.sqrt(-2*Math.log(Math.max(1e-10,R())))*Math.cos(2*Math.PI*R());}
+ function genData(name){
+  const R=rng(name==="islands"?3310:name==="moons"?3320:3300),result={plus:[],minus:[]};
+  if(name==="islands"){
+    // Interleaved island centers ensures all islands represented at low N.
+    for(let j=0;j<48;j++){let c=islandsCenters[j%3];result.plus.push({x:c[0]+.19*normal(R),y:c[1]+.19*normal(R),label:1});}
+    let attempts=0;
+    while(result.minus.length<48&&attempts++<40000){
+      let x=(R()*2-1)*2.28,y=(R()*2-1)*2.28;
+      if(islandsCenters.every(c=>Math.hypot(x-c[0],y-c[1])>.74))result.minus.push({x,y,label:-1});
+    }
+  }else if(name==="moons"){
+    for(let j=0;j<48;j++){
+     let a=(j+.35)*Math.PI/48,dx=.075*normal(R),dy=.075*normal(R);
+     result.plus.push({x:1.12*Math.cos(a)-.48+dx,y:1.12*Math.sin(a)+dy,label:1});
+     result.minus.push({x:1.12*(1-Math.cos(a))-.48+.075*normal(R),y:.58-1.12*Math.sin(a)+.075*normal(R),label:-1});
+    }
+  }else{
+    for(let j=0;j<48;j++){
+     let a=(j+.35)*2*Math.PI/48;
+     let r=.74+.055*normal(R),r2=1.65+.065*normal(R);
+     result.plus.push({x:r*Math.cos(a),y:r*Math.sin(a),label:1});
+     result.minus.push({x:r2*Math.cos(a+.05),y:r2*Math.sin(a+.05),label:-1});
+    }
+  }
+  return result;
+ }
+ function buildSubset(){
+  const n=Math.round(+count.value/2);
+  data=[];
+  // Sample spread across each class rather than taking only nearby indices.
+  for(let i=0;i<n;i++){
+   const j=Math.floor((i+.48)*48/n);
+   data.push(all.plus[Math.min(j,47)],all.minus[Math.min(j,47)]);
+  }
+  selected=Math.min(selected,data.length-1);
+ }
+ function kxy(x,y,p,s){const dx=x-p.x,dy=y-p.y;return Math.exp(-(dx*dx+dy*dy)/(2*s*s));}
+ function vals(x,y){
+  let ps=0,ns=0,ss=+sigma.value,n=data.length/2;
+  for(const p of data)if(p.label===1)ps+=kxy(x,y,p,ss);else ns+=kxy(x,y,p,ss);
+  const a=(+positive.value)*ps/n, b=ns/n, score=a-b+(+bias.value);
+  return {score,ps:a,ns:b};
+ }
+ function frame(id){
+  const cv=el(id),rect=cv.getBoundingClientRect(),w=Math.max(250,Math.round(rect.width)),h=Math.max(240,Math.round(rect.height)),dpr=Math.min(2,window.devicePixelRatio||1);
+  if(cv.width!==Math.round(w*dpr)||cv.height!==Math.round(h*dpr)){cv.width=Math.round(w*dpr);cv.height=Math.round(h*dpr);}
+  const ctx=cv.getContext("2d");ctx.setTransform(dpr,0,0,dpr,0,0);ctx.clearRect(0,0,w,h);
+  let box=cfgs[mode].box,pad=31;
+  return {cv,ctx,w,h,pad,box,
+   xy(x,y){return [pad+(x-box[0])/(box[1]-box[0])*(w-2*pad),pad+(box[3]-y)/(box[3]-box[2])*(h-2*pad)];},
+   inv(px,py){return [box[0]+(px-pad)/(w-2*pad)*(box[1]-box[0]),box[3]-(py-pad)/(h-2*pad)*(box[3]-box[2])]}
+  };
+ }
+ function grid(f){
+  const {ctx:c,w,h,pad}=f;
+  c.fillStyle="white";c.fillRect(0,0,w,h);
+  c.strokeStyle="#e8eef3";c.lineWidth=1;
+  for(let i=0;i<=8;i++){
+   let x=pad+(w-2*pad)*i/8,y=pad+(h-2*pad)*i/8;
+   c.beginPath();c.moveTo(x,pad);c.lineTo(x,h-pad);c.stroke();
+   c.beginPath();c.moveTo(pad,y);c.lineTo(w-pad,y);c.stroke();
+  }
+  c.strokeStyle="#8fa5b5";c.strokeRect(pad,pad,w-2*pad,h-2*pad);
+  c.fillStyle="#5c7083";c.font="12px Arial";c.fillText("x₂",9,21);c.textAlign="right";c.fillText("x₁",w-9,h-8);c.textAlign="left";
+ }
+ function dot(c,x,y,color,selectedPoint,sz){
+  c.beginPath();c.arc(x,y,sz||3.1,0,2*Math.PI);c.fillStyle=color;c.fill();
+  if(selectedPoint){c.strokeStyle="#263b50";c.lineWidth=1.8;c.stroke();c.beginPath();c.arc(x,y,8,0,2*Math.PI);c.strokeStyle="#e5bb4f";c.lineWidth=2.6;c.stroke();}
+ }
+ function points(f,opacity){
+  f.ctx.save();f.ctx.globalAlpha=opacity==null?1:opacity;
+  for(let i=0;i<data.length;i++){const p=data[i],v=f.xy(p.x,p.y);dot(f.ctx,v[0],v[1],p.label===1?"#d78140":"#357fa9",i===selected);}
+  f.ctx.restore();
+ }
+ function marker(f){const v=f.xy(probe[0],probe[1]),c=f.ctx;
+  c.strokeStyle="#122c41";c.lineWidth=2.4;c.beginPath();c.moveTo(v[0]-7,v[1]);c.lineTo(v[0]+7,v[1]);c.moveTo(v[0],v[1]-7);c.lineTo(v[0],v[1]+7);c.stroke();
+  c.strokeStyle="#fff";c.lineWidth=1;c.stroke();
+ }
+ function drawPoints(){
+  const f=frame("points");grid(f);points(f);marker(f);
+  el("infoA").innerHTML="<strong>"+data.length+"</strong> centers (training samples); each makes one exact Gaussian kernel evaluation.";
+ }
+ function heatField(f,kind){
+  const c=f.ctx,n=70,w=(f.w-2*f.pad)/n,h=(f.h-2*f.pad)/n,box=f.box,arr=[];
+  for(let j=0;j<=n;j++){
+   let row=[];for(let i=0;i<=n;i++){
+    let x=box[0]+(box[1]-box[0])*i/n,y=box[3]-(box[3]-box[2])*j/n;
+    row.push(kind==="kernel"?kxy(x,y,data[selected],+sigma.value):vals(x,y).score);
+   }arr.push(row);
+  }
+  c.save();c.beginPath();c.rect(f.pad,f.pad,f.w-2*f.pad,f.h-2*f.pad);c.clip();
+  for(let j=0;j<n;j++)for(let i=0;i<n;i++){
+   let v=(arr[j][i]+arr[j][i+1]+arr[j+1][i]+arr[j+1][i+1])/4;
+   if(kind==="kernel"){
+    let k=Math.max(0,Math.min(1,v)),hue=40-16*k;
+    c.fillStyle="hsl("+hue+", "+(32+53*k)+"%, "+(98-48*k)+"%)";
+   }else{
+    let intensity=Math.min(1,Math.abs(v)/.75);
+    c.fillStyle=v>=0?"rgba(215,129,64,"+(0.10+.52*intensity)+")":"rgba(53,127,169,"+(0.10+.52*intensity)+")";
+   }
+   c.fillRect(f.pad+i*w,f.pad+j*h,w+1,h+1);
+  }
+  if(kind==="score"){
+   c.strokeStyle="#172c3d";c.lineWidth=2.25;
+   // Marching squares on sampled score grid, level 0.
+   for(let j=0;j<n;j++)for(let i=0;i<n;i++){
+    const x=f.pad+i*w,y=f.pad+j*h;
+    const P=[[x,y],[x+w,y],[x+w,y+h],[x,y+h]];
+    const V=[arr[j][i],arr[j][i+1],arr[j+1][i+1],arr[j+1][i]];
+    const hits=[];
+    for(let q=0;q<4;q++){let r=(q+1)%4;if((V[q]>=0)!==(V[r]>=0)){
+     let t=V[q]/(V[q]-V[r]);hits.push([P[q][0]+t*(P[r][0]-P[q][0]),P[q][1]+t*(P[r][1]-P[q][1])]);}}
+    for(let z=0;z+1<hits.length;z+=2){c.beginPath();c.moveTo(...hits[z]);c.lineTo(...hits[z+1]);c.stroke();}
+   }
+  }
+  c.restore();
+ }
+ function drawKernel(){
+  const f=frame("kernel");grid(f);heatField(f,"kernel");points(f,.20);
+  const p=data[selected],q=f.xy(p.x,p.y);
+  dot(f.ctx,q[0],q[1],p.label===1?"#d78140":"#357fa9",true,5);marker(f);
+  el("infoB").innerHTML="<strong>K(xᵢ,xᵢ)=1</strong> at the selected sample. The heat map decays with distance; it is not a class probability.";
+ }
+ function drawDecision(){
+  const f=frame("decision");grid(f);heatField(f,"score");points(f,.75);marker(f);
+  let correct=0;for(const p of data)if((vals(p.x,p.y).score>=0?1:-1)===p.label)correct++;
+  el("infoC").innerHTML="<strong>"+(100*correct/data.length).toFixed(1)+"%</strong> correct on these displayed training points — not an independent validation result.";
+ }
+ function updateReadouts(){
+  const result=vals(probe[0],probe[1]),v=result.score,si=data[selected],ker=kxy(probe[0],probe[1],si,+sigma.value);
+  el("probeReadout").textContent="New x = ("+probe[0].toFixed(2)+", "+probe[1].toFixed(2)+") : Class+ contribution "+result.ps.toFixed(3)+" − Class− contribution "+result.ns.toFixed(3)+" + bias ("+(+bias.value).toFixed(2)+") = f(x) "+v.toFixed(3)+" → predicted Class "+(v>=0?"+1":"−1");
+  const a=(si.label===1?(+positive.value):-1)/(data.length/2);
+  el("selectedReadout").textContent="Selected "+(si.label===1?"Class +":"Class −")+" sample xᵢ = ("+si.x.toFixed(2)+", "+si.y.toFixed(2)+") : K(x,xᵢ) = "+ker.toFixed(3)+"; coefficient aᵢ = "+a.toFixed(3)+"; contribution to f(x) = "+(a*ker).toFixed(3)+".";
+ }
+ let scheduled=0;
+ function render(){cancelAnimationFrame(scheduled);scheduled=requestAnimationFrame(()=>{
+  el("countVal").textContent=count.value;el("sigmaVal").textContent=(+sigma.value).toFixed(2);el("positiveVal").textContent=(+positive.value).toFixed(2);el("biasVal").textContent=(+bias.value).toFixed(2);
+  drawPoints();drawKernel();drawDecision();updateReadouts();
+ });}
+ function switchMode(key){
+  mode=key;all=genData(key);selected=0;probe=cfgs[key].probe.slice();sigma.value=cfgs[key].sigma;positive.value="1";bias.value="0";count.value="24";buildSubset();
+  document.querySelectorAll("[data-preset]").forEach(b=>b.setAttribute("aria-pressed",String(b.dataset.preset===key)));
+  render();
+ }
+ document.querySelectorAll("[data-preset]").forEach(b=>b.addEventListener("click",()=>switchMode(b.dataset.preset)));
+ count.addEventListener("change",()=>{buildSubset();render()});
+ [sigma,positive,bias].forEach(c=>c.addEventListener("input",render));
+ function coords(e,id){const f=frame(id),rect=f.cv.getBoundingClientRect();return {f,px:e.clientX-rect.left,py:e.clientY-rect.top};}
+ el("points").addEventListener("click",e=>{
+  const o=coords(e,"points");let best=-1,d=20;
+  data.forEach((p,i)=>{let q=o.f.xy(p.x,p.y),dd=Math.hypot(q[0]-o.px,q[1]-o.py);if(dd<d){best=i;d=dd}});
+  if(best>=0){selected=best;render();}
+ });
+ el("decision").addEventListener("click",e=>{const o=coords(e,"decision"),p=o.f.inv(o.px,o.py),box=cfgs[mode].box;probe=[Math.min(box[1],Math.max(box[0],p[0])),Math.min(box[3],Math.max(box[2],p[1]))];render();});
+ window.addEventListener("resize",render);
+ switchMode("islands");
+})();
+</script></body></html>
