@@ -1,0 +1,124 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<meta name="description" content="ME 3310 interactive Gaussian kernel Taylor feature approximation demo." />
+<title>Gaussian Kernel: How Many Features Are Enough? | ME 3310</title>
+<style>
+:root{--ink:#203449;--muted:#617184;--teal:#226e7e;--blue:#367aa7;--gold:#c8943b;--purple:#8264ab;--red:#a64f58;--green:#2d8a6b;--border:#dce7ed;--bg:#f7fafc;--panel:#fff;--light:#edf6f8;--soft:#f1f7fb;}
+*{box-sizing:border-box}html{scroll-behavior:smooth}body{margin:0;background:var(--bg);color:var(--ink);font:15px/1.58 system-ui,-apple-system,"Segoe UI",Arial,sans-serif}main{max-width:1190px;margin:0 auto;padding:28px 20px 50px}header{padding:27px 30px;background:linear-gradient(110deg,#eaf5f8 0%,#f2f8fc 76%);border:1px solid #d6e7ec;border-left:6px solid var(--teal);border-radius:12px}header .kicker{font-size:12px;letter-spacing:.08em;text-transform:uppercase;font-weight:800;color:var(--teal)}h1{font-size:clamp(24px,3vw,33px);line-height:1.2;letter-spacing:-.025em;margin:8px 0 7px;color:#15394b}h2{font-size:19px;line-height:1.35;color:#1a4054;margin:0 0 7px}h3{font-size:15px;margin:0 0 8px}p{margin:7px 0 10px}.sub{color:#506679;font-size:15px;max-width:850px}section{margin:20px 0}.info{background:#fff8e9;border-left:4px solid var(--gold);padding:12px 16px;border-radius:6px;margin:17px 0}.panel{background:white;border:1px solid var(--border);border-radius:12px;box-shadow:0 2px 12px #2343570b;padding:21px}.controls{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:18px}.control{min-width:0}.control label{font-weight:700;font-size:13px;display:flex;justify-content:space-between;gap:8px}.control output{font-variant-numeric:tabular-nums;color:#17596b}input[type=range]{width:100%;accent-color:var(--teal);margin:12px 0 2px;cursor:pointer}.rangeends{display:flex;justify-content:space-between;color:#778898;font-size:11px}.buttons{display:flex;gap:8px;flex-wrap:wrap;margin-top:18px}.buttons button{border:1px solid #b9d4df;border-radius:7px;background:#f2f8fb;color:#17556a;padding:7px 12px;cursor:pointer;font:700 13px system-ui}.buttons button:hover,.buttons button:focus-visible{background:#d9eaf2;outline:2px solid #9bc9d8;outline-offset:1px}.buttons button.active{background:#256b7c;color:#fff;border-color:#256b7c}.metrics{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:10px;margin:18px 0 0}.metric{background:#f3f8fb;border-radius:9px;padding:12px 14px;min-width:0}.metric strong{display:block;font-size:21px;color:#1d5065;font-variant-numeric:tabular-nums}.metric span{font-size:12px;color:#506477}.two{display:grid;grid-template-columns:1fr 1fr;gap:18px}.legend{display:flex;flex-wrap:wrap;gap:8px 16px;font-size:12px;color:#5b6f80;margin:11px 0 3px}.key{display:inline-flex;align-items:center;gap:6px}.dot{width:17px;height:4px;background:var(--ink);border-radius:4px;display:inline-block}.canvas-wrap{width:100%;min-height:260px;position:relative}.canvas-wrap canvas{display:block;width:100%;height:270px}.wide canvas{height:300px}.math{font-family:Cambria,"Times New Roman",serif;font-size:17px;text-align:center;background:#f4f8fa;border:1px solid #e0ebf0;border-radius:7px;padding:14px;overflow-x:auto;white-space:nowrap}.notes{font-size:13px;color:#506779}.pill{display:inline-block;border-radius:99px;background:#e7f4ed;color:#27664b;padding:3px 11px;font-size:13px;font-weight:700}.pill.warn{background:#fff0da;color:#986525}.pill.bad{background:#fcebef;color:#974854}.bottom{background:#eef6f8;border-left:5px solid var(--teal);border-radius:7px;padding:16px 19px}.mono{font-family:ui-monospace,SFMono-Regular,Consolas,monospace}.num{font-variant-numeric:tabular-nums}.comparison{display:flex;align-items:stretch;gap:10px;flex-wrap:wrap;margin-top:12px}.cmp{flex:1;min-width:115px;background:#f6f9fb;padding:10px;border:1px solid #dfebef;border-radius:8px}.cmp b{display:block;font-size:19px;color:#204e65;font-variant-numeric:tabular-nums}.cmp small{color:#5f7080}.banner{padding:11px 14px;background:#f4f7fb;border-radius:8px;margin:15px 0;font-size:14px}.sr{position:absolute!important;width:1px;height:1px;padding:0;margin:-1px;overflow:hidden;clip:rect(0,0,0,0);white-space:nowrap;border:0}footer{margin:18px 0;color:#728397;font-size:12px}@media(max-width:850px){.controls{grid-template-columns:repeat(2,1fr)}.two{grid-template-columns:1fr}}@media(max-width:570px){main{padding:12px 10px 30px}header{padding:20px}.panel{padding:15px}.metrics{grid-template-columns:repeat(2,1fr)}.control label{font-size:12px}.canvas-wrap canvas{height:245px}.wide canvas{height:265px}}
+</style>
+</head>
+<body>
+<main>
+<header>
+ <div class="kicker">ME 3310 &middot; Experimental Methods I &middot; Interactive Demonstration</div>
+ <h1>Gaussian Kernel: How Many Features Are Enough?</h1>
+ <p class="sub">A Gaussian kernel corresponds to <strong>countably infinitely many features</strong>. Explore how accurately 10, 20, or 40 of those features reproduce the exact kernel &mdash; and when they do not.</p>
+</header>
+<section class="panel" aria-label="Interactive parameters">
+<h2>1. Change the experiment</h2>
+<p class="notes">All calculations below use a <strong>one-dimensional</strong> input. Choose two measurements, a kernel width, and how many feature terms to retain.</p>
+<div class="controls">
+ <div class="control"><label for="xx">Measurement <i>x</i><output id="xxv">2.00</output></label><input id="xx" type="range" min="-5" max="5" step="0.1" value="2" /><div class="rangeends"><span>−5</span><span>5</span></div></div>
+ <div class="control"><label for="zz">Reference <i>x′</i><output id="zzv">1.00</output></label><input id="zz" type="range" min="-5" max="5" step="0.1" value="1" /><div class="rangeends"><span>−5</span><span>5</span></div></div>
+ <div class="control"><label for="sigma">Kernel width <i>σ</i><output id="sigv">1.00</output></label><input id="sigma" type="range" min="0.5" max="3" step="0.1" value="1" /><div class="rangeends"><span>0.5</span><span>3.0</span></div></div>
+ <div class="control"><label for="count">Retained features <i>N</i><output id="countv">10</output></label><input id="count" type="range" min="1" max="80" step="1" value="10" /><div class="rangeends"><span>1</span><span>80</span></div></div>
+</div>
+<div class="buttons" role="group" aria-label="Feature presets">
+<span style="font-size:12px;font-weight:800;color:#526b7e;padding:8px 0">Compare feature counts:</span>
+<button type="button" data-n="5">5 features</button><button type="button" data-n="10">10 features</button><button type="button" data-n="20">20 features</button><button type="button" data-n="40">40 features</button><button type="button" data-n="80">80 features</button>
+<button type="button" id="reset">Reset example</button>
+</div>
+<div class="metrics" role="status" aria-live="polite">
+ <div class="metric"><span>Exact kernel K(x, x′)</span><strong id="exactv">—</strong></div>
+ <div class="metric"><span>Finite-feature kernel K<sub>N</sub>(x, x′)</span><strong id="approxv">—</strong></div>
+ <div class="metric"><span>Absolute kernel error</span><strong id="errorv">—</strong></div>
+ <div class="metric"><span>Feature energy retained at x</span><strong id="energyv">—</strong></div>
+</div>
+</section>
+<section class="two">
+<div class="panel">
+ <h2>2. Where are the infinitely many features?</h2>
+ <p class="notes">Each bar is the squared magnitude <strong>φ<sub>n</sub>(x)²</strong> of one feature. The shaded bars are the first <i>N</i> retained features.</p>
+ <div class="canvas-wrap"><canvas id="bars" role="img" aria-label="Feature energy by polynomial degree and cutoff"></canvas></div>
+ <div class="legend"><span class="key"><span class="dot" style="background:#367aa7"></span> Retained features</span><span class="key"><span class="dot" style="background:#cbd8e1"></span> Omitted features</span></div>
+ <p class="notes" id="peaknote">—</p>
+</div>
+<div class="panel">
+ <h2>3. Does the finite kernel match the exact kernel?</h2>
+ <p class="notes">With <i>x′</i> fixed, the horizontal axis sweeps a new input <i>t</i>. Compare exact Gaussian similarity against finite-feature approximations.</p>
+ <div class="canvas-wrap"><canvas id="curves" role="img" aria-label="Exact Gaussian kernel and truncated feature-series kernels as input varies"></canvas></div>
+ <div class="legend"><span class="key"><span class="dot" style="background:#226e7e"></span> Exact kernel</span><span class="key"><span class="dot" style="background:#c8943b"></span> N = 10</span><span class="key"><span class="dot" style="background:#8264ab"></span> N = 20</span><span class="key"><span class="dot" style="background:#367aa7"></span> Selected N</span></div>
+ <p class="notes">The vertical dashed line indicates your selected measurement <i>x</i>. Curves overlap when the approximation is accurate.</p>
+</div>
+</section>
+<section class="panel">
+<h2>4. Why does the series converge?</h2>
+<p>In one dimension, the Gaussian kernel can be written as an infinite inner product. Keeping only the first <i>N</i> terms gives a directly testable approximation:</p>
+<div class="math">K(x,x′) = e<sup>−(x²+x′²)/(2σ²)</sup> &sum;<sub>n=0</sub><sup>&infin;</sup> (xx′/σ²)<sup>n</sup>/n!</div>
+<div class="math" style="margin-top:10px">K<sub>N</sub>(x,x′) = e<sup>−(x²+x′²)/(2σ²)</sup> &sum;<sub>n=0</sub><sup>N−1</sup> (xx′/σ²)<sup>n</sup>/n!</div>
+<p class="notes">The corresponding feature is φ<sub>n</sub>(x) = e<sup>−x²/(2σ²)</sup>(x/σ)<sup>n</sup>/√(n!). Its squared magnitude is e<sup>−λ</sup> λ<sup>n</sup>/n!, with λ = (x/σ)².</p>
+<div class="comparison">
+ <div class="cmp"><small>Normalized position |x|/σ</small><b id="ratio">—</b></div>
+ <div class="cmp"><small>Peak feature degree ≈ λ</small><b id="lambda">—</b></div>
+ <div class="cmp"><small>Retained energy at x′</small><b id="energyz">—</b></div>
+ <div class="cmp"><small>Rigorous bound on kernel error</small><b id="bound">—</b></div>
+</div>
+<div class="banner" id="interpretation">—</div>
+<p class="notes"><strong>Important distinction:</strong> for a given input, features do <em>not</em> always shrink immediately as the degree increases. Their magnitude increases up to around (x/σ)² and then decreases. The <strong>exact kernel</strong> avoids explicitly constructing these features.</p>
+</section>
+<section class="panel">
+<h2>5. Does the approximation affect classification?</h2>
+<p class="notes">This is an <strong>illustrative fixed-weight decision function</strong>, not an SVM trained by optimization. It uses three hypothetical support vectors: two positive examples at −1.6 and +1.6, and one negative example at 0. Their respective signed weights are +1, +1, and −2 (bias 0).</p>
+<div class="math">f(t) = K(t,−1.6) + K(t,+1.6) − 2K(t,0)</div>
+<div class="canvas-wrap wide"><canvas id="classify" role="img" aria-label="Illustrative classifier decision score using exact and approximated Gaussian kernels"></canvas></div>
+<div class="legend"><span class="key"><span class="dot" style="background:#226e7e"></span> Exact score</span><span class="key"><span class="dot" style="background:#367aa7"></span> N-feature score</span><span class="key"><span class="dot" style="background:#b7c4ce"></span> Decision threshold (score 0)</span></div>
+<div class="comparison">
+ <div class="cmp"><small>Exact decision score at x</small><b id="score-exact">—</b></div>
+ <div class="cmp"><small>Approximate decision score at x</small><b id="score-approx">—</b></div>
+ <div class="cmp"><small>Predicted classes</small><b id="predictions" style="font-size:15px">—</b></div>
+</div>
+<p class="notes">This comparison isolates the effect of kernel truncation. A real Gaussian SVM also learns the support-vector coefficients and bias through optimization. Its fitted model must be evaluated on independent test data.</p>
+</section>
+<section class="bottom">
+<h2>Engineering judgment: what is enough?</h2>
+<p><strong>Think–Pair–Discuss:</strong> Try <i>x = 4, σ = 1</i>. Are 10 or 20 features enough? Now increase σ to 2. Why does the answer change? Would a student get the same conclusion for new motion data outside the tested feature range?</p>
+<p><strong>Connection to the final project:</strong> Gaussian SVM uses the exact kernel directly. We are approximating it here <em>only to investigate why the kernel trick is powerful</em>. A good approximation of the mathematical kernel is not, by itself, evidence that the motion classifier is reliable.</p>
+</section>
+<footer>ME 3310 · Fall 2026 · Self-contained HTML (no dependencies or external data). All feature and kernel computations are made in the browser.</footer>
+</main>
+<script>
+(() => {
+'use strict';
+const $=id=>document.getElementById(id);
+const controls=['xx','zz','sigma','count'];
+const colors={ink:'#243a4e',grid:'#e4ecf1',muted:'#698092',exact:'#226e7e',n10:'#c8943b',n20:'#8264ab',selected:'#367aa7',dashed:'#b7c4ce'};
+function kernel(a,b,s){let q=(a-b)/s;return Math.exp(-.5*q*q)}
+function finiteKernel(a,b,s,N){let p=a*b/(s*s),term=Math.exp(-.5*((a/s)**2+(b/s)**2)),sum=term;for(let n=1;n<N;n++){term*=p/n;sum+=term}return sum}
+function energy(x,s,N){let lam=(x/s)**2,term=Math.exp(-lam),sum=term;for(let n=1;n<N;n++){term*=lam/n;sum+=term}return Math.max(0,Math.min(1,sum))}
+function f(x,s,N){let k=N==null ? (a,b)=>kernel(a,b,s) : (a,b)=>finiteKernel(a,b,s,N);return k(x,-1.6)+k(x,1.6)-2*k(x,0)}
+function fmt(x,n=4){if(Math.abs(x)<.00005)return '0.0000';return x.toFixed(n)}
+function percent(x){return (x*100).toFixed(x>.9999?3:2)+'%'}
+function prepCanvas(id){let c=$(id),dpr=Math.min(window.devicePixelRatio||1,2),r=c.getBoundingClientRect(),w=Math.max(250,r.width),h=r.height||270;c.width=Math.round(w*dpr);c.height=Math.round(h*dpr);let g=c.getContext('2d');g.setTransform(dpr,0,0,dpr,0,0);g.clearRect(0,0,w,h);return {g,w,h}}
+function axes(g,w,h,ymin,ymax,xmin=-5,xmax=5){let pad={l:48,r:13,t:16,b:35},W=w-pad.l-pad.r,H=h-pad.t-pad.b;
+let xx=x=>pad.l+(x-xmin)/(xmax-xmin)*W,yy=y=>pad.t+(ymax-y)/(ymax-ymin)*H;
+g.font='11px system-ui';g.textAlign='right';g.textBaseline='middle';g.strokeStyle=colors.grid;g.lineWidth=1;
+for(let i=0;i<=4;i++){let v=ymin+(ymax-ymin)*i/4,Y=yy(v);g.beginPath();g.moveTo(pad.l,Y);g.lineTo(w-pad.r,Y);g.stroke();g.fillStyle=colors.muted;g.fillText((Math.abs(v)<1e-10?0:v).toFixed(2),pad.l-7,Y)}
+for(let i=0;i<=5;i++){let v=xmin+(xmax-xmin)*i/5,X=xx(v);g.beginPath();g.moveTo(X,pad.t);g.lineTo(X,h-pad.b);g.stroke();g.fillStyle=colors.muted;g.textAlign='center';g.fillText(v.toFixed(0),X,h-pad.b+16)}
+g.fillStyle=colors.muted;g.textAlign='center';g.fillText('Input t',pad.l+W/2,h-4);return {xx,yy,pad,W,H}}
+function curve(g,fn,xx,yy,col,stroke=2,dash=[]){g.save();g.beginPath();g.strokeStyle=col;g.lineWidth=stroke;g.setLineDash(dash);for(let i=0;i<=300;i++){let x=-5+10*i/300,y=fn(x);if(i===0)g.moveTo(xx(x),yy(y));else g.lineTo(xx(x),yy(y))}g.stroke();g.restore()}
+function point(g,x,y,col){g.beginPath();g.arc(x,y,4,0,Math.PI*2);g.fillStyle='#fff';g.fill();g.strokeStyle=col;g.lineWidth=2;g.stroke()}
+function bars(x,s,N){let {g,w,h}=prepCanvas('bars');let left=45,right=12,top=20,bot=40,W=w-left-right,H=h-top-bot;let lam=(x/s)**2,values=[],t=Math.exp(-lam);values.push(t);let nMax=Math.min(130,Math.max(45,Math.ceil(lam+6*Math.sqrt(lam+1)),N+3));for(let i=1;i<nMax;i++){t*=lam/i;values.push(t)}let m=Math.max(...values,0.000001)*1.12;g.font='11px system-ui';g.fillStyle=colors.muted;g.strokeStyle=colors.grid;g.textAlign='right';for(let i=0;i<=4;i++){let y=top+H*(1-i/4);g.beginPath();g.moveTo(left,y);g.lineTo(w-right,y);g.stroke();g.fillText((m*i/4).toFixed(m<.01?3:2),left-7,y+3)}let bw=W/nMax;values.forEach((v,i)=>{let bh=Math.min(H,H*v/m),xp=left+i*bw,yp=top+H-bh;g.fillStyle=i<N?'#367aa7':'#cbd8e1';g.fillRect(xp+Math.min(.6,bw*.08),yp,Math.max(.3,bw-1),bh)});g.textAlign='center';g.fillStyle=colors.muted;let tick=Math.max(5,Math.ceil(nMax/8/5)*5);for(let i=0;i<nMax;i+=tick)g.fillText(i,left+(i+.5)*bw,top+H+18);g.fillText('Feature degree n',left+W/2,h-5);g.save();g.strokeStyle='#a35561';g.setLineDash([4,3]);g.lineWidth=2;let bx=left+N*bw;g.beginPath();g.moveTo(bx,top);g.lineTo(bx,top+H);g.stroke();g.restore();let peak=Math.floor(lam);$('peaknote').textContent=`For this measurement, λ = (x/σ)² = ${lam.toFixed(2)}. Feature energy tends to peak near n ≈ ${peak}; the red line separates retained and omitted terms.`;}
+function curves(x,z,s,N){let {g,w,h}=prepCanvas('curves');let ymin=-0.1;for(let j=0;j<=200;j++){let t=-5+j*.05;ymin=Math.min(ymin,finiteKernel(t,z,s,10),finiteKernel(t,z,s,20),finiteKernel(t,z,s,N));}let A=axes(g,w,h,Math.max(-1.05,ymin-.06),1.05);curve(g,t=>kernel(t,z,s),A.xx,A.yy,colors.exact,3);curve(g,t=>finiteKernel(t,z,s,10),A.xx,A.yy,colors.n10,2,[5,3]);curve(g,t=>finiteKernel(t,z,s,20),A.xx,A.yy,colors.n20,2,[3,3]);if(N!==10 && N!==20)curve(g,t=>finiteKernel(t,z,s,N),A.xx,A.yy,colors.selected,2.5,[8,3]);g.save();g.strokeStyle='#9aaebc';g.setLineDash([4,5]);g.beginPath();g.moveTo(A.xx(x),A.pad.t);g.lineTo(A.xx(x),h-A.pad.b);g.stroke();g.restore();point(g,A.xx(x),A.yy(kernel(x,z,s)),colors.exact);point(g,A.xx(x),A.yy(finiteKernel(x,z,s,N)),colors.selected)}
+function classification(x,s,N){let {g,w,h}=prepCanvas('classify');let lo=-2.4,hi=1.8,A=axes(g,w,h,lo,hi);if(lo<=0 && hi>=0){g.save();g.strokeStyle=colors.dashed;g.lineWidth=2;g.setLineDash([5,5]);g.beginPath();g.moveTo(A.xx(-5),A.yy(0));g.lineTo(A.xx(5),A.yy(0));g.stroke();g.restore()}curve(g,t=>f(t,s,null),A.xx,A.yy,colors.exact,3);curve(g,t=>f(t,s,N),A.xx,A.yy,colors.selected,2.5,[7,4]);g.save();g.strokeStyle='#a5afbb';g.setLineDash([3,4]);g.beginPath();g.moveTo(A.xx(x),A.pad.t);g.lineTo(A.xx(x),h-A.pad.b);g.stroke();g.restore();let e=f(x,s,null),a=f(x,s,N);if(e>=lo&&e<=hi)point(g,A.xx(x),A.yy(e),colors.exact);if(a>=lo&&a<=hi)point(g,A.xx(x),A.yy(a),colors.selected);$('score-exact').textContent=fmt(e,3);$('score-approx').textContent=fmt(a,3);let cl=v=>Math.abs(v)<1e-8?'boundary':v>0?'Motion (+)':'No motion (−)';$('predictions').textContent=`${cl(e)} / ${cl(a)}`}
+function update(){let x=+$('xx').value,z=+$('zz').value,s=+$('sigma').value,N=+$('count').value;$('xxv').textContent=x.toFixed(2);$('zzv').textContent=z.toFixed(2);$('sigv').textContent=s.toFixed(2);$('countv').textContent=N;
+let e=kernel(x,z,s),a=finiteKernel(x,z,s,N),ex=energy(x,s,N),ez=energy(z,s,N),bound=Math.sqrt(Math.max(0,1-ex)*Math.max(0,1-ez));$('exactv').textContent=fmt(e);$('approxv').textContent=fmt(a);$('errorv').textContent=fmt(Math.abs(e-a));$('energyv').textContent=percent(ex);$('energyz').textContent=percent(ez);$('ratio').textContent=(Math.abs(x)/s).toFixed(2);$('lambda').textContent=((x/s)**2).toFixed(2);$('bound').textContent='≤ '+fmt(bound);
+let enough=ex>.999&&ez>.999;let msg=enough?'For these two inputs, the retained feature vectors capture over 99.9% of the squared norm. The kernel approximation should be close.':ex<.8||ez<.8?'At least one input lies in a range where the first N terms omit substantial feature energy. Try increasing N or σ.':'Many, but not all, feature contributions are retained. Compare the actual kernel error, which depends on both inputs.';$('interpretation').textContent=msg;
+document.querySelectorAll('button[data-n]').forEach(b=>{b.classList.toggle('active',+b.dataset.n===N);b.setAttribute('aria-pressed',String(+b.dataset.n===N))});bars(x,s,N);curves(x,z,s,N);classification(x,s,N)}
+controls.forEach(id=>$(id).addEventListener('input',update));document.querySelectorAll('button[data-n]').forEach(b=>b.addEventListener('click',()=>{$('count').value=b.dataset.n;update()}));$('reset').addEventListener('click',()=>{$('xx').value=2;$('zz').value=1;$('sigma').value=1;$('count').value=10;update()});let resizeTid;window.addEventListener('resize',()=>{clearTimeout(resizeTid);resizeTid=setTimeout(update,100)});update();
+})();
+</script>
+</body>
+</html>
